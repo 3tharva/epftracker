@@ -1,0 +1,158 @@
+{
+    "1": {
+        "name": "JAMMU AND KASHMIR",
+        "abbreviation": "JK"
+    },
+    "2": {
+        "name": "HIMACHAL PRADESH",
+        "abbreviation": "HP"
+    },
+    "3": {
+        "name": "PUNJAB",
+        "abbreviation": "PB"
+    },
+    "4": {
+        "name": "CHANDIGARH",
+        "abbreviation": "CH"
+    },
+    "5": {
+        "name": "UTTARAKHAND",
+        "abbreviation": "UK"
+    },
+    "6": {
+        "name": "HARYANA",
+        "abbreviation": "HR"
+    },
+    "7": {
+        "name": "DELHI",
+        "abbreviation": "DL"
+    },
+    "8": {
+        "name": "RAJASTHAN",
+        "abbreviation": "RJ"
+    },
+    "9": {
+        "name": "UTTAR PRADESH",
+        "abbreviation": "UP"
+    },
+    "10": {
+        "name": "BIHAR",
+        "abbreviation": "BR"
+    },
+    "11": {
+        "name": "SIKKIM",
+        "abbreviation": "SK"
+    },
+    "12": {
+        "name": "ARUNACHAL PRADESH",
+        "abbreviation": "AR"
+    },
+    "13": {
+        "name": "NAGALAND",
+        "abbreviation": "NL"
+    },
+    "14": {
+        "name": "MANIPUR",
+        "abbreviation": "MN"
+    },
+    "15": {
+        "name": "MIZORAM",
+        "abbreviation": "MZ"
+    },
+    "16": {
+        "name": "TRIPURA",
+        "abbreviation": "TR"
+    },
+    "17": {
+        "name": "MEGHALAYA",
+        "abbreviation": "ML"
+    },
+    "18": {
+        "name": "ASSAM",
+        "abbreviation": "AS"
+    },
+    "19": {
+        "name": "WEST BENGAL",
+        "abbreviation": "WB"
+    },
+    "20": {
+        "name": "JHARKHAND",
+        "abbreviation": "JH"
+    },
+    "21": {
+        "name": "ODISHA",
+        "abbreviation": "OD"
+    },
+    "22": {
+        "name": "CHATTISGARH",
+        "abbreviation": "CG"
+    },
+    "23": {
+        "name": "MADHYA PRADESH",
+        "abbreviation": "MP"
+    },
+    "24": {
+        "name": "GUJARAT",
+        "abbreviation": "GJ"
+    },
+    "26": {
+        "name": "DADRA AND NAGAR HAVELI AND DAMAN AND DIU",
+        "abbreviation": "DNHDD"
+    },
+    "27": {
+        "name": "MAHARASHTRA",
+        "abbreviation": "MH"
+    },
+    "28": {
+        "name": "ANDHRA PRADESH (BEFORE DIVISION)",
+        "abbreviation": "AP"
+    },
+    "29": {
+        "name": "KARNATAKA",
+        "abbreviation": "KA"
+    },
+    "30": {
+        "name": "GOA",
+        "abbreviation": "GA"
+    },
+    "31": {
+        "name": "LAKSHADWEEP",
+        "abbreviation": "LD"
+    },
+    "32": {
+        "name": "KERALA",
+        "abbreviation": "KL"
+    },
+    "33": {
+        "name": "TAMIL NADU",
+        "abbreviation": "TN"
+    },
+    "34": {
+        "name": "PUDUCHERRY",
+        "abbreviation": "PY"
+    },
+    "35": {
+        "name": "ANDAMAN AND NICOBAR ISLANDS",
+        "abbreviation": "AN"
+    },
+    "36": {
+        "name": "TELANGANA",
+        "abbreviation": "TS"
+    },
+    "37": {
+        "name": "ANDHRA PRADESH",
+        "abbreviation": "AP"
+    },
+    "38": {
+        "name": "LADAKH",
+        "abbreviation": "LA"
+    },
+    "97": {
+        "name": "OTHER TERRITORY",
+        "abbreviation": "OT"
+    },
+    "99": {
+        "name": "CENTRE JURISDICTION",
+        "abbreviation": "CJ"
+    }
+}

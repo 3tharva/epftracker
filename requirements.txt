@@ -1,0 +1,9 @@
+playwright
+google-generativeai
+pillow
+pandas
+openpyxl
+xlrd
+beautifulsoup4
+html5lib
+pytesseract
