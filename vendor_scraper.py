@@ -134,8 +134,21 @@ async def apply_context_stealth(context):
     await context.add_init_script(stealth_js)
 
 
+# Load environment variables from local .env file if it exists
+if os.path.exists(".env"):
+    try:
+        with open(".env", "r", encoding="utf-8") as f:
+            for l in f:
+                l = l.strip()
+                if l and not l.startswith("#") and "=" in l:
+                    k, v = l.split("=", 1)
+                    os.environ[k.strip()] = v.strip().strip('"').strip("'")
+    except Exception:
+        pass
+
 DEFAULT_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
 DEFAULT_URL = "https://unifiedportal-emp.epfindia.gov.in/publicPortal/no-auth/misReport/home/loadEstSearchHome"
+
 
 
 def solve_captcha(image_bytes, api_key=None):
