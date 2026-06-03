@@ -1,0 +1,556 @@
+{
+  "0000339919": {
+    "vendor_name": "BYOMAKESH MISHRA",
+    "vendor_gstn": "21ABFPM4907J1ZT",
+    "status": "success",
+    "allowed_state_codes": [
+      "OR",
+      "OD"
+    ],
+    "target_establishment_id": "ORBAM3802535000",
+    "matched_establishment_ids": [
+      "ORBAM3802535000"
+    ],
+    "scraped_details": {
+      "ORBAM3802535000": {
+        "status": "success",
+        "tables": {
+          "validity_status": [
+            {
+              "A.": "A.",
+              "Establishment Code": "Establishment Code",
+              "ORBAM3802535000": "ORBAM3802535000"
+            },
+            {
+              "A.": "B.",
+              "Establishment Code": "Establishment Name",
+              "ORBAM3802535000": "BYOMAKESH MISHRA"
+            },
+            {
+              "A.": "C.",
+              "Establishment Code": "Establishment Status",
+              "ORBAM3802535000": "CODE NO ALLOTTED WAS AFTER ONLINE REGISTRATION STARTED."
+            },
+            {
+              "A.": "D.",
+              "Establishment Code": "Registration Status on ECR Portal",
+              "ORBAM3802535000": "PERMANENT LOGIN CREATED BY OWNER ON ECR PORTAL"
+            },
+            {
+              "A.": "E.",
+              "Establishment Code": "Post Coverage Status",
+              "ORBAM3802535000": "--"
+            }
+          ],
+          "establishment_status": [
+            {
+              "A.": "A.",
+              "Exemption Status": "Exemption Status",
+              "PF: UNEXEMPTED, PENSION: UNEXEMPTED, EDLI: UNEXEMPTED": "PF: UNEXEMPTED, PENSION: UNEXEMPTED, EDLI: UNEXEMPTED"
+            },
+            {
+              "A.": "B.",
+              "Exemption Status": "Working Status",
+              "PF: UNEXEMPTED, PENSION: UNEXEMPTED, EDLI: UNEXEMPTED": "LIVE ESTABLISHMENT"
+            },
+            {
+              "A.": "C.",
+              "Exemption Status": "Coverage Section",
+              "PF: UNEXEMPTED, PENSION: UNEXEMPTED, EDLI: UNEXEMPTED": "0001(3)(b)"
+            },
+            {
+              "A.": "D.",
+              "Exemption Status": "Actionable Status",
+              "PF: UNEXEMPTED, PENSION: UNEXEMPTED, EDLI: UNEXEMPTED": "ACTIONABLE ESTABLISHMENT"
+            },
+            {
+              "A.": "E.",
+              "Exemption Status": "Date of Coverage",
+              "PF: UNEXEMPTED, PENSION: UNEXEMPTED, EDLI: UNEXEMPTED": "22-DEC-2025"
+            }
+          ],
+          "establishment_details": [
+            {
+              "Name of Establishment(As per PAN) :": "Name of Establishment(As per PAN) :",
+              "BYOMAKESH MISHRA": "BYOMAKESH MISHRA",
+              "Establishment Code :": "Establishment Code :",
+              "ORBAM3802535000": "ORBAM3802535000"
+            },
+            {
+              "Name of Establishment(As per PAN) :": "PAN Status :",
+              "BYOMAKESH MISHRA": "VERIFIED",
+              "Establishment Code :": "",
+              "ORBAM3802535000": ""
+            },
+            {
+              "Name of Establishment(As per PAN) :": "Section Applicable :",
+              "BYOMAKESH MISHRA": "OTHER ESTABLISHMENTS IN WHICH EMPLOYING 20 OR MORE PERSONS AND NOTIFIED BY THE CENTRAL GOVT.",
+              "Establishment Code :": "Primary Business Activity :",
+              "ORBAM3802535000": "ENGINEERS - ENGG. CONTRACTORS"
+            },
+            {
+              "Name of Establishment(As per PAN) :": "ESIC CODE :",
+              "BYOMAKESH MISHRA": "",
+              "Establishment Code :": "",
+              "ORBAM3802535000": ""
+            },
+            {
+              "Name of Establishment(As per PAN) :": "Ownership Type :",
+              "BYOMAKESH MISHRA": "Proprietorship Firm",
+              "Establishment Code :": "Date Of Setup Of Establishment :",
+              "ORBAM3802535000": "01-JUL-2017"
+            },
+            {
+              "Name of Establishment(As per PAN) :": "Address :",
+              "BYOMAKESH MISHRA": "Bagicha Sahi Main Road",
+              "Establishment Code :": "Pin Code :",
+              "ORBAM3802535000": "762014"
+            },
+            {
+              "Name of Establishment(As per PAN) :": "City :",
+              "BYOMAKESH MISHRA": "Boudh",
+              "Establishment Code :": "District :",
+              "ORBAM3802535000": "BOUDH"
+            },
+            {
+              "Name of Establishment(As per PAN) :": "State :",
+              "BYOMAKESH MISHRA": "ODISHA",
+              "Establishment Code :": "Country :",
+              "ORBAM3802535000": "India"
+            },
+            {
+              "Name of Establishment(As per PAN) :": "EPFO Office Name :",
+              "BYOMAKESH MISHRA": "BERHAMPUR",
+              "Establishment Code :": "EPFO Office Address :",
+              "ORBAM3802535000": "1st Floor, PAN Complex, Nr. Payel Talkies,New Bus Stand Rd,"
+            },
+            {
+              "Name of Establishment(As per PAN) :": "Zone :",
+              "BYOMAKESH MISHRA": "ANDHRA PRADESH AND ORISSA",
+              "Establishment Code :": "Region :",
+              "ORBAM3802535000": "OR - BHUBANESHWAR"
+            }
+          ],
+          "additional_information": [
+            {
+              "A.": "A.",
+              "Establishment ID": "Establishment ID",
+              "ORBAM3802535000": "ORBAM3802535000"
+            },
+            {
+              "A.": "B.",
+              "Establishment ID": "CIN Code",
+              "ORBAM3802535000": "NA"
+            },
+            {
+              "A.": "C.",
+              "Establishment ID": "ESIC Code",
+              "ORBAM3802535000": "NA"
+            },
+            {
+              "A.": "D.",
+              "Establishment ID": "LIN Code",
+              "ORBAM3802535000": "NA"
+            },
+            {
+              "A.": "E.",
+              "Establishment ID": "Startup Order No.",
+              "ORBAM3802535000": "NA"
+            },
+            {
+              "A.": "F.",
+              "Establishment ID": "Startup Order Date",
+              "ORBAM3802535000": "-"
+            },
+            {
+              "A.": "G.",
+              "Establishment ID": "MSME Order No.",
+              "ORBAM3802535000": "NA"
+            },
+            {
+              "A.": "H.",
+              "Establishment ID": "MSME Order Date",
+              "ORBAM3802535000": "-"
+            }
+          ]
+        },
+        "downloaded_files": [
+          "downloads/ORBAM3802535000_details_export_0.xlsx"
+        ]
+      }
+    }
+  },
+  "0000655399": {
+    "vendor_name": "BURHANI EXPLOSIVES",
+    "vendor_gstn": "21AHTPB9848D1Z9",
+    "status": "success",
+    "allowed_state_codes": [
+      "OR",
+      "OD"
+    ],
+    "target_establishment_id": "ORRKL2690608000",
+    "matched_establishment_ids": [
+      "ORRKL2690608000"
+    ]
+  },
+  "0000350547": {
+    "vendor_name": "KVK PROSET PRIVATE LIMITED",
+    "vendor_gstn": "21AAHCK6872A1ZT",
+    "status": "success",
+    "allowed_state_codes": [
+      "OR",
+      "OD"
+    ],
+    "target_establishment_id": "ORBBS2222527000",
+    "matched_establishment_ids": [
+      "ORBBS2222527000"
+    ]
+  },
+  "0000236731": {
+    "vendor_name": "M/s  GANESH KUMAR KATHAYAT",
+    "vendor_gstn": "21BMLPK8662G1ZW",
+    "status": "no_match_found",
+    "allowed_state_codes": [
+      "OR",
+      "OD"
+    ],
+    "target_establishment_id": null,
+    "matched_establishment_ids": []
+  },
+  "0000236758": {
+    "vendor_name": "M/s PCM STRESCON OVERSEAS VENTURES",
+    "vendor_gstn": "21AAECP2571Q1Z6",
+    "status": "success",
+    "allowed_state_codes": [
+      "OR",
+      "OD"
+    ],
+    "target_establishment_id": "JLJLP1330601000",
+    "matched_establishment_ids": [
+      "JLJLP1330601000"
+    ],
+    "disclaimer": "Single search result found. State code mismatch ignored (Target: ['OR', 'OD'], Found: JL)."
+  },
+  "0000236777": {
+    "vendor_name": "M/s QUALIX INFORMATION SYSTEM LLP",
+    "vendor_gstn": "21AAAFQ4599C1ZG",
+    "status": "success",
+    "allowed_state_codes": [
+      "OR",
+      "OD"
+    ],
+    "target_establishment_id": "MRNOI1050272000",
+    "matched_establishment_ids": [
+      "MRNOI1050272000"
+    ],
+    "disclaimer": "Single search result found. State code mismatch ignored (Target: ['OR', 'OD'], Found: MR)."
+  },
+  "0000236991": {
+    "vendor_name": "PACE INFRATECH",
+    "vendor_gstn": "21ADHPV6335M1Z6",
+    "status": "success",
+    "allowed_state_codes": [
+      "OR",
+      "OD"
+    ],
+    "target_establishment_id": "ORBBS2989177000",
+    "matched_establishment_ids": [
+      "ORBBS2989177000"
+    ]
+  },
+  "0000235949": {
+    "vendor_name": "M/s PRATIK ENTERPRISE",
+    "vendor_gstn": "21ETJPR9784L1ZQ",
+    "status": "no_match_found",
+    "allowed_state_codes": [
+      "OR",
+      "OD"
+    ],
+    "target_establishment_id": null,
+    "matched_establishment_ids": []
+  },
+  "0000235833": {
+    "vendor_name": "SARJAN MANGARAJ",
+    "vendor_gstn": "21COUPM3453F1ZV",
+    "status": "no_match_found",
+    "allowed_state_codes": [
+      "OR",
+      "OD"
+    ],
+    "target_establishment_id": null,
+    "matched_establishment_ids": []
+  },
+  "0000655479": {
+    "vendor_name": "PMT INFRASCIENCE PRIVATE LIMITED",
+    "vendor_gstn": "09AAKCP1979N1ZI",
+    "status": "success",
+    "allowed_state_codes": [
+      "UP"
+    ],
+    "target_establishment_id": "UPVNS2191626000",
+    "matched_establishment_ids": [
+      "UPVNS2191626000"
+    ]
+  },
+  "0000236542": {
+    "vendor_name": "M/s PINASA ENTERPRISE",
+    "vendor_gstn": "19AGWPL7512L1ZL",
+    "status": "success",
+    "allowed_state_codes": [
+      "WB"
+    ],
+    "target_establishment_id": "JLJLP3370974000",
+    "matched_establishment_ids": [
+      "JLJLP3370974000"
+    ],
+    "disclaimer": "Single search result found. State code mismatch ignored (Target: ['WB'], Found: JL)."
+  },
+  "0000236566": {
+    "vendor_name": "M/s KASHI ENTERPRISES",
+    "vendor_gstn": "09DQQPP6196B1Z7",
+    "status": "success",
+    "allowed_state_codes": [
+      "UP"
+    ],
+    "target_establishment_id": "UPKNP2592778000",
+    "matched_establishment_ids": [
+      "UPKNP2592778000",
+      "UPLKO3372117000"
+    ]
+  },
+  "0000236659": {
+    "vendor_name": "M/s PATRA CONSTRUCTION",
+    "vendor_gstn": "21AQIPP7800M2ZN",
+    "status": "success",
+    "allowed_state_codes": [
+      "OR",
+      "OD"
+    ],
+    "target_establishment_id": "ORBBS1026086000",
+    "matched_establishment_ids": [
+      "ORKJR2728381000",
+      "ORBBS2732418000",
+      "ORRKL0002726000",
+      "ORBBS1052130000",
+      "ORBBS3125172000",
+      "ORBBS3392309000",
+      "ORBBS2250067000",
+      "ORBBS3946664000",
+      "ORBBS1586811000",
+      "ORBBS2514417000",
+      "ORBBS3354200000",
+      "ORBBS2773162000",
+      "ORBBS2928763000",
+      "ORBBS3342730000",
+      "ORBBS3767828000",
+      "ORBBS1822096000",
+      "ORBBS2282601000",
+      "ORBBS1026086000"
+    ]
+  },
+  "0000235539": {
+    "vendor_name": "MANOJ KUMAR BEHERA",
+    "vendor_gstn": "21BMVPB2975B1Z9",
+    "status": "success",
+    "allowed_state_codes": [
+      "OR",
+      "OD"
+    ],
+    "target_establishment_id": "ORBAM1541655000",
+    "matched_establishment_ids": [
+      "ORBAM1541655000",
+      "ORBBS2216996000",
+      "ORBBS1474225000",
+      "ORKJR0025114000",
+      "ORBBS2377989000",
+      "ORBBS0016802000",
+      "ORBBS1678553000",
+      "ORBBS2524506000",
+      "ORBAM2440839000"
+    ]
+  },
+  "0000236779": {
+    "vendor_name": "M/s RAMESH KUMAR",
+    "vendor_gstn": "02BUWPK9570J1ZX",
+    "status": "success",
+    "allowed_state_codes": [
+      "HP"
+    ],
+    "target_establishment_id": "HPSML0005665000",
+    "matched_establishment_ids": [
+      "HPSML2765030000",
+      "HPSML1826302000",
+      "HPSML0005665000"
+    ]
+  },
+  "0000236765": {
+    "vendor_name": "M/s DASHARATH BEHERA",
+    "vendor_gstn": "21IGSPB3642B1ZS",
+    "status": "no_match_found",
+    "allowed_state_codes": [
+      "OR",
+      "OD"
+    ],
+    "target_establishment_id": null,
+    "matched_establishment_ids": []
+  },
+  "0000236846": {
+    "vendor_name": "NARAYAN BEHERA",
+    "vendor_gstn": "21ATSPN5754D1ZK",
+    "status": "success",
+    "allowed_state_codes": [
+      "OR",
+      "OD"
+    ],
+    "target_establishment_id": "ORBAM2413553000",
+    "matched_establishment_ids": [
+      "ORBBS0012549000",
+      "ORBBS0013199000",
+      "ORBBS3259270000",
+      "ORBAM2413553000",
+      "ORBBS3345079000",
+      "ORBBS3188726000",
+      "ORKJR1469088000",
+      "ORBAM2512990000",
+      "ORKJR1750501000",
+      "ORBBS1040399000"
+    ]
+  },
+  "0000236759": {
+    "vendor_name": "M/s GREEN CHANNEL POWER PRIVATE LIM",
+    "vendor_gstn": "01AASCM4425A1ZX",
+    "status": "success",
+    "allowed_state_codes": [
+      "JK"
+    ],
+    "target_establishment_id": "JKJMU3367469000",
+    "matched_establishment_ids": [
+      "JKJMU3367469000"
+    ]
+  },
+  "0000236996": {
+    "vendor_name": "DAYAL CONSTRUCTION",
+    "vendor_gstn": "37BTQPK7593C2Z3",
+    "status": "no_match_found",
+    "allowed_state_codes": [
+      "AP"
+    ],
+    "target_establishment_id": null,
+    "matched_establishment_ids": []
+  },
+  "0000236961": {
+    "vendor_name": "M/s ASHOK KUMAR DIGAL",
+    "vendor_gstn": "nan",
+    "status": "skipped_no_state_code",
+    "matched_establishment_ids": []
+  },
+  "0000237012": {
+    "vendor_name": "JHANSIRANI JENA",
+    "vendor_gstn": "21BWUPJ1518B1ZX",
+    "status": "no_match_found",
+    "allowed_state_codes": [
+      "OR",
+      "OD"
+    ],
+    "target_establishment_id": null,
+    "matched_establishment_ids": []
+  },
+  "0000237270": {
+    "vendor_name": "M/s JOGENDRA NAYAK",
+    "vendor_gstn": "21ACTPN7262Q1ZS",
+    "status": "failed_error: Locator.inner_text: Timeout 30000ms exceeded.\nCall log:\n  - waiting for locator(\"#tablecontainer\")\n",
+    "matched_establishment_ids": []
+  },
+  "0000237303": {
+    "vendor_name": "SATYAM TRADERS",
+    "vendor_gstn": "08EQWPS4349E1Z2",
+    "status": "no_match_found",
+    "allowed_state_codes": [
+      "RJ"
+    ],
+    "target_establishment_id": null,
+    "matched_establishment_ids": []
+  },
+  "0000237295": {
+    "vendor_name": "ISWAR CHANDRA PRADHAN",
+    "vendor_gstn": "21AKDPP5495M2ZP",
+    "status": "no_match_found",
+    "allowed_state_codes": [
+      "OR",
+      "OD"
+    ],
+    "target_establishment_id": null,
+    "matched_establishment_ids": []
+  },
+  "0000352712": {
+    "vendor_name": "M/S Power Pioneers",
+    "vendor_gstn": "23AHVPA7926K1ZY",
+    "status": "no_match_found",
+    "allowed_state_codes": [
+      "MP"
+    ],
+    "target_establishment_id": null,
+    "matched_establishment_ids": []
+  },
+  "0000237009": {
+    "vendor_name": "ANAY CONSTRUCTION",
+    "vendor_gstn": "23BAMPM1787K1Z9",
+    "status": "success",
+    "allowed_state_codes": [
+      "MP"
+    ],
+    "target_establishment_id": "MPBPL1560921000",
+    "matched_establishment_ids": [
+      "MPIND1359272000",
+      "MPBPL1560921000",
+      "MPSGR3681057000"
+    ]
+  },
+  "0000611222": {
+    "vendor_name": "JAY MAHAKALI CONSTRUCTION",
+    "vendor_gstn": "08HFOPK3726P1ZK",
+    "status": "success",
+    "allowed_state_codes": [
+      "RJ"
+    ],
+    "target_establishment_id": "RJRAJ2854109000",
+    "matched_establishment_ids": [
+      "RJRAJ2854109000"
+    ]
+  },
+  "0000352711": {
+    "vendor_name": "M/S Power Pioneers",
+    "vendor_gstn": "08AHVPA7926K1ZQ",
+    "status": "no_match_found",
+    "allowed_state_codes": [
+      "RJ"
+    ],
+    "target_establishment_id": null,
+    "matched_establishment_ids": []
+  },
+  "0000612231": {
+    "vendor_name": "Geo Dynamics Engineers LLP",
+    "vendor_gstn": "24ABAFG5995M1ZV",
+    "status": "success",
+    "allowed_state_codes": [
+      "GJ"
+    ],
+    "target_establishment_id": "VDBRD0065793000",
+    "matched_establishment_ids": [
+      "VDBRD0065793000"
+    ],
+    "disclaimer": "Single search result found. State code mismatch ignored (Target: ['GJ'], Found: VD)."
+  },
+  "0000352653": {
+    "vendor_name": "M/S PN Enterprises",
+    "vendor_gstn": "09AMLPK1754C1Z4",
+    "status": "failed_error: Locator.screenshot: Timeout 30000ms exceeded.\nCall log:\n  - taking element screenshot\n  - waiting for fonts to load...\n  - fonts loaded\n  - attempting scroll into view action\n    - waiting for element to be stable\n",
+    "matched_establishment_ids": []
+  },
+  "0000352710": {
+    "vendor_name": "M/S Power Pioneers",
+    "vendor_gstn": "09AHVPA7926K1ZO",
+    "status": "failed_error: Page.goto: net::ERR_CERT_AUTHORITY_INVALID at https://unifiedportal-emp.epfindia.gov.in/publicPortal/no-auth/misReport/home/loadEstSearchHome\nCall log:\n  - navigating to \"https://unifiedportal-emp.epfindia.gov.in/publicPortal/no-auth/misReport/home/loadEstSearchHome\", waiting until \"domcontentloaded\"\n",
+    "matched_establishment_ids": []
+  }
+}

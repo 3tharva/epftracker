@@ -16,6 +16,36 @@ import pytesseract
 async def human_delay(min_sec=1.0, max_sec=3.0):
     await asyncio.sleep(random.uniform(min_sec, max_sec))
 
+async def human_mouse_move(page, target_locator):
+    try:
+        box = await target_locator.bounding_box()
+        if box:
+            x_target = box["x"] + box["width"] / 2
+            y_target = box["y"] + box["height"] / 2
+            
+            # Generate starting position randomly
+            steps = random.randint(6, 12)
+            current_x, current_y = random.randint(100, 800), random.randint(100, 600)
+            
+            for i in range(steps):
+                t = (i + 1) / steps
+                # Curve calculations: start linear + add some cosine curve deviation
+                jitter_x = random.uniform(-4, 4)
+                jitter_y = random.uniform(-4, 4)
+                step_x = current_x + (x_target - current_x) * t + jitter_x
+                step_y = current_y + (y_target - current_y) * t + jitter_y
+                await page.mouse.move(step_x, step_y)
+                await asyncio.sleep(random.uniform(0.015, 0.035))
+            
+            # Hover directly on target center
+            await page.mouse.move(x_target, y_target)
+    except Exception as e:
+        # Fallback to direct hover if anything fails
+        try:
+            await target_locator.hover()
+        except Exception:
+            pass
+
 async def human_type(page, selector_or_locator, text):
     """
     Simulates a human typing character by character with random delays.
@@ -34,22 +64,69 @@ async def human_type(page, selector_or_locator, text):
     
     for char in text:
         await page.keyboard.type(char)
-        await asyncio.sleep(random.uniform(0.08, 0.2))
+        # 5% chance of a longer pause mimicking typing mistake or hesitation
+        if random.random() < 0.05:
+            await human_delay(0.3, 0.7)
+        else:
+            await asyncio.sleep(random.uniform(0.08, 0.2))
     await human_delay(0.3, 0.6)
 
 async def human_click(page, selector_or_locator):
     """
-    Simulates a human clicking an element by hovering first with a small delay.
+    Simulates a human clicking an element by hovering using natural mouse paths.
     """
     if isinstance(selector_or_locator, str):
         locator = page.locator(selector_or_locator)
     else:
         locator = selector_or_locator
         
-    await locator.hover()
-    await human_delay(0.3, 0.8)
+    await human_mouse_move(page, locator)
+    await human_delay(0.3, 0.7)
     await locator.click()
-    await human_delay(0.6, 1.2)
+    await human_delay(0.5, 1.0)
+
+async def human_scroll(page):
+    """
+    Simulates a human scrolling down and up slightly to look like a reader.
+    """
+    try:
+        scroll_y = random.randint(150, 350)
+        await page.evaluate(f"window.scrollBy(0, {scroll_y})")
+        await human_delay(0.5, 1.2)
+        await page.evaluate(f"window.scrollBy(0, -{scroll_y})")
+        await human_delay(0.3, 0.8)
+    except Exception:
+        pass
+
+USER_AGENTS = [
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:124.0) Gecko/20100101 Firefox/124.0",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36 Edg/124.0.0.0"
+]
+
+async def apply_context_stealth(context):
+    """
+    Applies stealth settings to the browser context to bypass WAF bot checks.
+    """
+    stealth_js = """
+    Object.defineProperty(navigator, 'webdriver', {
+        get: () => undefined
+    });
+    window.navigator.chrome = {
+        runtime: {},
+        loadTimes: () => {},
+        csi: () => {}
+    };
+    Object.defineProperty(navigator, 'plugins', {
+        get: () => [1, 2, 3, 4, 5]
+    });
+    Object.defineProperty(navigator, 'languages', {
+        get: () => ['en-US', 'en']
+    });
+    """
+    await context.add_init_script(stealth_js)
 
 
 # Configure Tesseract path for Windows
@@ -522,12 +599,15 @@ async def search_and_download_vendor(page, vendor_name, allowed_state_codes, api
 
 async def run_scraper(limit=None, api_key=DEFAULT_API_KEY, headless=True):
     # Setup data files
-    if not os.path.exists("VENDORLIST.csv"):
-        print("[!] VENDORLIST.csv not found in the current directory.")
+    if os.path.exists("VENDORLIST.csv"):
+        # Clean and deduplicate VENDORLIST.csv
+        df_vendors = clean_and_deduplicate_csv("VENDORLIST.csv", "VENDORLIST_CLEANED.csv")
+    elif os.path.exists("VENDORLIST_CLEANED.csv"):
+        print("[*] VENDORLIST.csv not found, but VENDORLIST_CLEANED.csv exists. Loading cleaned vendor list...")
+        df_vendors = pd.read_csv("VENDORLIST_CLEANED.csv", dtype=str)
+    else:
+        print("[!] Neither VENDORLIST.csv nor VENDORLIST_CLEANED.csv found in the current directory.")
         return
-        
-    # Clean and deduplicate VENDORLIST.csv
-    df_vendors = clean_and_deduplicate_csv("VENDORLIST.csv", "VENDORLIST_CLEANED.csv")
     
     # Load state codes mapping
     if not os.path.exists("STATECODE.JSON"):
@@ -561,6 +641,7 @@ async def run_scraper(limit=None, api_key=DEFAULT_API_KEY, headless=True):
     async with async_playwright() as p:
         print("[*] Launching browser in persistent context...")
         user_data_dir = os.path.join(os.getcwd(), "chrome_profile")
+        selected_ua = random.choice(USER_AGENTS)
         
         # Try launching with Google Chrome channel first, fallback to default Playwright Chromium
         try:
@@ -569,7 +650,7 @@ async def run_scraper(limit=None, api_key=DEFAULT_API_KEY, headless=True):
                 channel="chrome",
                 headless=headless,
                 args=["--disable-blink-features=AutomationControlled"],
-                user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+                user_agent=selected_ua,
                 viewport={"width": 1280, "height": 1024}
             )
             print("[+] Launched persistent context using Google Chrome channel.")
@@ -579,10 +660,11 @@ async def run_scraper(limit=None, api_key=DEFAULT_API_KEY, headless=True):
                 user_data_dir=user_data_dir,
                 headless=headless,
                 args=["--disable-blink-features=AutomationControlled"],
-                user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+                user_agent=selected_ua,
                 viewport={"width": 1280, "height": 1024}
             )
             
+        await apply_context_stealth(context)
         page = context.pages[0] if context.pages else await context.new_page()
         
         for idx, row in df_vendors.iterrows():
@@ -658,6 +740,8 @@ async def run_scraper(limit=None, api_key=DEFAULT_API_KEY, headless=True):
                     json.dump(results, f, indent=2, ensure_ascii=False)
                 
                 count += 1
+                print("[*] Waiting 10 seconds before next vendor...")
+                await asyncio.sleep(10)
                 
             except Exception as e:
                 print(f"[!] Error processing vendor {vendor_code}: {e}")
@@ -671,26 +755,335 @@ async def run_scraper(limit=None, api_key=DEFAULT_API_KEY, headless=True):
                 with open(results_file, "w", encoding="utf-8") as f:
                     json.dump(results, f, indent=2, ensure_ascii=False)
                 # Small wait before trying next
-                await asyncio.sleep(5)
+                print("[*] Waiting 10 seconds after failure before next vendor...")
+                await asyncio.sleep(10)
                 
         await context.close()
         
     print(f"\n[+] Processing complete. Filtered results saved to: {results_file}")
+
+async def scrape_details_page_tables(page):
+    """
+    Scrapes all visible tables in the details section of the page and returns them as a dict.
+    """
+    tables_data = {}
+    
+    sections = {
+        "validity_status": "#tablecontainer3",
+        "establishment_status": "#tablecontainer4",
+        "establishment_details": "#tablecontainer5",
+        "units_subcode": "#tablecontainer8",
+        "other_codes": "#tablecontainer9",
+        "branches_without_code": "#tablecontainer10",
+        "same_pan_establishments": "#tablecontainer11",
+        "additional_information": "#tablecontainer12"
+    }
+    
+    for section_name, selector in sections.items():
+        try:
+            container = page.locator(selector)
+            if await container.count() > 0 and await container.is_visible():
+                # Check if there is a table inside
+                table = container.locator("table")
+                if await table.count() > 0:
+                    # Extract headers
+                    headers = []
+                    thead_ths = table.locator("thead th, thead td")
+                    th_count = await thead_ths.count()
+                    if th_count > 0:
+                        for h_idx in range(th_count):
+                            headers.append((await thead_ths.nth(h_idx).inner_text()).strip())
+                    else:
+                        # Fallback to first tr ths
+                        first_tr_ths = table.locator("tr").first.locator("th, td")
+                        for h_idx in range(await first_tr_ths.count()):
+                            headers.append((await first_tr_ths.nth(h_idx).inner_text()).strip())
+                            
+                    # Extract rows
+                    rows = []
+                    tbody_trs = table.locator("tbody tr")
+                    tr_count = await tbody_trs.count()
+                    start_idx = 0
+                    if tr_count == 0:
+                        # Fallback to all trs except first if no tbody
+                        tbody_trs = table.locator("tr")
+                        tr_count = await tbody_trs.count()
+                        start_idx = 1 if len(headers) > 0 else 0
+                        
+                    for r_idx in range(start_idx, tr_count):
+                        row_cells = tbody_trs.nth(r_idx).locator("td, th")
+                        cell_count = await row_cells.count()
+                        row_data = {}
+                        for c_idx in range(cell_count):
+                            cell_val = (await row_cells.nth(c_idx).inner_text()).strip()
+                            header_name = headers[c_idx] if c_idx < len(headers) else f"column_{c_idx}"
+                            row_data[header_name] = cell_val
+                        if row_data:
+                            rows.append(row_data)
+                            
+                    tables_data[section_name] = rows
+        except Exception as e:
+            print(f"[!] Error scraping table {section_name}: {e}")
+            
+    return tables_data
+
+
+async def scrape_establishment_by_code(page, matched_id, api_key):
+    """
+    Searches EPFO by the 7-digit establishment code, solves captcha, clicks view report,
+    scrapes all visible tables and downloads export files.
+    """
+    if len(matched_id) < 12:
+        print(f"[!] Matched ID '{matched_id}' is invalid or too short.")
+        return None, []
+        
+    code_7 = matched_id[5:12]
+    print(f"[*] Searching for matched ID: '{matched_id}' using 7-digit code: '{code_7}'")
+    
+    max_attempts = 5
+    for attempt in range(1, max_attempts + 1):
+        await navigate_with_retry(page, DEFAULT_URL)
+        await human_delay(1.5, 3.0)
+        
+        # Clear estName to ensure we only search by code
+        await page.locator("#estName").clear()
+        
+        # Enter 7-digit code
+        await human_type(page, "#estCode", code_7)
+        
+        # Capture Captcha
+        captcha_img = page.locator("#capImg")
+        await captcha_img.wait_for(state="visible", timeout=15000)
+        await human_delay(1.0, 2.0)
+        image_bytes = await captcha_img.screenshot()
+        
+        # Solve Captcha
+        try:
+            captcha_solution = solve_captcha(image_bytes, api_key)
+            print(f"[*] Attempt {attempt}: Captcha solved as '{captcha_solution}'")
+        except Exception as e:
+            print(f"[!] Captcha solver failed: {e}")
+            await asyncio.sleep(2)
+            continue
+            
+        await human_type(page, "#captcha", captcha_solution)
+        
+        captcha_failed = False
+        alert_msg = ""
+        
+        async def handle_alert(dialog):
+            nonlocal captcha_failed, alert_msg
+            alert_msg = dialog.message
+            msg_lower = alert_msg.lower()
+            if "no details found" in msg_lower or "valid establishment name" in msg_lower:
+                print(f"[-] Alert: '{alert_msg}'. No details found for this search. Will not retry captcha.")
+                captcha_failed = False
+            elif "captcha" in msg_lower or "invalid" in msg_lower or "wrong" in msg_lower:
+                captcha_failed = True
+            await dialog.dismiss()
+            
+        page.on("dialog", handle_alert)
+        await human_click(page, "#searchEmployer")
+        
+        # Wait for loading overlay (blockUI) to hide
+        try:
+            await page.locator(".blockUI").wait_for(state="hidden", timeout=15000)
+        except Exception:
+            pass
+            
+        # Small wait for UI stabilization
+        await human_delay(1.0, 2.0)
+        page.remove_listener("dialog", handle_alert)
+        
+        if captcha_failed:
+            print("[!] Incorrect captcha. Retrying...")
+            continue
+            
+        if alert_msg:
+            if "no details found" in alert_msg.lower() or "valid establishment name" in alert_msg.lower():
+                print(f"[-] Search blocked by 'No Details Found' alert. Skipping matched ID: '{matched_id}'")
+                return None, []
+            print(f"[!] Search blocked by alert: '{alert_msg}'")
+            return None, []
+            
+        container_text = await page.locator("#tablecontainer").inner_text()
+        if "no records" in container_text.lower():
+            print(f"[-] No records found for matched ID: '{matched_id}'")
+            return None, []
+            
+        table_locator = page.locator("#tablecontainer table")
+        if await table_locator.count() == 0:
+            print("[?] Results table not visible. Retrying search...")
+            continue
+            
+        # Get first row
+        tbody_tr = page.locator("#tablecontainer table tbody tr")
+        row_count = await tbody_tr.count()
+        if row_count == 0:
+            print("[-] Results table is empty.")
+            return None, []
+            
+        tds = tbody_tr.nth(0).locator("td")
+        action_cell = tds.last
+        action_link = action_cell.locator("a, button, input[type='button']").first
+        if await action_link.count() == 0:
+            print("[-] View Report action button not found.")
+            return None, []
+            
+        # Click View Report/Details
+        await human_click(page, action_link)
+        
+        # Wait for details page load
+        print("[*] Waiting for details section/page to load...")
+        await human_delay(5.0, 7.0)
+        
+        # Scrape all HTML tables
+        print("[*] Scraping HTML tables from details page...")
+        tables_data = await scrape_details_page_tables(page)
+        
+        # Download files
+        excel_locators = page.locator("a:has-text('Excel'), button:has-text('Excel'), input[value='Excel'], .buttons-excel, a:has-text('CSV'), button:has-text('CSV'), .buttons-csv")
+        excel_count = await excel_locators.count()
+        print(f"[+] Found {excel_count} Excel/CSV export button(s) in details page.")
+        
+        download_paths = []
+        for i in range(excel_count):
+            btn = excel_locators.nth(i)
+            if await btn.is_visible():
+                try:
+                    print(f"[*] Downloading file {i+1}/{excel_count}...")
+                    async with page.expect_download(timeout=15000) as download_info:
+                        await human_click(page, btn)
+                    download = await download_info.value
+                    os.makedirs("downloads", exist_ok=True)
+                    suggested = download.suggested_filename
+                    ext = os.path.splitext(suggested)[1] or ".xls"
+                    save_path = f"downloads/{matched_id}_details_export_{i}{ext}"
+                    await download.save_as(save_path)
+                    print(f"[+] Download saved to: {save_path}")
+                    download_paths.append(save_path)
+                except Exception as e:
+                    print(f"[!] Export download {i+1} failed: {e}")
+                    
+        return tables_data, download_paths
+        
+    print("[!] Failed to solve captcha after maximum attempts.")
+    return None, []
+
+
+async def run_details_scraper(api_key=DEFAULT_API_KEY, headless=True):
+    results_file = "vendor_est_matches.json"
+    if not os.path.exists(results_file):
+        print(f"[!] Results file '{results_file}' not found. Run the primary scraper first.")
+        return
+        
+    with open(results_file, "r", encoding="utf-8") as f:
+        results = json.load(f)
+        
+    async with async_playwright() as p:
+        print("[*] Launching browser in persistent context for details scraping...")
+        user_data_dir = os.path.join(os.getcwd(), "chrome_profile")
+        selected_ua = random.choice(USER_AGENTS)
+        try:
+            context = await p.chromium.launch_persistent_context(
+                user_data_dir=user_data_dir,
+                channel="chrome",
+                headless=headless,
+                args=["--disable-blink-features=AutomationControlled"],
+                user_agent=selected_ua,
+                viewport={"width": 1280, "height": 1024}
+            )
+            print("[+] Launched persistent context using Google Chrome channel.")
+        except Exception as e:
+            print(f"[*] Fallback: Could not launch with Google Chrome channel ({e}). Launching default Chromium persistent context...")
+            context = await p.chromium.launch_persistent_context(
+                user_data_dir=user_data_dir,
+                headless=headless,
+                args=["--disable-blink-features=AutomationControlled"],
+                user_agent=selected_ua,
+                viewport={"width": 1280, "height": 1024}
+            )
+            
+        await apply_context_stealth(context)
+        page = context.pages[0] if context.pages else await context.new_page()
+        
+        for vendor_code, vendor_data in results.items():
+            if vendor_data.get("status") != "success":
+                continue
+                
+            matched_ids = vendor_data.get("matched_establishment_ids", [])
+            if not matched_ids:
+                continue
+                
+            if "scraped_details" not in vendor_data:
+                vendor_data["scraped_details"] = {}
+                
+            for mid in matched_ids:
+                # Skip if already scraped successfully
+                if mid in vendor_data["scraped_details"] and vendor_data["scraped_details"][mid].get("status") == "success":
+                    continue
+                    
+                print(f"\n--- Scraping details for Matched ID: {mid} (Vendor: {vendor_data['vendor_name']}) ---")
+                try:
+                    tables, downloads = await scrape_establishment_by_code(page, mid, api_key)
+                    if tables is not None:
+                        vendor_data["scraped_details"][mid] = {
+                            "status": "success",
+                            "tables": tables,
+                            "downloaded_files": downloads
+                        }
+                    else:
+                        vendor_data["scraped_details"][mid] = {
+                            "status": "failed_or_skipped",
+                            "tables": {},
+                            "downloaded_files": []
+                        }
+                except Exception as ex:
+                    print(f"[!] Error scraping details for {mid}: {ex}")
+                    vendor_data["scraped_details"][mid] = {
+                        "status": f"failed_error: {str(ex)}",
+                        "tables": {},
+                        "downloaded_files": []
+                    }
+                    await asyncio.sleep(5)
+                    
+                # Save progress after every matched ID
+                with open(results_file, "w", encoding="utf-8") as f:
+                    json.dump(results, f, indent=2, ensure_ascii=False)
+                    
+        await context.close()
+    print("[+] Details scraping completed.")
+
 
 def main():
     parser = argparse.ArgumentParser(description="Deduplicate vendors and run EPFO state filtered search")
     parser.add_argument("-l", "--limit", type=int, default=None, help="Limit the number of vendors to process (default: all)")
     parser.add_argument("-k", "--key", default=DEFAULT_API_KEY, help="Gemini API Key")
     parser.add_argument("--headless", action="store_true", help="Run browser in headless mode")
+    parser.add_argument("--scrape-details", action="store_true", help="Scrape details only for already matched IDs")
     
     args = parser.parse_args()
     
-    # Run the async scraper
-    asyncio.run(run_scraper(
-        limit=args.limit,
-        api_key=args.key,
-        headless=args.headless
-    ))
+    if args.scrape_details:
+        # Run stage 2 only
+        asyncio.run(run_details_scraper(
+            api_key=args.key,
+            headless=args.headless
+        ))
+    else:
+        # Run stage 1 (primary search)
+        asyncio.run(run_scraper(
+            limit=args.limit,
+            api_key=args.key,
+            headless=args.headless
+        ))
+        # Automatically trigger stage 2 for newly matched IDs
+        print("\n[*] Starting stage 2: Scraping details for matched establishment IDs...")
+        asyncio.run(run_details_scraper(
+            api_key=args.key,
+            headless=args.headless
+        ))
+
 
 if __name__ == "__main__":
     main()
