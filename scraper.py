@@ -147,33 +147,39 @@ async def extract_table_data(page):
 
 async def run_scraper(establishment_name, api_key, headless=True):
     async with async_playwright() as p:
-        print("[*] Launching browser...")
-        browser = await p.chromium.launch(
-            headless=headless,
-            args=["--disable-blink-features=AutomationControlled"]
-        )
-        
-        # Configure Zyte proxy if API key is present
-        zyte_api_key = os.getenv("ZYTE_API_KEY")
-        proxy_settings = None
-        if zyte_api_key:
-            print("[*] Configuring browser to route traffic via Zyte Smart Proxy...")
-            proxy_settings = {
-                "server": "http://api.zyte.com:8011",
-                "username": zyte_api_key,
-                "password": ""
-            }
-
-        # Configure context with standard headers and resolution
-        context = await browser.new_context(
-            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
-            viewport={"width": 1280, "height": 1024},
-            proxy=proxy_settings,
-            ignore_https_errors=True if proxy_settings else False
-        )
+        import platform
+        if platform.system() == "Windows":
+            user_data_dir = os.path.expandvars(r"%LOCALAPPDATA%\Google\Chrome\User Data")
+        else:
+            user_data_dir = os.path.expanduser("~/.config/google-chrome")
+        print(f"[*] Launching browser in persistent context using system Chrome profile: '{user_data_dir}'...")
+        selected_ua = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
 
         
-        page = await context.new_page()
+        try:
+            context = await p.chromium.launch_persistent_context(
+                user_data_dir=user_data_dir,
+                channel="chrome",
+                headless=headless,
+                args=["--disable-blink-features=AutomationControlled"],
+                user_agent=selected_ua,
+                viewport={"width": 1280, "height": 1024},
+                ignore_https_errors=True
+            )
+            print("[+] Launched persistent context using Google Chrome channel.")
+        except Exception as e:
+            print(f"[*] Fallback: Could not launch with Google Chrome channel ({e}). Launching default Chromium persistent context...")
+            context = await p.chromium.launch_persistent_context(
+                user_data_dir=user_data_dir,
+                headless=headless,
+                args=["--disable-blink-features=AutomationControlled"],
+                user_agent=selected_ua,
+                viewport={"width": 1280, "height": 1024},
+                ignore_https_errors=True
+            )
+            
+        page = context.pages[0] if context.pages else await context.new_page()
+
         
         captcha_failed = False
         alert_triggered = False
@@ -327,7 +333,8 @@ async def run_scraper(establishment_name, api_key, headless=True):
                 print(container_text[:200])
                 print("[*] Retrying...")
                 
-        await browser.close()
+        await context.close()
+
         return results_rows
 
 def main():

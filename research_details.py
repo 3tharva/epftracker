@@ -75,25 +75,38 @@ def solve_captcha(image_bytes):
 
 async def main():
     async with async_playwright() as p:
-        print("[*] Launching browser...")
-        browser = await p.chromium.launch(headless=True)
-        # Configure Zyte proxy if API key is present
-        zyte_api_key = os.getenv("ZYTE_API_KEY")
-        proxy_settings = None
-        if zyte_api_key:
-            print("[*] Configuring browser to route traffic via Zyte Smart Proxy...")
-            proxy_settings = {
-                "server": "http://api.zyte.com:8011",
-                "username": zyte_api_key,
-                "password": ""
-            }
+        import platform
+        if platform.system() == "Windows":
+            user_data_dir = os.path.expandvars(r"%LOCALAPPDATA%\Google\Chrome\User Data")
+        else:
+            user_data_dir = os.path.expanduser("~/.config/google-chrome")
+        print(f"[*] Launching browser in persistent context using system Chrome profile: '{user_data_dir}'...")
+        selected_ua = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
 
-        context = await browser.new_context(
-            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
-            viewport={"width": 1280, "height": 1024},
-            proxy=proxy_settings,
-            ignore_https_errors=True if proxy_settings else False
-        )
+        
+        try:
+            context = await p.chromium.launch_persistent_context(
+                user_data_dir=user_data_dir,
+                channel="chrome",
+                headless=True,
+                args=["--disable-blink-features=AutomationControlled"],
+                user_agent=selected_ua,
+                viewport={"width": 1280, "height": 1024},
+                ignore_https_errors=True
+            )
+            print("[+] Launched persistent context using Google Chrome channel.")
+        except Exception as e:
+            print(f"[*] Fallback: Could not launch with Google Chrome channel ({e}). Launching default Chromium persistent context...")
+            context = await p.chromium.launch_persistent_context(
+                user_data_dir=user_data_dir,
+                headless=True,
+                args=["--disable-blink-features=AutomationControlled"],
+                user_agent=selected_ua,
+                viewport={"width": 1280, "height": 1024},
+                ignore_https_errors=True
+            )
+
+
 
         page = await context.new_page()
         
@@ -125,8 +138,9 @@ async def main():
         
         if captcha_failed:
             print("[-] Captcha failed.")
-            await browser.close()
+            await context.close()
             return
+
             
         # Click the link under Action column.
         # Let's locate the table rows and find the link/button
@@ -170,7 +184,8 @@ async def main():
             excel_elements = page.locator("a:has-text('Excel'), button:has-text('Excel'), input[value='Excel'], :has-text('excel')")
             print(f"[+] Found {await excel_elements.count()} elements containing 'Excel'")
             
-        await browser.close()
+        await context.close()
+
 
 if __name__ == "__main__":
     asyncio.run(main())

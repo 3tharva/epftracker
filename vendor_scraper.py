@@ -606,7 +606,7 @@ async def search_and_download_vendor(page, vendor_name, allowed_state_codes, api
             
     return None, [], None
 
-async def run_scraper(limit=None, api_key=DEFAULT_API_KEY, headless=True, input_file="vendorList.csv"):
+async def run_scraper(limit=None, api_key=DEFAULT_API_KEY, headless=True, input_file="vendorList.csv", profile_dir="chrome_profile"):
     # Setup data files
     base_name, _ = os.path.splitext(input_file)
     cleaned_file = f"{base_name}_cleaned.csv"
@@ -651,20 +651,18 @@ async def run_scraper(limit=None, api_key=DEFAULT_API_KEY, headless=True, input_
     count = 0
     
     async with async_playwright() as p:
-        print("[*] Launching browser in persistent context...")
-        user_data_dir = os.path.join(os.getcwd(), "chrome_profile")
+        import platform
+        if profile_dir == "chrome_profile":
+            if platform.system() == "Windows":
+                user_data_dir = os.path.expandvars(r"%LOCALAPPDATA%\Google\Chrome\User Data")
+            else:
+                user_data_dir = os.path.expanduser("~/.config/google-chrome")
+            print(f"[*] Launching browser in persistent context using system standard Chrome profile: '{user_data_dir}'...")
+        else:
+            user_data_dir = os.path.join(os.getcwd(), profile_dir)
+            print(f"[*] Launching browser in persistent context using custom profile: '{user_data_dir}'...")
         selected_ua = random.choice(USER_AGENTS)
-        
-        # Configure Zyte proxy if API key is present
-        zyte_api_key = os.getenv("ZYTE_API_KEY")
-        proxy_settings = None
-        if zyte_api_key:
-            print("[*] Configuring browser to route traffic via Zyte Smart Proxy...")
-            proxy_settings = {
-                "server": "http://api.zyte.com:8011",
-                "username": zyte_api_key,
-                "password": ""
-            }
+
 
         # Try launching with Google Chrome channel first, fallback to default Playwright Chromium
         try:
@@ -675,8 +673,7 @@ async def run_scraper(limit=None, api_key=DEFAULT_API_KEY, headless=True, input_
                 args=["--disable-blink-features=AutomationControlled"],
                 user_agent=selected_ua,
                 viewport={"width": 1280, "height": 1024},
-                proxy=proxy_settings,
-                ignore_https_errors=True if proxy_settings else False
+                ignore_https_errors=True
             )
             print("[+] Launched persistent context using Google Chrome channel.")
         except Exception as e:
@@ -687,9 +684,10 @@ async def run_scraper(limit=None, api_key=DEFAULT_API_KEY, headless=True, input_
                 args=["--disable-blink-features=AutomationControlled"],
                 user_agent=selected_ua,
                 viewport={"width": 1280, "height": 1024},
-                proxy=proxy_settings,
-                ignore_https_errors=True if proxy_settings else False
+                ignore_https_errors=True
             )
+
+
             
         await apply_context_stealth(context)
         page = context.pages[0] if context.pages else await context.new_page()
@@ -1008,9 +1006,14 @@ async def run_details_scraper(api_key=DEFAULT_API_KEY, headless=True):
         results = json.load(f)
         
     async with async_playwright() as p:
-        print("[*] Launching browser in persistent context for details scraping...")
-        user_data_dir = os.path.join(os.getcwd(), "chrome_profile")
+        import platform
+        if platform.system() == "Windows":
+            user_data_dir = os.path.expandvars(r"%LOCALAPPDATA%\Google\Chrome\User Data")
+        else:
+            user_data_dir = os.path.expanduser("~/.config/google-chrome")
+        print(f"[*] Launching browser in persistent context for details scraping using system Chrome profile: '{user_data_dir}'...")
         selected_ua = random.choice(USER_AGENTS)
+
         try:
             context = await p.chromium.launch_persistent_context(
                 user_data_dir=user_data_dir,
@@ -1018,7 +1021,8 @@ async def run_details_scraper(api_key=DEFAULT_API_KEY, headless=True):
                 headless=headless,
                 args=["--disable-blink-features=AutomationControlled"],
                 user_agent=selected_ua,
-                viewport={"width": 1280, "height": 1024}
+                viewport={"width": 1280, "height": 1024},
+                ignore_https_errors=True
             )
             print("[+] Launched persistent context using Google Chrome channel.")
         except Exception as e:
@@ -1028,8 +1032,10 @@ async def run_details_scraper(api_key=DEFAULT_API_KEY, headless=True):
                 headless=headless,
                 args=["--disable-blink-features=AutomationControlled"],
                 user_agent=selected_ua,
-                viewport={"width": 1280, "height": 1024}
+                viewport={"width": 1280, "height": 1024},
+                ignore_https_errors=True
             )
+
             
         await apply_context_stealth(context)
         page = context.pages[0] if context.pages else await context.new_page()
@@ -1089,6 +1095,7 @@ def main():
     parser.add_argument("-k", "--key", default=DEFAULT_API_KEY, help="Gemini API Key")
     parser.add_argument("--headless", action="store_true", help="Run browser in headless mode")
     parser.add_argument("--scrape-details", action="store_true", help="Scrape details only for already matched IDs")
+    parser.add_argument("--profile", default="chrome_profile", help="Path to Chrome user data directory (default: chrome_profile)")
     
     args = parser.parse_args()
     
@@ -1104,7 +1111,8 @@ def main():
             limit=args.limit,
             api_key=args.key,
             headless=args.headless,
-            input_file=args.input
+            input_file=args.input,
+            profile_dir=args.profile
         ))
         # Automatically trigger stage 2 for newly matched IDs
         print("\n[*] Starting stage 2: Scraping details for matched establishment IDs...")
@@ -1112,6 +1120,7 @@ def main():
             api_key=args.key,
             headless=args.headless
         ))
+
 
 
 if __name__ == "__main__":
