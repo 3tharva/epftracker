@@ -426,9 +426,18 @@ async def execute_search_for_query(page, query, allowed_state_codes, api_key):
             return None, [], None
             
         container_text = await page.locator("#tablecontainer").inner_text()
-        if "no records" in container_text.lower():
+        container_text_lower = container_text.lower()
+        body_text_lower = (await page.locator("body").inner_text()).lower()
+        
+        if (
+            "no records" in container_text_lower 
+            or "no details found" in container_text_lower 
+            or "no details found" in body_text_lower
+            or "valid establishment" in container_text_lower 
+            or "valid establishment" in body_text_lower
+        ):
             page.remove_listener("dialog", handle_alert)
-            print("[-] No records found for this query.")
+            print(f"[-] No details/records found for query: '{query}'. Skipping query.")
             return None, [], None
             
         table_locator = page.locator("#tablecontainer table")
@@ -958,9 +967,18 @@ async def scrape_establishment_by_code(page, matched_id, api_key):
             return None, []
             
         container_text = await page.locator("#tablecontainer").inner_text()
-        if "no records" in container_text.lower():
+        container_text_lower = container_text.lower()
+        body_text_lower = (await page.locator("body").inner_text()).lower()
+        
+        if (
+            "no records" in container_text_lower 
+            or "no details found" in container_text_lower 
+            or "no details found" in body_text_lower
+            or "valid establishment" in container_text_lower 
+            or "valid establishment" in body_text_lower
+        ):
             page.remove_listener("dialog", handle_alert)
-            print(f"[-] No records found for matched ID: '{matched_id}'")
+            print(f"[-] No details/records found for matched ID: '{matched_id}'")
             return None, []
             
         table_locator = page.locator("#tablecontainer table")
