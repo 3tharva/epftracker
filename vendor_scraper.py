@@ -578,23 +578,36 @@ async def execute_search_for_query(page, query, allowed_state_codes, api_key):
 
 async def search_and_download_vendor(page, vendor_name, allowed_state_codes, api_key):
     """
-    Performs the search for a vendor, trying both prefix and sanitized formats
-    if the name starts with M/S. Solves captcha, downloads details exports.
+    Performs the search for a vendor. If M/s is present, it generates:
+    1) Sanitized (without prefix, e.g. "Power Pioneers")
+    2) Without slash (MS prefix, e.g. "MS Power Pioneers")
     """
     original_clean = vendor_name.strip()
     sanitized = sanitize_vendor_name(vendor_name)
     
     queries = []
-    if original_clean.upper().startswith("M/S"):
-        # Include both: try sanitized (without prefix) first, then original (with prefix)
-        if sanitized:
-            queries.append(sanitized)
-        queries.append(original_clean)
-    else:
-        if sanitized:
+    m_s_pattern = re.compile(r'\bM/S\.?\b', re.IGNORECASE)
+    
+    if m_s_pattern.search(original_clean):
+        # 1) Try completely sanitized
+        if sanitized and sanitized not in queries:
             queries.append(sanitized)
             
+        # 2) Try replacing M/s with MS (no slash)
+        no_slash_variant = m_s_pattern.sub("MS", original_clean)
+        no_slash_variant = re.sub(r'\s+', ' ', no_slash_variant).strip()
+        if no_slash_variant and no_slash_variant not in queries:
+            queries.append(no_slash_variant)
+
+    else:
+        # Standard fallback
+        if sanitized and sanitized not in queries:
+            queries.append(sanitized)
+        if original_clean not in queries:
+            queries.append(original_clean)
+            
     # Try queries sequentially
+
     for q_idx, query in enumerate(queries):
         if len(queries) > 1:
             print(f"[*] Trying search query variant {q_idx+1}/{len(queries)}: '{query}'")
