@@ -2,12 +2,350 @@
   "352712": {
     "vendor_name": "M/S Power Pioneers",
     "vendor_gstn": "23AHVPA7926K1ZY",
-    "status": "no_match_found",
+    "status": "success",
     "allowed_state_codes": [
       "MP"
     ],
-    "target_establishment_id": null,
-    "matched_establishment_ids": []
+    "target_establishment_id": "APHYD0061652000",
+    "matched_establishment_ids": [
+      "GRGNT3580590000",
+      "APHYD0061652000"
+    ],
+    "disclaimer": "State code mismatch ignored (Target: ['MP'], Found: AP).",
+    "scraped_details": {
+      "GRGNT3580590000": {
+        "status": "success",
+        "tables": {
+          "validity_status": [
+            {
+              "A.": "A.",
+              "Establishment Code": "Establishment Code",
+              "GRGNT3580590000": "GRGNT3580590000"
+            },
+            {
+              "A.": "B.",
+              "Establishment Code": "Establishment Name",
+              "GRGNT3580590000": "ARAK POWER PIONEERS INDIA PRIVATE LIMITED"
+            },
+            {
+              "A.": "C.",
+              "Establishment Code": "Establishment Status",
+              "GRGNT3580590000": "CODE NO ALLOTTED WAS AFTER ONLINE REGISTRATION STARTED."
+            },
+            {
+              "A.": "D.",
+              "Establishment Code": "Registration Status on ECR Portal",
+              "GRGNT3580590000": "PERMANENT LOGIN CREATED BY OWNER ON ECR PORTAL"
+            },
+            {
+              "A.": "E.",
+              "Establishment Code": "Post Coverage Status",
+              "GRGNT3580590000": "--"
+            }
+          ],
+          "establishment_status": [
+            {
+              "A.": "A.",
+              "Exemption Status": "Exemption Status",
+              "PF: UNEXEMPTED, PENSION: UNEXEMPTED, EDLI: UNEXEMPTED": "PF: UNEXEMPTED, PENSION: UNEXEMPTED, EDLI: UNEXEMPTED"
+            },
+            {
+              "A.": "B.",
+              "Exemption Status": "Working Status",
+              "PF: UNEXEMPTED, PENSION: UNEXEMPTED, EDLI: UNEXEMPTED": "LIVE ESTABLISHMENT"
+            },
+            {
+              "A.": "C.",
+              "Exemption Status": "Coverage Section",
+              "PF: UNEXEMPTED, PENSION: UNEXEMPTED, EDLI: UNEXEMPTED": "0000001(4)"
+            },
+            {
+              "A.": "D.",
+              "Exemption Status": "Actionable Status",
+              "PF: UNEXEMPTED, PENSION: UNEXEMPTED, EDLI: UNEXEMPTED": "ACTIONABLE ESTABLISHMENT"
+            },
+            {
+              "A.": "E.",
+              "Exemption Status": "Date of Coverage",
+              "PF: UNEXEMPTED, PENSION: UNEXEMPTED, EDLI: UNEXEMPTED": "01-MAY-2025"
+            }
+          ],
+          "establishment_details": [
+            {
+              "Name of Establishment(As per PAN) :": "Name of Establishment(As per PAN) :",
+              "ARAK POWER PIONEERS INDIA PRIVATE LIMITED": "ARAK POWER PIONEERS INDIA PRIVATE LIMITED",
+              "Establishment Code :": "Establishment Code :",
+              "GRGNT3580590000": "GRGNT3580590000"
+            },
+            {
+              "Name of Establishment(As per PAN) :": "PAN Status :",
+              "ARAK POWER PIONEERS INDIA PRIVATE LIMITED": "VERIFIED",
+              "Establishment Code :": "",
+              "GRGNT3580590000": ""
+            },
+            {
+              "Name of Establishment(As per PAN) :": "Section Applicable :",
+              "ARAK POWER PIONEERS INDIA PRIVATE LIMITED": "VOLUNTARY COVERAGE",
+              "Establishment Code :": "Primary Business Activity :",
+              "GRGNT3580590000": "OTHERS"
+            },
+            {
+              "Name of Establishment(As per PAN) :": "ESIC CODE :",
+              "ARAK POWER PIONEERS INDIA PRIVATE LIMITED": "",
+              "Establishment Code :": "",
+              "GRGNT3580590000": ""
+            },
+            {
+              "Name of Establishment(As per PAN) :": "Ownership Type :",
+              "ARAK POWER PIONEERS INDIA PRIVATE LIMITED": "Public Ltd Company / Joint Stock Company",
+              "Establishment Code :": "Date Of Setup Of Establishment :",
+              "GRGNT3580590000": "01-MAY-2025"
+            },
+            {
+              "Name of Establishment(As per PAN) :": "Address :",
+              "ARAK POWER PIONEERS INDIA PRIVATE LIMITED": "59A8/107,maruthi cooperativesociety,",
+              "Establishment Code :": "Pin Code :",
+              "GRGNT3580590000": "520008"
+            },
+            {
+              "Name of Establishment(As per PAN) :": "City :",
+              "ARAK POWER PIONEERS INDIA PRIVATE LIMITED": "Vijayawada Urban",
+              "Establishment Code :": "District :",
+              "GRGNT3580590000": "KRISHNA"
+            },
+            {
+              "Name of Establishment(As per PAN) :": "State :",
+              "ARAK POWER PIONEERS INDIA PRIVATE LIMITED": "ANDHRA PRADESH",
+              "Establishment Code :": "Country :",
+              "GRGNT3580590000": "India"
+            },
+            {
+              "Name of Establishment(As per PAN) :": "EPFO Office Name :",
+              "ARAK POWER PIONEERS INDIA PRIVATE LIMITED": "GUNTUR",
+              "Establishment Code :": "EPFO Office Address :",
+              "GRGNT3580590000": "BhavishyanidhiBhawan,Krishna Nagar, 3rd Lane,"
+            },
+            {
+              "Name of Establishment(As per PAN) :": "Zone :",
+              "ARAK POWER PIONEERS INDIA PRIVATE LIMITED": "ANDHRA PRADESH AND ORISSA",
+              "Establishment Code :": "Region :",
+              "GRGNT3580590000": "AP - GUNTUR"
+            }
+          ],
+          "additional_information": [
+            {
+              "A.": "A.",
+              "Establishment ID": "Establishment ID",
+              "GRGNT3580590000": "GRGNT3580590000"
+            },
+            {
+              "A.": "B.",
+              "Establishment ID": "CIN Code",
+              "GRGNT3580590000": "U66309AP2025PTC119175"
+            },
+            {
+              "A.": "C.",
+              "Establishment ID": "ESIC Code",
+              "GRGNT3580590000": "NA"
+            },
+            {
+              "A.": "D.",
+              "Establishment ID": "LIN Code",
+              "GRGNT3580590000": "1243897473"
+            },
+            {
+              "A.": "E.",
+              "Establishment ID": "Startup Order No.",
+              "GRGNT3580590000": "NA"
+            },
+            {
+              "A.": "F.",
+              "Establishment ID": "Startup Order Date",
+              "GRGNT3580590000": "-"
+            },
+            {
+              "A.": "G.",
+              "Establishment ID": "MSME Order No.",
+              "GRGNT3580590000": "NA"
+            },
+            {
+              "A.": "H.",
+              "Establishment ID": "MSME Order Date",
+              "GRGNT3580590000": "-"
+            }
+          ]
+        },
+        "downloaded_files": [
+          "downloads/GRGNT3580590000_details_export_0.xlsx"
+        ]
+      },
+      "APHYD0061652000": {
+        "status": "success",
+        "tables": {
+          "validity_status": [
+            {
+              "A.": "A.",
+              "Establishment Code": "Establishment Code",
+              "APHYD0061652000": "APHYD0061652000"
+            },
+            {
+              "A.": "B.",
+              "Establishment Code": "Establishment Name",
+              "APHYD0061652000": "POWER PIONEERS"
+            },
+            {
+              "A.": "C.",
+              "Establishment Code": "Establishment Status",
+              "APHYD0061652000": "CODE NO ALLOTTED WAS BEFORE ONLINE REGISTRATION STARTED."
+            },
+            {
+              "A.": "D.",
+              "Establishment Code": "Registration Status on ECR Portal",
+              "APHYD0061652000": "PERMANENT LOGIN CREATED BY OWNER ON ECR PORTAL"
+            },
+            {
+              "A.": "E.",
+              "Establishment Code": "Post Coverage Status",
+              "APHYD0061652000": "--"
+            }
+          ],
+          "establishment_status": [
+            {
+              "A.": "A.",
+              "Exemption Status": "Exemption Status",
+              "PF: UNEXEMPTED, PENSION: UNEXEMPTED, EDLI: UNEXEMPTED": "PF: UNEXEMPTED, PENSION: UNEXEMPTED, EDLI: UNEXEMPTED"
+            },
+            {
+              "A.": "B.",
+              "Exemption Status": "Working Status",
+              "PF: UNEXEMPTED, PENSION: UNEXEMPTED, EDLI: UNEXEMPTED": "LIVE ESTABLISHMENT"
+            },
+            {
+              "A.": "C.",
+              "Exemption Status": "Coverage Section",
+              "PF: UNEXEMPTED, PENSION: UNEXEMPTED, EDLI: UNEXEMPTED": "0001(3)(b)"
+            },
+            {
+              "A.": "D.",
+              "Exemption Status": "Actionable Status",
+              "PF: UNEXEMPTED, PENSION: UNEXEMPTED, EDLI: UNEXEMPTED": "ACTIONABLE ESTABLISHMENT"
+            },
+            {
+              "A.": "E.",
+              "Exemption Status": "Date of Coverage",
+              "PF: UNEXEMPTED, PENSION: UNEXEMPTED, EDLI: UNEXEMPTED": "01-NOV-2008"
+            }
+          ],
+          "establishment_details": [
+            {
+              "Name of Establishment(As per PAN) :": "Name of Establishment(As per PAN) :",
+              "P.VENKATESHWARLU": "P.VENKATESHWARLU",
+              "Establishment Code :": "Establishment Code :",
+              "APHYD0061652000": "APHYD0061652000"
+            },
+            {
+              "Name of Establishment(As per PAN) :": "PAN Status :",
+              "P.VENKATESHWARLU": "REJECTED",
+              "Establishment Code :": "",
+              "APHYD0061652000": ""
+            },
+            {
+              "Name of Establishment(As per PAN) :": "Section Applicable :",
+              "P.VENKATESHWARLU": "OTHER ESTABLISHMENTS IN WHICH EMPLOYING 20 OR MORE PERSONS AND NOTIFIED BY THE CENTRAL GOVT.",
+              "Establishment Code :": "Primary Business Activity :",
+              "APHYD0061652000": "ENGINEERS - ENGG. CONTRACTORS"
+            },
+            {
+              "Name of Establishment(As per PAN) :": "ESIC CODE :",
+              "P.VENKATESHWARLU": "52000407100000604",
+              "Establishment Code :": "",
+              "APHYD0061652000": ""
+            },
+            {
+              "Name of Establishment(As per PAN) :": "Ownership Type :",
+              "P.VENKATESHWARLU": "Proprietorship Firm",
+              "Establishment Code :": "Date Of Setup Of Establishment :",
+              "APHYD0061652000": "02-JAN-2009"
+            },
+            {
+              "Name of Establishment(As per PAN) :": "Address :",
+              "P.VENKATESHWARLU": "POWER PIONEERS D NO 29 1384 2 2 DEENDAYAL NAGAROLD",
+              "Establishment Code :": "Pin Code :",
+              "APHYD0061652000": "500056"
+            },
+            {
+              "Name of Establishment(As per PAN) :": "City :",
+              "P.VENKATESHWARLU": "SECUNDERABAD",
+              "Establishment Code :": "District :",
+              "APHYD0061652000": "HYDERABAD"
+            },
+            {
+              "Name of Establishment(As per PAN) :": "State :",
+              "P.VENKATESHWARLU": "TELANGANA",
+              "Establishment Code :": "Country :",
+              "APHYD0061652000": "India"
+            },
+            {
+              "Name of Establishment(As per PAN) :": "EPFO Office Name :",
+              "P.VENKATESHWARLU": "HYDERABAD",
+              "Establishment Code :": "EPFO Office Address :",
+              "APHYD0061652000": "Bhavishyanidhi Bhawan, No. 3-4-763, Barkatpura Chaman,"
+            },
+            {
+              "Name of Establishment(As per PAN) :": "Zone :",
+              "P.VENKATESHWARLU": "ANDHRA PRADESH AND ORISSA",
+              "Establishment Code :": "Region :",
+              "APHYD0061652000": "AP - HYDERABAD"
+            }
+          ],
+          "additional_information": [
+            {
+              "A.": "A.",
+              "Establishment ID": "Establishment ID",
+              "APHYD0061652000": "APHYD0061652000"
+            },
+            {
+              "A.": "B.",
+              "Establishment ID": "CIN Code",
+              "APHYD0061652000": "NA"
+            },
+            {
+              "A.": "C.",
+              "Establishment ID": "ESIC Code",
+              "APHYD0061652000": "52000407100000604"
+            },
+            {
+              "A.": "D.",
+              "Establishment ID": "LIN Code",
+              "APHYD0061652000": "1504893345"
+            },
+            {
+              "A.": "E.",
+              "Establishment ID": "Startup Order No.",
+              "APHYD0061652000": "NULL"
+            },
+            {
+              "A.": "F.",
+              "Establishment ID": "Startup Order Date",
+              "APHYD0061652000": "-"
+            },
+            {
+              "A.": "G.",
+              "Establishment ID": "MSME Order No.",
+              "APHYD0061652000": "NULL"
+            },
+            {
+              "A.": "H.",
+              "Establishment ID": "MSME Order Date",
+              "APHYD0061652000": "-"
+            }
+          ]
+        },
+        "downloaded_files": [
+          "downloads/APHYD0061652000_details_export_0.xlsx"
+        ]
+      }
+    }
   },
   "611222": {
     "vendor_name": "JAY MAHAKALI CONSTRUCTION",
@@ -24,22 +362,57 @@
   "352711": {
     "vendor_name": "M/S Power Pioneers",
     "vendor_gstn": "08AHVPA7926K1ZQ",
-    "status": "no_match_found",
+    "status": "success",
     "allowed_state_codes": [
       "RJ"
     ],
-    "target_establishment_id": null,
-    "matched_establishment_ids": []
+    "target_establishment_id": "APHYD0061652000",
+    "matched_establishment_ids": [
+      "APHYD0061652000",
+      "GRGNT3580590000"
+    ],
+    "disclaimer": "State code mismatch ignored (Target: ['RJ'], Found: AP)."
   },
   "352653": {
     "vendor_name": "M/S PN Enterprises",
     "vendor_gstn": "09AMLPK1754C1Z4",
-    "status": "no_match_found",
+    "status": "success",
     "allowed_state_codes": [
       "UP"
     ],
-    "target_establishment_id": null,
-    "matched_establishment_ids": []
+    "target_establishment_id": "APKKP2685408000",
+    "matched_establishment_ids": [
+      "THTHA1655829000",
+      "PYKRP3075854000",
+      "PYBOM0061401000",
+      "PUPUN3981898000",
+      "RJUDR3783298000",
+      "GRGNT2265566000",
+      "TBVLR3908039000",
+      "TNAMB2608219000",
+      "BRPAT2268682000",
+      "TNAMB2318556000",
+      "BRMUZ2317167000",
+      "GRVSP2117938000",
+      "TBTAM3604876000",
+      "NGAUR3183725000",
+      "GNGGN2911262000",
+      "JHRAN1807165000",
+      "RJRAJ2469691000",
+      "MPBPL0013461000",
+      "DSNHP1069998000",
+      "CBTRY3311266000",
+      "HPSML2674224000",
+      "MHBAN3327736000",
+      "DLCPM1105744000",
+      "PUPUN2416228000",
+      "JHJAM1613652000",
+      "TNAMB2070112000",
+      "APKKP2685408000",
+      "MDMDU2893094000",
+      "CBSLM3679390000"
+    ],
+    "disclaimer": "State code mismatch ignored (Target: ['UP'], Found: AP)."
   },
   "352710": {
     "vendor_name": "M/S Power Pioneers",

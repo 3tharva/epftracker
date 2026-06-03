@@ -6,3 +6,4 @@ __pycache__/
 *.pyc
 vendorList_cleaned.csv
 details_source.html
+test_profile/

@@ -375,8 +375,34 @@ async def execute_search_for_query(page, query, allowed_state_codes, api_key):
     max_attempts = 5
     for attempt in range(1, max_attempts + 1):
         # Go to home/reset page if we are not there
-        await navigate_with_retry(page, DEFAULT_URL)
-        await human_delay(1.5, 3.0)
+        is_on_search_page = False
+        try:
+            is_on_search_page = await page.locator("#estName").is_visible()
+        except Exception:
+            pass
+            
+        if is_on_search_page:
+            if attempt == 1:
+                reset_btn = page.locator("input[value='Reset']")
+                if await reset_btn.count() > 0 and await reset_btn.is_visible():
+                    try:
+                        print("[*] Clicking Reset button to clear search form...")
+                        await human_click(page, reset_btn)
+                        await human_delay(1.0, 2.0)
+                    except Exception as e:
+                        print(f"[!] Reset click failed: {e}. Reloading page...")
+                        await navigate_with_retry(page, DEFAULT_URL)
+                        await human_delay(1.5, 3.0)
+                else:
+                    await navigate_with_retry(page, DEFAULT_URL)
+                    await human_delay(1.5, 3.0)
+            else:
+                # Captcha retry on the same page. Just wait a small bit, don't reload or reset.
+                print(f"[*] Captcha retry {attempt}: page already loaded, reusing search page.")
+                await human_delay(1.0, 2.0)
+        else:
+            await navigate_with_retry(page, DEFAULT_URL)
+            await human_delay(1.5, 3.0)
         
         # Enter establishment name
         await human_type(page, "#estName", query)
@@ -465,6 +491,9 @@ async def execute_search_for_query(page, query, allowed_state_codes, api_key):
 
 
             
+        # Results table is found! Scroll naturally to look like a human reading results
+        await human_scroll(page)
+        
         # Get rows
         tbody_tr = page.locator("#tablecontainer table tbody tr")
         row_count = await tbody_tr.count()
@@ -587,6 +616,9 @@ async def execute_search_for_query(page, query, allowed_state_codes, api_key):
         # Wait for details page load
         print("[*] Waiting for details section/page to load...")
         await human_delay(4.0, 6.0)
+        
+        # Scroll naturally
+        await human_scroll(page)
         
         # Locate export buttons
         excel_locators = page.locator("a:has-text('Excel'), button:has-text('Excel'), input[value='Excel'], .buttons-excel, a:has-text('CSV'), button:has-text('CSV'), .buttons-csv")
@@ -1015,8 +1047,34 @@ async def scrape_establishment_by_code(page, matched_id, api_key):
     
     max_attempts = 5
     for attempt in range(1, max_attempts + 1):
-        await navigate_with_retry(page, DEFAULT_URL)
-        await human_delay(1.5, 3.0)
+        is_on_search_page = False
+        try:
+            is_on_search_page = await page.locator("#estName").is_visible()
+        except Exception:
+            pass
+            
+        if is_on_search_page:
+            if attempt == 1:
+                reset_btn = page.locator("input[value='Reset']")
+                if await reset_btn.count() > 0 and await reset_btn.is_visible():
+                    try:
+                        print("[*] Clicking Reset button to clear search form...")
+                        await human_click(page, reset_btn)
+                        await human_delay(1.0, 2.0)
+                    except Exception as e:
+                        print(f"[!] Reset click failed: {e}. Reloading page...")
+                        await navigate_with_retry(page, DEFAULT_URL)
+                        await human_delay(1.5, 3.0)
+                else:
+                    await navigate_with_retry(page, DEFAULT_URL)
+                    await human_delay(1.5, 3.0)
+            else:
+                # Captcha retry on the same page. Just wait a small bit, don't reload or reset.
+                print(f"[*] Captcha retry {attempt}: page already loaded, reusing search page.")
+                await human_delay(1.0, 2.0)
+        else:
+            await navigate_with_retry(page, DEFAULT_URL)
+            await human_delay(1.5, 3.0)
         
         # Clear estName to ensure we only search by code
         await page.locator("#estName").clear()
@@ -1110,6 +1168,9 @@ async def scrape_establishment_by_code(page, matched_id, api_key):
         # Wait for details page load
         print("[*] Waiting for details section/page to load...")
         await human_delay(5.0, 7.0)
+        
+        # Scroll naturally
+        await human_scroll(page)
         
         # Scrape all HTML tables
         print("[*] Scraping HTML tables from details page...")

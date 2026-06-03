@@ -5,10 +5,119 @@ import os
 import re
 import io
 import base64
+import random
 import requests
 from PIL import Image
 from playwright.async_api import async_playwright
 from dotenv import load_dotenv
+
+# Helpers for human-like behavior
+async def human_delay(min_sec=1.0, max_sec=3.0):
+    await asyncio.sleep(random.uniform(min_sec, max_sec))
+
+async def human_mouse_move(page, target_locator):
+    try:
+        box = await target_locator.bounding_box()
+        if box:
+            x_target = box["x"] + box["width"] / 2
+            y_target = box["y"] + box["height"] / 2
+            
+            # Generate starting position randomly
+            steps = random.randint(6, 12)
+            current_x, current_y = random.randint(100, 800), random.randint(100, 600)
+            
+            for i in range(steps):
+                t = (i + 1) / steps
+                # Curve calculations: start linear + add some cosine curve deviation
+                jitter_x = random.uniform(-4, 4)
+                jitter_y = random.uniform(-4, 4)
+                step_x = current_x + (x_target - current_x) * t + jitter_x
+                step_y = current_y + (y_target - current_y) * t + jitter_y
+                await page.mouse.move(step_x, step_y)
+                await asyncio.sleep(random.uniform(0.015, 0.035))
+            
+            # Hover directly on target center
+            await page.mouse.move(x_target, y_target)
+    except Exception as e:
+        # Fallback to direct hover if anything fails
+        try:
+            await target_locator.hover()
+        except Exception:
+            pass
+
+async def human_type(page, selector_or_locator, text):
+    """
+    Simulates a human typing character by character with random delays.
+    Clears the target element first.
+    """
+    if isinstance(selector_or_locator, str):
+        locator = page.locator(selector_or_locator)
+    else:
+        locator = selector_or_locator
+        
+    await locator.click()
+    # Select all and delete to clear existing input
+    await page.keyboard.press("Control+A")
+    await page.keyboard.press("Backspace")
+    await human_delay(0.2, 0.4)
+    
+    for char in text:
+        await page.keyboard.type(char)
+        # 5% chance of a longer pause mimicking typing mistake or hesitation
+        if random.random() < 0.05:
+            await human_delay(0.3, 0.7)
+        else:
+            await asyncio.sleep(random.uniform(0.08, 0.2))
+    await human_delay(0.3, 0.6)
+
+async def human_click(page, selector_or_locator):
+    """
+    Simulates a human clicking an element by hovering using natural mouse paths.
+    """
+    if isinstance(selector_or_locator, str):
+        locator = page.locator(selector_or_locator)
+    else:
+        locator = selector_or_locator
+        
+    await human_mouse_move(page, locator)
+    await human_delay(0.3, 0.7)
+    await locator.click()
+    await human_delay(0.5, 1.0)
+
+async def human_scroll(page):
+    """
+    Simulates a human scrolling down and up slightly to look like a reader.
+    """
+    try:
+        scroll_y = random.randint(150, 350)
+        await page.evaluate(f"window.scrollBy(0, {scroll_y})")
+        await human_delay(0.5, 1.2)
+        await page.evaluate(f"window.scrollBy(0, -{scroll_y})")
+        await human_delay(0.3, 0.8)
+    except Exception:
+        pass
+
+async def apply_context_stealth(context):
+    """
+    Applies stealth settings to the browser context to bypass WAF bot checks.
+    """
+    stealth_js = """
+    Object.defineProperty(navigator, 'webdriver', {
+        get: () => undefined
+    });
+    window.navigator.chrome = {
+        runtime: {},
+        loadTimes: () => {},
+        csi: () => {}
+    };
+    Object.defineProperty(navigator, 'plugins', {
+        get: () => [1, 2, 3, 4, 5]
+    });
+    Object.defineProperty(navigator, 'languages', {
+        get: () => ['en-US', 'en']
+    });
+    """
+    await context.add_init_script(stealth_js)
 
 # Load environment variables from .env
 load_dotenv()
@@ -246,6 +355,7 @@ async def run_scraper(establishment_name, api_key, headless=True):
                 ignore_https_errors=True
             )
             
+        await apply_context_stealth(context)
         page = context.pages[0] if context.pages else await context.new_page()
 
         
@@ -294,7 +404,7 @@ async def run_scraper(establishment_name, api_key, headless=True):
                 
                 # Fill establishment name
                 print(f"[*] Entering establishment name: '{current_name}'")
-                await page.fill("#estName", current_name)
+                await human_type(page, "#estName", current_name)
                 
                 # Locate captcha image and take a screenshot of the image element
                 print("[*] Locating captcha image...")
@@ -314,13 +424,23 @@ async def run_scraper(establishment_name, api_key, headless=True):
                     print(f"[+] Gemini solved captcha: '{captcha_solution}'")
                 except Exception as e:
                     print(f"[!] Gemini solver failed: {e}. Retrying with a new captcha image...")
-                    # Click reset or reload page to get a new captcha
-                    await page.reload()
-                    await page.wait_for_timeout(2000)
+                    # Click reset button instead of reload page to get a new captcha
+                    reset_btn = page.locator("input[value='Reset']")
+                    if await reset_btn.count() > 0 and await reset_btn.is_visible():
+                        try:
+                            print("[*] Clicking Reset button to get new captcha...")
+                            await human_click(page, reset_btn)
+                            await page.wait_for_timeout(2000)
+                        except Exception:
+                            await page.reload()
+                            await page.wait_for_timeout(2000)
+                    else:
+                        await page.reload()
+                        await page.wait_for_timeout(2000)
                     continue
                     
                 # Fill solved captcha
-                await page.fill("#captcha", captcha_solution)
+                await human_type(page, "#captcha", captcha_solution)
                 
                 # Reset states before search click
                 captcha_failed = False
@@ -330,7 +450,7 @@ async def run_scraper(establishment_name, api_key, headless=True):
                 # Click search
                 print("[*] Clicking Search...")
                 # We click the button and wait for responses
-                await page.click("#searchEmployer")
+                await human_click(page, "#searchEmployer")
                 
                 # Wait for either alert to trigger or search results loading to finish
                 # Data is fetched asynchronously via jQuery AJAX
@@ -348,8 +468,18 @@ async def run_scraper(establishment_name, api_key, headless=True):
                     # If it's a validation error, let's break or retry
                     # If we get "Something get wrong", let's reload/retry
                     if "wrong" in alert_msg.lower() or "error" in alert_msg.lower():
-                        await page.reload()
-                        await page.wait_for_timeout(2000)
+                        reset_btn = page.locator("input[value='Reset']")
+                        if await reset_btn.count() > 0 and await reset_btn.is_visible():
+                            try:
+                                print("[*] Clicking Reset button due to error...")
+                                await human_click(page, reset_btn)
+                                await page.wait_for_timeout(2000)
+                            except Exception:
+                                await page.reload()
+                                await page.wait_for_timeout(2000)
+                        else:
+                            await page.reload()
+                            await page.wait_for_timeout(2000)
                         continue
                     break
                     
@@ -366,6 +496,9 @@ async def run_scraper(establishment_name, api_key, headless=True):
                 if await table_locator.count() > 0:
                     print("[+] Search successful! Extracting results...")
                     found_records = True
+                    
+                    # Scroll naturally
+                    await human_scroll(page)
                     
                     # We will handle pagination if DataTables is used
                     # Let's extract pages of data
@@ -402,7 +535,7 @@ async def run_scraper(establishment_name, api_key, headless=True):
                             
                             try:
                                 print("[*] Clicking Next page button...")
-                                await next_link.click(timeout=3000)
+                                await human_click(page, next_link)
                                 # Wait for table to update
                                 await page.wait_for_timeout(2000)
                             except Exception as e:

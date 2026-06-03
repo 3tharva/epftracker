@@ -115,7 +115,7 @@ If the portal detects and blocks headless scraping, you can run the browser in "
 sudo apt install -y xvfb
 
 # 2. Run the script inside Xvfb (without passing the --headless flag)
-xvfb-run python -u vendor_scraper.py --input vendorList.csv
+xvfb-run -a python -u vendor_scraper.py --input vendorList.csv
 ```
 
 ---
