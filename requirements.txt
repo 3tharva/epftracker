@@ -1,5 +1,4 @@
 playwright
-google-generativeai
 pillow
 pandas
 openpyxl

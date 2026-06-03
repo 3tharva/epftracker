@@ -11,7 +11,6 @@ from PIL import Image
 from playwright.async_api import async_playwright
 import time
 import random
-import google.generativeai as genai
 from dotenv import load_dotenv
 
 # Load environment variables from .env
@@ -135,95 +134,73 @@ async def apply_context_stealth(context):
     await context.add_init_script(stealth_js)
 
 
-# Default values
-
-DEFAULT_API_KEY = os.getenv("OPENROUTER_API_KEY") or os.getenv("GEMINI_API_KEY", "")
+DEFAULT_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
 DEFAULT_URL = "https://unifiedportal-emp.epfindia.gov.in/publicPortal/no-auth/misReport/home/loadEstSearchHome"
 
 
 def solve_captcha(image_bytes, api_key=None):
     """
-    Solves the captcha. If api_key starts with 'sk-or-v1-', uses OpenRouter API.
-    Otherwise, uses Gemini API.
+    Solves the captcha using OpenRouter API.
     """
-    if api_key and api_key.startswith("sk-or-v1-"):
-        print("[*] Solving captcha using OpenRouter API...")
-        try:
-            base64_image = base64.b64encode(image_bytes).decode('utf-8')
-            
-            headers = {
-                "Authorization": f"Bearer {api_key}",
-                "Content-Type": "application/json",
-                "HTTP-Referer": "https://github.com/epftracker",
-                "X-Title": "EPF Tracker Scraper"
-            }
-            
-            models_to_try = [
-                "google/gemini-2.5-flash-lite",
-                "google/gemini-2.5-flash",
-                "google/gemini-flash-1.5"
-            ]
-            
-            for model in models_to_try:
-                payload = {
-                    "model": model,
-                    "messages": [
-                        {
-                            "role": "user",
-                            "content": [
-                                {
-                                    "type": "text",
-                                    "text": "Identify the characters in this CAPTCHA image. Respond with ONLY the alphanumeric characters, nothing else — no punctuation, spaces, or explanation. The answer is 5–6 characters long. Read strictly left to right, even if characters vary in vertical position."
-                                },
-                                {
-                                    "type": "image_url",
-                                    "image_url": {
-                                        "url": f"data:image/png;base64,{base64_image}"
-                                    }
-                                }
-                            ]
-                        }
-                    ]
-                }
-                try:
-                    response = requests.post("https://openrouter.ai/api/v1/chat/completions", headers=headers, json=payload, timeout=15)
-                    response.raise_for_status()
-                    data = response.json()
-                    solution = data['choices'][0]['message']['content'].strip()
-                    # Clean solution
-                    solution = re.sub(r'[^a-zA-Z0-9]', '', solution)
-                    print(f"[+] OpenRouter ({model}) solved captcha: '{solution}'")
-                    if solution:
-                        return solution
-                except Exception as e:
-                    print(f"[!] OpenRouter ({model}) failed: {e}")
-                    
-            print("[!] OpenRouter failed to solve captcha. Falling back to Gemini API...")
-        except Exception as outer_e:
-            print(f"[!] OpenRouter request setup failed: {outer_e}")
-
-    # Google Gemini fallback
-    try:
-        print("[*] Solving captcha using Google Gemini API...")
-        if api_key:
-            genai.configure(api_key=api_key)
-        else:
-            genai.configure(api_key=os.environ.get("GEMINI_API_KEY"))
-            
-        model = genai.GenerativeModel('gemini-2.5-flash')
-        image = Image.open(io.BytesIO(image_bytes))
-        prompt = (
-            "Solve this captcha image. Output ONLY the alphanumeric captcha code exactly as shown, "
-            "with absolutely no other text, spaces, or explanation."
-        )
-        response = model.generate_content([prompt, image])
-        solution = response.text.strip()
-        solution = re.sub(r'[^a-zA-Z0-9]', '', solution)
-        print(f"[+] Gemini solved captcha: '{solution}'")
-        return solution
-    except Exception as e:
-        print(f"[!] Gemini captcha solver failed: {e}")
+    key_to_use = api_key or DEFAULT_API_KEY
+    if not key_to_use:
+        print("[!] No OpenRouter API key provided.")
         return ""
+
+    print("[*] Solving captcha using OpenRouter API...")
+    try:
+        base64_image = base64.b64encode(image_bytes).decode('utf-8')
+        
+        headers = {
+            "Authorization": f"Bearer {key_to_use}",
+            "Content-Type": "application/json",
+            "HTTP-Referer": "https://github.com/epftracker",
+            "X-Title": "EPF Tracker Scraper"
+        }
+        
+        models_to_try = [
+            "google/gemini-2.5-flash-lite",
+            "google/gemini-2.5-flash",
+            "google/gemini-flash-1.5"
+        ]
+        
+        for model in models_to_try:
+            payload = {
+                "model": model,
+                "messages": [
+                    {
+                        "role": "user",
+                        "content": [
+                            {
+                                "type": "text",
+                                "text": "Identify the characters in this CAPTCHA image. Respond with ONLY the alphanumeric characters, nothing else — no punctuation, spaces, or explanation. The answer is 5–6 characters long. Read strictly left to right, even if characters vary in vertical position."
+                            },
+                            {
+                                "type": "image_url",
+                                "image_url": {
+                                    "url": f"data:image/png;base64,{base64_image}"
+                                }
+                            }
+                        ]
+                    }
+                ]
+            }
+            try:
+                response = requests.post("https://openrouter.ai/api/v1/chat/completions", headers=headers, json=payload, timeout=15)
+                response.raise_for_status()
+                data = response.json()
+                solution = data['choices'][0]['message']['content'].strip()
+                solution = re.sub(r'[^a-zA-Z0-9]', '', solution)
+                print(f"[+] OpenRouter ({model}) solved captcha: '{solution}'")
+                if solution:
+                    return solution
+            except Exception as e:
+                print(f"[!] OpenRouter ({model}) failed: {e}")
+                
+    except Exception as outer_e:
+        print(f"[!] OpenRouter request setup failed: {outer_e}")
+
+    return ""
 
 
 def clean_and_deduplicate_csv(input_path, output_path):
@@ -596,16 +573,19 @@ async def search_and_download_vendor(page, vendor_name, allowed_state_codes, api
             
     return None, [], None
 
-async def run_scraper(limit=None, api_key=DEFAULT_API_KEY, headless=True):
+async def run_scraper(limit=None, api_key=DEFAULT_API_KEY, headless=True, input_file="vendorList.csv"):
     # Setup data files
-    if os.path.exists("VENDORLIST.csv"):
-        # Clean and deduplicate VENDORLIST.csv
-        df_vendors = clean_and_deduplicate_csv("VENDORLIST.csv", "VENDORLIST_CLEANED.csv")
-    elif os.path.exists("VENDORLIST_CLEANED.csv"):
-        print("[*] VENDORLIST.csv not found, but VENDORLIST_CLEANED.csv exists. Loading cleaned vendor list...")
-        df_vendors = pd.read_csv("VENDORLIST_CLEANED.csv", dtype=str)
+    base_name, _ = os.path.splitext(input_file)
+    cleaned_file = f"{base_name}_cleaned.csv"
+    
+    if os.path.exists(input_file):
+        # Clean and deduplicate input file
+        df_vendors = clean_and_deduplicate_csv(input_file, cleaned_file)
+    elif os.path.exists(cleaned_file):
+        print(f"[*] {input_file} not found, but {cleaned_file} exists. Loading cleaned vendor list...")
+        df_vendors = pd.read_csv(cleaned_file, dtype=str)
     else:
-        print("[!] Neither VENDORLIST.csv nor VENDORLIST_CLEANED.csv found in the current directory.")
+        print(f"[!] Neither {input_file} nor {cleaned_file} found in the current directory.")
         return
     
     # Load state codes mapping
@@ -1071,6 +1051,7 @@ async def run_details_scraper(api_key=DEFAULT_API_KEY, headless=True):
 
 def main():
     parser = argparse.ArgumentParser(description="Deduplicate vendors and run EPFO state filtered search")
+    parser.add_argument("-i", "--input", default="vendorList.csv", help="Path to input vendor CSV file (default: vendorList.csv)")
     parser.add_argument("-l", "--limit", type=int, default=None, help="Limit the number of vendors to process (default: all)")
     parser.add_argument("-k", "--key", default=DEFAULT_API_KEY, help="Gemini API Key")
     parser.add_argument("--headless", action="store_true", help="Run browser in headless mode")
@@ -1089,7 +1070,8 @@ def main():
         asyncio.run(run_scraper(
             limit=args.limit,
             api_key=args.key,
-            headless=args.headless
+            headless=args.headless,
+            input_file=args.input
         ))
         # Automatically trigger stage 2 for newly matched IDs
         print("\n[*] Starting stage 2: Scraping details for matched establishment IDs...")

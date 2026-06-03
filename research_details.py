@@ -2,25 +2,76 @@ import asyncio
 import io
 import re
 import os
+import base64
+import requests
 from PIL import Image
 from playwright.async_api import async_playwright
-import google.generativeai as genai
 from dotenv import load_dotenv
 
 # Load environment variables
 load_dotenv()
 
-API_KEY = os.getenv("GEMINI_API_KEY", "")
+API_KEY = os.getenv("OPENROUTER_API_KEY", "")
 URL = "https://unifiedportal-emp.epfindia.gov.in/publicPortal/no-auth/misReport/home/loadEstSearchHome"
 
 
 def solve_captcha(image_bytes):
-    genai.configure(api_key=API_KEY)
-    model = genai.GenerativeModel('gemini-2.5-flash')
-    image = Image.open(io.BytesIO(image_bytes))
-    prompt = "Solve this captcha image. Output ONLY the alphanumeric captcha code."
-    response = model.generate_content([prompt, image])
-    return re.sub(r'[^a-zA-Z0-9]', '', response.text.strip())
+    if not API_KEY:
+        print("[!] No OpenRouter API key provided.")
+        return ""
+    
+    try:
+        base64_image = base64.b64encode(image_bytes).decode('utf-8')
+        
+        headers = {
+            "Authorization": f"Bearer {API_KEY}",
+            "Content-Type": "application/json",
+            "HTTP-Referer": "https://github.com/epftracker",
+            "X-Title": "EPF Tracker Scraper"
+        }
+        
+        models_to_try = [
+            "google/gemini-2.5-flash-lite",
+            "google/gemini-2.5-flash",
+            "google/gemini-flash-1.5"
+        ]
+        
+        for model in models_to_try:
+            payload = {
+                "model": model,
+                "messages": [
+                    {
+                        "role": "user",
+                        "content": [
+                            {
+                                "type": "text",
+                                "text": "Identify the characters in this CAPTCHA image. Respond with ONLY the alphanumeric characters, nothing else."
+                            },
+                            {
+                                "type": "image_url",
+                                "image_url": {
+                                    "url": f"data:image/png;base64,{base64_image}"
+                                }
+                            }
+                        ]
+                    }
+                ]
+            }
+            try:
+                response = requests.post("https://openrouter.ai/api/v1/chat/completions", headers=headers, json=payload, timeout=15)
+                response.raise_for_status()
+                data = response.json()
+                solution = data['choices'][0]['message']['content'].strip()
+                solution = re.sub(r'[^a-zA-Z0-9]', '', solution)
+                if solution:
+                    return solution
+            except Exception as e:
+                print(f"[!] OpenRouter ({model}) failed: {e}")
+                
+    except Exception as outer_e:
+        print(f"[!] OpenRouter request setup failed: {outer_e}")
+
+    return ""
 
 async def main():
     async with async_playwright() as p:

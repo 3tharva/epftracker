@@ -4,41 +4,81 @@ import json
 import os
 import re
 import io
+import base64
+import requests
 from PIL import Image
 from playwright.async_api import async_playwright
-import google.generativeai as genai
 from dotenv import load_dotenv
 
 # Load environment variables from .env
 load_dotenv()
 
-# Default Gemini API key loaded from environment
-DEFAULT_API_KEY = os.getenv("GEMINI_API_KEY", "")
+# Default OpenRouter API key loaded from environment
+DEFAULT_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
 DEFAULT_URL = "https://unifiedportal-emp.epfindia.gov.in/publicPortal/no-auth/misReport/home/loadEstSearchHome"
 
 
 def solve_captcha(image_bytes, api_key):
     """
-    Sends the captcha image bytes to Gemini API to solve.
+    Sends the captcha image bytes to OpenRouter API to solve.
     """
-    genai.configure(api_key=api_key)
+    if not api_key:
+        print("[!] No OpenRouter API key provided.")
+        return ""
     
-    # We will use gemini-2.5-flash as it is available and extremely fast for image tasks
-    model = genai.GenerativeModel('gemini-2.5-flash')
-    
-    image = Image.open(io.BytesIO(image_bytes))
-    
-    prompt = (
-        "Solve this captcha image. Output ONLY the alphanumeric captcha code exactly as shown, "
-        "with absolutely no other text, spaces, or explanation."
-    )
-    
-    response = model.generate_content([prompt, image])
-    solution = response.text.strip()
-    
-    # Sanitize solution to keep only alphanumeric characters
-    solution = re.sub(r'[^a-zA-Z0-9]', '', solution)
-    return solution
+    try:
+        base64_image = base64.b64encode(image_bytes).decode('utf-8')
+        
+        headers = {
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json",
+            "HTTP-Referer": "https://github.com/epftracker",
+            "X-Title": "EPF Tracker Scraper"
+        }
+        
+        models_to_try = [
+            "google/gemini-2.5-flash-lite",
+            "google/gemini-2.5-flash",
+            "google/gemini-flash-1.5"
+        ]
+        
+        for model in models_to_try:
+            payload = {
+                "model": model,
+                "messages": [
+                    {
+                        "role": "user",
+                        "content": [
+                            {
+                                "type": "text",
+                                "text": "Identify the characters in this CAPTCHA image. Respond with ONLY the alphanumeric characters, nothing else — no punctuation, spaces, or explanation. The answer is 5–6 characters long. Read strictly left to right, even if characters vary in vertical position."
+                            },
+                            {
+                                "type": "image_url",
+                                "image_url": {
+                                    "url": f"data:image/png;base64,{base64_image}"
+                                }
+                            }
+                        ]
+                    }
+                ]
+            }
+            try:
+                response = requests.post("https://openrouter.ai/api/v1/chat/completions", headers=headers, json=payload, timeout=15)
+                response.raise_for_status()
+                data = response.json()
+                solution = data['choices'][0]['message']['content'].strip()
+                solution = re.sub(r'[^a-zA-Z0-9]', '', solution)
+                print(f"[+] OpenRouter ({model}) solved captcha: '{solution}'")
+                if solution:
+                    return solution
+            except Exception as e:
+                print(f"[!] OpenRouter ({model}) failed: {e}")
+                
+    except Exception as outer_e:
+        print(f"[!] OpenRouter request setup failed: {outer_e}")
+
+    return ""
 
 async def extract_table_data(page):
     """
