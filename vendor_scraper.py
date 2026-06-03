@@ -427,8 +427,28 @@ async def execute_search_for_query(page, query, allowed_state_codes, api_key):
             
         table_locator = page.locator("#tablecontainer table")
         if await table_locator.count() == 0:
-            print("[?] Results table not visible. Retrying search...")
+            print("[?] Results table not visible. Extracting page content for terminal debug...")
+            try:
+                title = await page.title()
+                body_text = await page.locator("body").inner_text()
+                container_html = await page.locator("#tablecontainer").inner_html()
+                
+                print(f"\n--- [DEBUG] PAGE TITLE: '{title}' ---")
+                print("--- [DEBUG] FIRST 500 CHARACTERS OF BODY TEXT ---")
+                print(body_text.strip()[:500])
+                print("-------------------------------------------------")
+                print(f"DEBUG: #tablecontainer innerHTML: {container_html.strip()[:200]}")
+                
+                # Save HTML dump
+                with open("error_search_table.html", "w", encoding="utf-8") as f:
+                    f.write(await page.content())
+                print("[*] Page HTML source saved to 'error_search_table.html'")
+            except Exception as e:
+                print(f"[!] Failed to dump debug info: {e}")
+            print("[*] Retrying search...")
             continue
+
+
             
         # Get rows
         tbody_tr = page.locator("#tablecontainer table tbody tr")
