@@ -510,6 +510,8 @@ async def execute_search_for_query(page, query, allowed_state_codes, api_key):
                     await human_click(page, action_link)
         else:
             current_page = 1
+            first_row_est_id = None
+            first_row_tds = None
             while True:
                 tbody_tr = page.locator("#tablecontainer table tbody tr")
                 row_count = await tbody_tr.count()
@@ -525,6 +527,10 @@ async def execute_search_for_query(page, query, allowed_state_codes, api_key):
                             break
                     
                     if est_id:
+                        if first_row_est_id is None:
+                            first_row_est_id = est_id
+                            first_row_tds = tds
+                            
                         prefix = est_id[:2]
                         if prefix in allowed_state_codes:
                             print(f"[+] Found matching establishment ID: '{est_id}' on page {current_page}")
@@ -553,6 +559,26 @@ async def execute_search_for_query(page, query, allowed_state_codes, api_key):
                     current_page += 1
                 else:
                     break
+                    
+            if not found_matching_row and first_row_est_id is not None:
+                if current_page > 1:
+                    print("[*] State-matching row not found. Navigating back to page 1 to select first result...")
+                    first_page_btn = page.locator("li.paginate_button a:has-text('1'), #example a:has-text('1')").first
+                    if await first_page_btn.count() > 0:
+                        await human_click(page, first_page_btn)
+                        await human_delay(1.5, 3.0)
+                    tbody_tr = page.locator("#tablecontainer table tbody tr")
+                    first_row_tds = tbody_tr.nth(0).locator("td")
+                
+                prefix = first_row_est_id[:2]
+                disclaimer = f"State code mismatch ignored (Target: {allowed_state_codes}, Found: {prefix})."
+                print(f"[!] {disclaimer}")
+                action_cell = first_row_tds.last
+                action_link = action_cell.locator("a, button, input[type='button']").first
+                if await action_link.count() > 0:
+                    await human_click(page, action_link)
+                    found_matching_row = True
+                    target_est_id = first_row_est_id
                     
         if not found_matching_row:
             print(f"[-] No search result matches state codes for query: '{query}'")
@@ -593,6 +619,29 @@ async def execute_search_for_query(page, query, allowed_state_codes, api_key):
     print("[!] Failed to solve captcha after maximum search attempts.")
     return None, [], None
 
+def remove_pvt_ltd(name):
+    """
+    Removes 'PVT LTD', 'CO', 'COMPANY', and similar suffixes (case-insensitive) from a vendor name.
+    """
+    if not isinstance(name, str):
+        return ""
+    # Matches PVT LTD, PVT. LTD., PVT.LTD, PVT LTD., PVT LT, PVT. LT., PRIVATE LIMITED, CO, CO., COMPANY, etc.
+    pattern = re.compile(r'\b(PVT\.?\s*(LTD|LT|LIMITED|L)|PRIVATE\s+LIMITED|CO|COMPANY)\b\.?', re.IGNORECASE)
+    cleaned = pattern.sub("", name)
+    cleaned = re.sub(r'\s+', ' ', cleaned)
+    return cleaned.strip(" ,.-/")
+
+def remove_symbols(name):
+    """
+    Removes all non-alphanumeric characters (except spaces) and collapses multiple spaces.
+    """
+    if not isinstance(name, str):
+        return ""
+    # Replace non-alphanumeric characters with nothing
+    cleaned = re.sub(r'[^a-zA-Z0-9\s]', '', name)
+    cleaned = re.sub(r'\s+', ' ', cleaned)
+    return cleaned.strip()
+
 async def search_and_download_vendor(page, vendor_name, allowed_state_codes, api_key):
     """
     Performs the search for a vendor. If M/s is present, it generates:
@@ -623,10 +672,62 @@ async def search_and_download_vendor(page, vendor_name, allowed_state_codes, api
         if original_clean not in queries:
             queries.append(original_clean)
             
+    # Ensure initial_queries are unique and order preserved
+    initial_queries = []
+    for q in queries:
+        if q not in initial_queries:
+            initial_queries.append(q)
+            
+    pvt_ltd_pattern = re.compile(r'\b(PVT\.?\s*(LTD|LT|LIMITED|L)|PRIVATE\s+LIMITED|CO|COMPANY)\b', re.IGNORECASE)
+    symbol_pattern = re.compile(r'[^a-zA-Z0-9\s]')
+    
+    # 1. Generate no-symbol queries (keeping PVT LTD CO suffix)
+    no_symbol_queries = []
+    for q in initial_queries:
+        if symbol_pattern.search(q):
+            w_sym = remove_symbols(q)
+            if w_sym and w_sym not in initial_queries and w_sym not in no_symbol_queries:
+                no_symbol_queries.append(w_sym)
+                
+    # 2. Generate no-suffix queries (keeping symbols)
+    no_pvt_ltd_queries = []
+    for q in initial_queries:
+        if pvt_ltd_pattern.search(q):
+            w_pvt = remove_pvt_ltd(q)
+            if (w_pvt and 
+                w_pvt not in initial_queries and 
+                w_pvt not in no_symbol_queries and 
+                w_pvt not in no_pvt_ltd_queries):
+                no_pvt_ltd_queries.append(w_pvt)
+                
+    # 3. Generate queries with both symbols and suffixes removed
+    both_removed_queries = []
+    for q in initial_queries:
+        if pvt_ltd_pattern.search(q) or symbol_pattern.search(q):
+            w_both = remove_symbols(remove_pvt_ltd(q))
+            if (w_both and 
+                w_both not in initial_queries and 
+                w_both not in no_symbol_queries and 
+                w_both not in no_pvt_ltd_queries and 
+                w_both not in both_removed_queries):
+                both_removed_queries.append(w_both)
+                
+    queries = initial_queries + no_symbol_queries + no_pvt_ltd_queries + both_removed_queries
+
     # Try queries sequentially
+    idx_no_symbols = len(initial_queries)
+    idx_no_pvt = idx_no_symbols + len(no_symbol_queries)
+    idx_both = idx_no_pvt + len(no_pvt_ltd_queries)
 
     for q_idx, query in enumerate(queries):
         if len(queries) > 1:
+            if q_idx == idx_no_symbols:
+                print("\n[*] Initial search queries returned no matches. Trying fallback: symbols removed...")
+            elif q_idx == idx_no_pvt:
+                print("\n[*] No-symbol fallback queries returned no matches. Trying fallback: PVT LTD / CO removed...")
+            elif q_idx == idx_both:
+                print("\n[*] No-suffix fallback queries returned no matches. Trying fallback: both symbols and PVT LTD / CO removed...")
+                
             print(f"[*] Trying search query variant {q_idx+1}/{len(queries)}: '{query}'")
         target_est_id, download_paths, disclaimer = await execute_search_for_query(
             page, query, allowed_state_codes, api_key
@@ -768,8 +869,8 @@ async def run_scraper(limit=None, api_key=DEFAULT_API_KEY, headless=True, input_
                         # Filter by state codes
                         for eid in all_ids:
                             prefix = eid[:2]
-                            # If matching allowed state codes, or if disclaimer is present and we want to include the mismatched state's IDs as well
-                            if prefix in allowed_state_codes or (disclaimer and prefix == target_est_id[:2]):
+                            # If matching allowed state codes, or if disclaimer is present (state code mismatch was bypassed), collect all of them
+                            if prefix in allowed_state_codes or disclaimer:
                                 matched_est_ids.add(eid)
                                 
                     print(f"[+] Found {len(matched_est_ids)} state-matching establishment IDs inside downloaded files.")

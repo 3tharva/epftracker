@@ -145,7 +145,75 @@ async def extract_table_data(page):
             
     return headers, mapped_rows
 
+
+def remove_pvt_ltd(name):
+    """
+    Removes 'PVT LTD', 'CO', 'COMPANY', and similar suffixes (case-insensitive) from a vendor/establishment name.
+    """
+    if not isinstance(name, str):
+        return ""
+    # Matches PVT LTD, PVT. LTD., PVT.LTD, PVT LTD., PVT LT, PVT. LT., PRIVATE LIMITED, CO, CO., COMPANY, etc.
+    pattern = re.compile(r'\b(PVT\.?\s*(LTD|LT|LIMITED|L)|PRIVATE\s+LIMITED|CO|COMPANY)\b\.?', re.IGNORECASE)
+    cleaned = pattern.sub("", name)
+    cleaned = re.sub(r'\s+', ' ', cleaned)
+    return cleaned.strip(" ,.-/")
+
+def remove_symbols(name):
+    """
+    Removes all non-alphanumeric characters (except spaces) and collapses multiple spaces.
+    """
+    if not isinstance(name, str):
+        return ""
+    # Replace non-alphanumeric characters with nothing
+    cleaned = re.sub(r'[^a-zA-Z0-9\s]', '', name)
+    cleaned = re.sub(r'\s+', ' ', cleaned)
+    return cleaned.strip()
+
 async def run_scraper(establishment_name, api_key, headless=True):
+    queries = [establishment_name]
+    
+    # Ensure initial_queries are unique and order preserved
+    initial_queries = []
+    for q in queries:
+        if q not in initial_queries:
+            initial_queries.append(q)
+            
+    pvt_ltd_pattern = re.compile(r'\b(PVT\.?\s*(LTD|LT|LIMITED|L)|PRIVATE\s+LIMITED|CO|COMPANY)\b', re.IGNORECASE)
+    symbol_pattern = re.compile(r'[^a-zA-Z0-9\s]')
+    
+    # 1. Generate no-symbol queries (keeping PVT LTD CO suffix)
+    no_symbol_queries = []
+    for q in initial_queries:
+        if symbol_pattern.search(q):
+            w_sym = remove_symbols(q)
+            if w_sym and w_sym not in initial_queries and w_sym not in no_symbol_queries:
+                no_symbol_queries.append(w_sym)
+                
+    # 2. Generate no-suffix queries (keeping symbols)
+    no_pvt_ltd_queries = []
+    for q in initial_queries:
+        if pvt_ltd_pattern.search(q):
+            w_pvt = remove_pvt_ltd(q)
+            if (w_pvt and 
+                w_pvt not in initial_queries and 
+                w_pvt not in no_symbol_queries and 
+                w_pvt not in no_pvt_ltd_queries):
+                no_pvt_ltd_queries.append(w_pvt)
+                
+    # 3. Generate queries with both symbols and suffixes removed
+    both_removed_queries = []
+    for q in initial_queries:
+        if pvt_ltd_pattern.search(q) or symbol_pattern.search(q):
+            w_both = remove_symbols(remove_pvt_ltd(q))
+            if (w_both and 
+                w_both not in initial_queries and 
+                w_both not in no_symbol_queries and 
+                w_both not in no_pvt_ltd_queries and 
+                w_both not in both_removed_queries):
+                both_removed_queries.append(w_both)
+                
+    queries = initial_queries + no_symbol_queries + no_pvt_ltd_queries + both_removed_queries
+
     async with async_playwright() as p:
         import platform
         if platform.system() == "Windows":
@@ -199,139 +267,157 @@ async def run_scraper(establishment_name, api_key, headless=True):
 
         page.on("dialog", on_dialog)
 
-        print(f"[*] Navigating to EPFO Portal: {DEFAULT_URL}")
-        await page.goto(DEFAULT_URL, wait_until="load", timeout=60000)
-        
-        max_attempts = 5
-        results_headers = []
         results_rows = []
-        
-        for attempt in range(1, max_attempts + 1):
-            print(f"\n--- Scraping Attempt {attempt}/{max_attempts} ---")
+        found_records = False
+
+        idx_no_symbols = len(initial_queries)
+        idx_no_pvt = idx_no_symbols + len(no_symbol_queries)
+        idx_both = idx_no_pvt + len(no_pvt_ltd_queries)
+
+        for q_idx, current_name in enumerate(queries):
+            if len(queries) > 1:
+                if q_idx == idx_no_symbols:
+                    print("\n[*] Initial search queries returned no matches. Trying fallback: symbols removed...")
+                elif q_idx == idx_no_pvt:
+                    print("\n[*] No-symbol fallback queries returned no matches. Trying fallback: PVT LTD / CO removed...")
+                elif q_idx == idx_both:
+                    print("\n[*] No-suffix fallback queries returned no matches. Trying fallback: both symbols and PVT LTD / CO removed...")
+                print(f"\n[*] Trying search query variant {q_idx+1}/{len(queries)}: '{current_name}'")
+
+            print(f"[*] Navigating to EPFO Portal: {DEFAULT_URL}")
+            await page.goto(DEFAULT_URL, wait_until="load", timeout=60000)
             
-            # Fill establishment name
-            print(f"[*] Entering establishment name: '{establishment_name}'")
-            await page.fill("#estName", establishment_name)
+            max_attempts = 5
             
-            # Locate captcha image and take a screenshot of the image element
-            print("[*] Locating captcha image...")
-            captcha_img = page.locator("#capImg")
-            await captcha_img.wait_for(state="visible", timeout=15000)
-            
-            # Give it a tiny bit of time to fully render the image
-            await page.wait_for_timeout(1000)
-            
-            # Take element screenshot
-            image_bytes = await captcha_img.screenshot()
-            
-            # Solve using Gemini
-            try:
-                print("[*] Requesting captcha solution from Gemini API...")
-                captcha_solution = solve_captcha(image_bytes, api_key)
-                print(f"[+] Gemini solved captcha: '{captcha_solution}'")
-            except Exception as e:
-                print(f"[!] Gemini solver failed: {e}. Retrying with a new captcha image...")
-                # Click reset or reload page to get a new captcha
-                await page.reload()
-                await page.wait_for_timeout(2000)
-                continue
+            for attempt in range(1, max_attempts + 1):
+                print(f"\n--- Scraping Attempt {attempt}/{max_attempts} ---")
                 
-            # Fill solved captcha
-            await page.fill("#captcha", captcha_solution)
-            
-            # Reset states before search click
-            captcha_failed = False
-            alert_triggered = False
-            alert_msg = ""
-            
-            # Click search
-            print("[*] Clicking Search...")
-            # We click the button and wait for responses
-            await page.click("#searchEmployer")
-            
-            # Wait for either alert to trigger or search results loading to finish
-            # Data is fetched asynchronously via jQuery AJAX
-            # Wait a few seconds to let AJAX run or dialog to trigger
-            await page.wait_for_timeout(4000)
-            
-            if captcha_failed or (alert_triggered and "captcha" in alert_msg.lower()):
-                print("[!] Captcha verification failed. Trying again...")
-                # The page automatically updates the captcha image on failure, we can just proceed to next loop
-                continue
-            
-            if alert_triggered:
-                print(f"[!] Search halted due to unexpected alert: {alert_msg}")
-                # Check if it was an error or notification
-                # If it's a validation error, let's break or retry
-                # If we get "Something get wrong", let's reload/retry
-                if "wrong" in alert_msg.lower() or "error" in alert_msg.lower():
+                # Fill establishment name
+                print(f"[*] Entering establishment name: '{current_name}'")
+                await page.fill("#estName", current_name)
+                
+                # Locate captcha image and take a screenshot of the image element
+                print("[*] Locating captcha image...")
+                captcha_img = page.locator("#capImg")
+                await captcha_img.wait_for(state="visible", timeout=15000)
+                
+                # Give it a tiny bit of time to fully render the image
+                await page.wait_for_timeout(1000)
+                
+                # Take element screenshot
+                image_bytes = await captcha_img.screenshot()
+                
+                # Solve using Gemini
+                try:
+                    print("[*] Requesting captcha solution from Gemini API...")
+                    captcha_solution = solve_captcha(image_bytes, api_key)
+                    print(f"[+] Gemini solved captcha: '{captcha_solution}'")
+                except Exception as e:
+                    print(f"[!] Gemini solver failed: {e}. Retrying with a new captcha image...")
+                    # Click reset or reload page to get a new captcha
                     await page.reload()
                     await page.wait_for_timeout(2000)
                     continue
-                break
-                
-            # Check tablecontainer for results
-            container_locator = page.locator("#tablecontainer")
-            container_text = await container_locator.inner_text()
-            
-            if "no records" in container_text.lower():
-                print("[-] Search completed. No records found for this establishment.")
-                break
-            
-            # If the search was successful, the table should be visible
-            table_locator = page.locator("#tablecontainer table")
-            if await table_locator.count() > 0:
-                print("[+] Search successful! Extracting results...")
-                
-                # We will handle pagination if DataTables is used
-                # Let's extract pages of data
-                while True:
-                    headers, page_rows = await extract_table_data(page)
-                    results_headers = headers
-                    results_rows.extend(page_rows)
-                    print(f"[+] Extracted {len(page_rows)} rows from current page. Total: {len(results_rows)}")
                     
-                    # Look for Next button in pagination
-                    # jQuery DataTable format: <li class="paginate_button next" id="example_next"><a ...>Next</a></li>
-                    # If it has class "disabled", it means we're on the last page.
-                    next_li = page.locator("li.paginate_button.next, #example_next").first
-                    if await next_li.count() > 0:
-                        class_attr = await next_li.get_attribute("class") or ""
-                        if "disabled" in class_attr:
-                            print("[*] Reached the last page of results.")
-                            break
+                # Fill solved captcha
+                await page.fill("#captcha", captcha_solution)
+                
+                # Reset states before search click
+                captcha_failed = False
+                alert_triggered = False
+                alert_msg = ""
+                
+                # Click search
+                print("[*] Clicking Search...")
+                # We click the button and wait for responses
+                await page.click("#searchEmployer")
+                
+                # Wait for either alert to trigger or search results loading to finish
+                # Data is fetched asynchronously via jQuery AJAX
+                # Wait a few seconds to let AJAX run or dialog to trigger
+                await page.wait_for_timeout(4000)
+                
+                if captcha_failed or (alert_triggered and "captcha" in alert_msg.lower()):
+                    print("[!] Captcha verification failed. Trying again...")
+                    # The page automatically updates the captcha image on failure, we can just proceed to next loop
+                    continue
+                
+                if alert_triggered:
+                    print(f"[!] Search halted due to unexpected alert: {alert_msg}")
+                    # Check if it was an error or notification
+                    # If it's a validation error, let's break or retry
+                    # If we get "Something get wrong", let's reload/retry
+                    if "wrong" in alert_msg.lower() or "error" in alert_msg.lower():
+                        await page.reload()
+                        await page.wait_for_timeout(2000)
+                        continue
+                    break
+                    
+                # Check tablecontainer for results
+                container_locator = page.locator("#tablecontainer")
+                container_text = await container_locator.inner_text()
+                
+                if "no records" in container_text.lower():
+                    print(f"[-] Search completed. No records found for query: '{current_name}'")
+                    break
+                
+                # If the search was successful, the table should be visible
+                table_locator = page.locator("#tablecontainer table")
+                if await table_locator.count() > 0:
+                    print("[+] Search successful! Extracting results...")
+                    found_records = True
+                    
+                    # We will handle pagination if DataTables is used
+                    # Let's extract pages of data
+                    while True:
+                        headers, page_rows = await extract_table_data(page)
+                        results_rows.extend(page_rows)
+                        print(f"[+] Extracted {len(page_rows)} rows from current page. Total: {len(results_rows)}")
                         
-                        next_link = next_li.locator("a")
-                        if await next_link.count() == 0:
-                            print("[*] No link inside Next button, assuming last page.")
-                            break
-                        
-                        # Check visibility
-                        if not await next_link.is_visible():
-                            print("[*] Next link is not visible, assuming last page.")
-                            break
+                        # Look for Next button in pagination
+                        # jQuery DataTable format: <li class="paginate_button next" id="example_next"><a ...>Next</a></li>
+                        # If it has class "disabled", it means we're on the last page.
+                        next_li = page.locator("li.paginate_button.next, #example_next").first
+                        if await next_li.count() > 0:
+                            class_attr = await next_li.get_attribute("class") or ""
+                            if "disabled" in class_attr:
+                                print("[*] Reached the last page of results.")
+                                break
                             
-                        # Check aria-disabled
-                        aria_disabled = await next_link.get_attribute("aria-disabled")
-                        if aria_disabled == "true":
-                            print("[*] Next link is aria-disabled, assuming last page.")
-                            break
+                            next_link = next_li.locator("a")
+                            if await next_link.count() == 0:
+                                print("[*] No link inside Next button, assuming last page.")
+                                break
                             
-                        try:
-                            print("[*] Clicking Next page button...")
-                            await next_link.click(timeout=3000)
-                            # Wait for table to update
-                            await page.wait_for_timeout(2000)
-                        except Exception as e:
-                            print(f"[*] Next page click failed or timed out: {e}. Assuming last page.")
+                            # Check visibility
+                            if not await next_link.is_visible():
+                                print("[*] Next link is not visible, assuming last page.")
+                                break
+                            
+                            # Check aria-disabled
+                            aria_disabled = await next_link.get_attribute("aria-disabled")
+                            if aria_disabled == "true":
+                                print("[*] Next link is aria-disabled, assuming last page.")
+                                break
+                            
+                            try:
+                                print("[*] Clicking Next page button...")
+                                await next_link.click(timeout=3000)
+                                # Wait for table to update
+                                await page.wait_for_timeout(2000)
+                            except Exception as e:
+                                print(f"[*] Next page click failed or timed out: {e}. Assuming last page.")
+                                break
+                        else:
                             break
-                    else:
-                        break
+                    break
+                else:
+                    print("[?] Results table not found yet. Content inside container:")
+                    print(container_text[:200])
+                    print("[*] Retrying...")
+                    
+            if found_records:
                 break
-            else:
-                print("[?] Results table not found yet. Content inside container:")
-                print(container_text[:200])
-                print("[*] Retrying...")
                 
         await context.close()
 
