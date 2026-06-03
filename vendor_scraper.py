@@ -774,7 +774,8 @@ async def run_scraper(limit=None, api_key=DEFAULT_API_KEY, headless=True, input_
         try:
             with open(results_file, "r", encoding="utf-8") as f:
                 results = json.load(f)
-            print(f"[+] Resuming scraping. Loaded {len(results)} already processed vendors.")
+            successful_runs = sum(1 for v in results.values() if v.get("status") == "success")
+            print(f"[+] Resuming scraping. Loaded {len(results)} processed vendors ({successful_runs} successfully matched, {len(results) - successful_runs} failed/unmatched will be retried).")
         except Exception as e:
             print(f"[!] Failed to parse existing results file: {e}. Starting fresh.")
             
@@ -828,8 +829,8 @@ async def run_scraper(limit=None, api_key=DEFAULT_API_KEY, headless=True, input_
             vendor_name = str(row["Vendor Name"])
             vendor_gstn = str(row["Vendor GSTN"])
             
-            # Skip if already processed
-            if vendor_code in results:
+            # Skip only if already successfully processed
+            if vendor_code in results and results[vendor_code].get("status") == "success":
                 continue
                 
             if limit and count >= limit:
