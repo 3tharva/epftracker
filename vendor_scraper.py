@@ -3,6 +3,8 @@ import argparse
 import json
 import os
 import re
+import zipfile
+import xml.etree.ElementTree as ET
 import io
 import base64
 import requests
@@ -290,8 +292,146 @@ def get_state_codes_for_gstn(gstn, statecode_data, district_states):
         codes.extend(["UA", "UK"])
     elif "CHATTISGARH" in clean_name or "CHHATTISGARH" in clean_name:
         codes.extend(["CG", "RY"])
+    elif "TELANGANA" in clean_name:
+        codes.extend(["TS", "TG", "AP"])
+    elif "ANDHRA PRADESH" in clean_name:
+        codes.extend(["AP", "TS", "TG"])
         
     return list(set(codes))
+
+custom_office_overrides = {
+    "AMBATTUR": "TN",
+    "BOMMASANDRA": "KA",
+    "K R PURAM (WHITEFIELD)": "KA",
+    "KUKATPALLI": "TG",
+    "TAMBARAM": "TN",
+    "NOIDA": "UP",
+    "DELHI (NORTH)": "DL",
+    "DELHI (SOUTH)": "DL",
+    "BANDRA(MUMBAI-I)": "MH",
+    "THANE (MUMBAI-II)": "MH",
+    "BARRACKPORE(TITAGARH)": "WB",
+    "RAIPUR (CHATTISGARH)": "CG",
+    "BHUBANESWAR": "OR",
+    "BERHAMPUR": "OR",
+    "ROURKELA": "OR",
+    "KEONJHAR": "OR",
+    "JAMSHEDPUR": "JH",
+    "DURGAPUR": "WB",
+    "VISHAKAPATNAM": "AP",
+    "TRICHY": "TN",
+    "NASIK": "MH",
+    "BHATINDA": "PB",
+    "GURGAON": "HR",
+}
+
+def find_state_for_office(office_name, office_state_map):
+    office_name = office_name.upper().strip()
+    if not office_name:
+        return None
+        
+    # Check manual overrides first
+    if office_name in custom_office_overrides:
+        return custom_office_overrides[office_name]
+        
+    # Try exact match
+    if office_name in office_state_map:
+        return office_state_map[office_name]
+        
+    # Clean parentheses e.g. "RAIPUR (CHATTISGARH)" -> "RAIPUR"
+    cleaned_office = re.sub(r'\(.*\)', '', office_name).strip()
+    if cleaned_office in office_state_map:
+        return office_state_map[cleaned_office]
+        
+    if cleaned_office in custom_office_overrides:
+        return custom_office_overrides[cleaned_office]
+        
+    # Try substring match: is district name in office name?
+    for dist_name, state_code in office_state_map.items():
+        if dist_name in office_name or dist_name in cleaned_office:
+            return state_code
+            
+    # Try substring match: is office name in district name?
+    for dist_name, state_code in office_state_map.items():
+        if office_name in dist_name or cleaned_office in dist_name:
+            return state_code
+            
+    return None
+
+def extract_id_office_pairs(file_path):
+    """
+    Parses the Excel file (as a zip/xml) and extracts (establishment_id, office_name) pairs.
+    """
+    pairs = []
+    try:
+        with zipfile.ZipFile(file_path, 'r') as z:
+            if 'xl/worksheets/sheet1.xml' not in z.namelist():
+                return []
+            
+            sheet_content = z.read('xl/worksheets/sheet1.xml')
+            root = ET.fromstring(sheet_content)
+            ns = {'x': 'http://schemas.openxmlformats.org/spreadsheetml/2006/main'}
+            
+            rows = root.findall('.//x:row', ns)
+            if not rows:
+                return []
+            
+            # Find column letters for "Establishment ID" and "Office Name" from header row (row 1)
+            est_id_col = None
+            office_name_col = None
+            
+            first_row = rows[0]
+            cells = first_row.findall('./x:c', ns)
+            for c in cells:
+                col_ref = c.get('r')
+                col_letter = "".join(filter(str.isalpha, col_ref))
+                
+                is_t = c.find('.//x:is/x:t', ns)
+                val = ""
+                if is_t is not None:
+                    val = is_t.text or ""
+                val_upper = val.strip().upper()
+                
+                if "ESTABLISHMENT ID" in val_upper or "ESTABLISHMENT CODE" in val_upper:
+                    est_id_col = col_letter
+                elif "OFFICE NAME" in val_upper or "OFFICE" in val_upper:
+                    office_name_col = col_letter
+            
+            # Default fallbacks if header parsing fails
+            if not est_id_col:
+                est_id_col = "A"
+            if not office_name_col:
+                office_name_col = "D"
+                
+            for r in rows[1:]:
+                cells = r.findall('./x:c', ns)
+                row_vals = {}
+                for c in cells:
+                    col_ref = c.get('r')
+                    col_letter = "".join(filter(str.isalpha, col_ref))
+                    
+                    is_t = c.find('.//x:is/x:t', ns)
+                    val = ""
+                    if is_t is not None:
+                        val = is_t.text or ""
+                    row_vals[col_letter] = val.strip()
+                
+                est_id = row_vals.get(est_id_col, "")
+                office = row_vals.get(office_name_col, "")
+                if re.match(r'^[A-Z]{5}[0-9]{10}$', est_id):
+                    pairs.append((est_id, office))
+    except Exception as e:
+        print(f"[!] XML parsing failed for {file_path}: {e}")
+        # Fallback to regex in case of non-standard files, but without office name
+        try:
+            with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
+                text = f.read()
+            for match in re.findall(r'\b[A-Z]{5}[0-9]{10}\b', text):
+                pairs.append((match, ""))
+        except Exception as e2:
+            print(f"[!] Fallback parsing also failed for {file_path}: {e2}")
+            
+    return pairs
 
 def extract_establishment_ids_from_file(file_path):
     """
@@ -352,7 +492,7 @@ async def navigate_with_retry(page, url, retries=3):
             await asyncio.sleep(5)
     return False
 
-async def execute_search_for_query(page, query, allowed_state_codes, api_key):
+async def execute_search_for_query(page, query, allowed_state_codes, api_key, office_state_map):
     """
     Executes search for a single query. Returns (target_est_id, downloaded_files, disclaimer).
     """
@@ -506,6 +646,19 @@ async def execute_search_for_query(page, query, allowed_state_codes, api_key):
             if "disabled" not in class_attr:
                 has_next_page = True
                 
+        # Extract headers to know where Office Name is
+        headers = []
+        thead_ths = page.locator("#tablecontainer table thead th")
+        th_count = await thead_ths.count()
+        if th_count > 0:
+            for h_idx in range(th_count):
+                headers.append((await thead_ths.nth(h_idx).inner_text()).strip().upper())
+                
+        office_name_col_idx = -1
+        for h_idx, h_text in enumerate(headers):
+            if "OFFICE NAME" in h_text or "OFFICE" in h_text:
+                office_name_col_idx = h_idx
+
         # If there is exactly 1 row on the first page, and no next page exists
         is_single_entry = (row_count == 1) and (not has_next_page)
         
@@ -527,11 +680,23 @@ async def execute_search_for_query(page, query, allowed_state_codes, api_key):
                 prefix = est_id[:2]
                 target_est_id = est_id
                 found_matching_row = True
-                if prefix not in allowed_state_codes:
-                    disclaimer = f"Single search result found. State code mismatch ignored (Target: {allowed_state_codes}, Found: {prefix})."
-                    print(f"[!] {disclaimer}")
+                
+                # Get Office Name for the single row
+                office_name = ""
+                if office_name_col_idx != -1 and office_name_col_idx < td_count:
+                    office_name = (await tds.nth(office_name_col_idx).inner_text()).strip()
+                elif td_count == 5:
+                    office_name = (await tds.nth(3).inner_text()).strip()
+                elif td_count == 6:
+                    office_name = (await tds.nth(4).inner_text()).strip()
+                    
+                office_state = find_state_for_office(office_name, office_state_map)
+                
+                if (prefix in allowed_state_codes) or (office_state in allowed_state_codes):
+                    print(f"[+] Found single matching establishment ID: '{est_id}' (Office: '{office_name}' -> '{office_state}')")
                 else:
-                    print(f"[+] Found single matching establishment ID: '{est_id}'")
+                    disclaimer = f"Single search result found. State code mismatch ignored (Target: {allowed_state_codes}, Found ID: {prefix}, Office: {office_name} -> {office_state})."
+                    print(f"[!] {disclaimer}")
                 
                 action_cell = tds.last
                 action_link = action_cell.locator("a, button, input[type='button']").first
@@ -560,9 +725,20 @@ async def execute_search_for_query(page, query, allowed_state_codes, api_key):
                             first_row_est_id = est_id
                             first_row_tds = tds
                             
+                        # Get Office Name for this row
+                        office_name = ""
+                        if office_name_col_idx != -1 and office_name_col_idx < td_count:
+                            office_name = (await tds.nth(office_name_col_idx).inner_text()).strip()
+                        elif td_count == 5:
+                            office_name = (await tds.nth(3).inner_text()).strip()
+                        elif td_count == 6:
+                            office_name = (await tds.nth(4).inner_text()).strip()
+                            
+                        office_state = find_state_for_office(office_name, office_state_map)
+                        
                         prefix = est_id[:2]
-                        if prefix in allowed_state_codes:
-                            print(f"[+] Found matching establishment ID: '{est_id}' on page {current_page}")
+                        if (prefix in allowed_state_codes) or (office_state in allowed_state_codes):
+                            print(f"[+] Found matching establishment ID: '{est_id}' (Office: '{office_name}' -> '{office_state}') on page {current_page}")
                             action_cell = tds.last
                             action_link = action_cell.locator("a, button, input[type='button']").first
                             if await action_link.count() > 0:
@@ -599,8 +775,20 @@ async def execute_search_for_query(page, query, allowed_state_codes, api_key):
                     tbody_tr = page.locator("#tablecontainer table tbody tr")
                     first_row_tds = tbody_tr.nth(0).locator("td")
                 
+                # Get Office Name for first row fallback
+                td_count = await first_row_tds.count()
+                office_name = ""
+                if office_name_col_idx != -1 and office_name_col_idx < td_count:
+                    office_name = (await first_row_tds.nth(office_name_col_idx).inner_text()).strip()
+                elif td_count == 5:
+                    office_name = (await first_row_tds.nth(3).inner_text()).strip()
+                elif td_count == 6:
+                    office_name = (await first_row_tds.nth(4).inner_text()).strip()
+                
+                office_state = find_state_for_office(office_name, office_state_map)
+                
                 prefix = first_row_est_id[:2]
-                disclaimer = f"State code mismatch ignored (Target: {allowed_state_codes}, Found: {prefix})."
+                disclaimer = f"State code mismatch ignored (Target: {allowed_state_codes}, Found ID: {prefix}, Office: {office_name} -> {office_state})."
                 print(f"[!] {disclaimer}")
                 action_cell = first_row_tds.last
                 action_link = action_cell.locator("a, button, input[type='button']").first
@@ -651,30 +839,44 @@ async def execute_search_for_query(page, query, allowed_state_codes, api_key):
     print("[!] Failed to solve captcha after maximum search attempts.")
     return None, [], None
 
+def save_results(results_file, results):
+    temp_file = results_file + ".tmp"
+    try:
+        with open(temp_file, "w", encoding="utf-8") as f:
+            json.dump(results, f, indent=2, ensure_ascii=False)
+        os.replace(temp_file, results_file)
+    except Exception as e:
+        print(f"[!] Warning: Failed to save results atomically: {e}. Attempting direct save.")
+        try:
+            with open(results_file, "w", encoding="utf-8") as f:
+                json.dump(results, f, indent=2, ensure_ascii=False)
+        except Exception as save_err:
+            print(f"[!] Critical: Failed to save results: {save_err}")
+
 def remove_pvt_ltd(name):
     """
     Removes 'PVT LTD', 'CO', 'COMPANY', and similar suffixes (case-insensitive) from a vendor name.
     """
     if not isinstance(name, str):
         return ""
-    # Matches PVT LTD, PVT. LTD., PVT.LTD, PVT LTD., PVT LT, PVT. LT., PRIVATE LIMITED, CO, CO., COMPANY, etc.
-    pattern = re.compile(r'\b(PVT\.?\s*(LTD|LT|LIMITED|L)|PRIVATE\s+LIMITED|CO|COMPANY)\b\.?', re.IGNORECASE)
+    # Matches PVT, LTD, LT, LIMITED, LIM, PRIVATE, CO, COMPANY, etc.
+    pattern = re.compile(r'\b(PVT|LTD|LT|LIMITED|LIM|PRIVATE|CO|COMPANY)\b\.?', re.IGNORECASE)
     cleaned = pattern.sub("", name)
     cleaned = re.sub(r'\s+', ' ', cleaned)
     return cleaned.strip(" ,.-/")
 
 def remove_symbols(name):
     """
-    Removes all non-alphanumeric characters (except spaces) and collapses multiple spaces.
+    Removes all non-alphanumeric characters (except spaces and dots) and collapses multiple spaces.
     """
     if not isinstance(name, str):
         return ""
-    # Replace non-alphanumeric characters with nothing
-    cleaned = re.sub(r'[^a-zA-Z0-9\s]', '', name)
+    # Replace non-alphanumeric characters (except spaces and dots) with nothing
+    cleaned = re.sub(r'[^a-zA-Z0-9\s\.]', '', name)
     cleaned = re.sub(r'\s+', ' ', cleaned)
     return cleaned.strip()
 
-async def search_and_download_vendor(page, vendor_name, allowed_state_codes, api_key):
+async def search_and_download_vendor(page, vendor_name, allowed_state_codes, api_key, office_state_map):
     """
     Performs the search for a vendor. If M/s is present, it generates:
     1) Sanitized (without prefix, e.g. "Power Pioneers")
@@ -696,7 +898,7 @@ async def search_and_download_vendor(page, vendor_name, allowed_state_codes, api
         no_slash_variant = re.sub(r'\s+', ' ', no_slash_variant).strip()
         if no_slash_variant and no_slash_variant not in queries:
             queries.append(no_slash_variant)
-
+ 
     else:
         # Standard fallback
         if sanitized and sanitized not in queries:
@@ -704,14 +906,24 @@ async def search_and_download_vendor(page, vendor_name, allowed_state_codes, api
         if original_clean not in queries:
             queries.append(original_clean)
             
+    # Generate dot-to-space variants
+    dot_space_queries = []
+    for q in queries:
+        if '.' in q:
+            dot_replaced = q.replace('.', ' ')
+            dot_replaced = re.sub(r'\s+', ' ', dot_replaced).strip()
+            if dot_replaced and dot_replaced not in queries and dot_replaced not in dot_space_queries:
+                dot_space_queries.append(dot_replaced)
+    queries.extend(dot_space_queries)
+    
     # Ensure initial_queries are unique and order preserved
     initial_queries = []
     for q in queries:
         if q not in initial_queries:
             initial_queries.append(q)
             
-    pvt_ltd_pattern = re.compile(r'\b(PVT\.?\s*(LTD|LT|LIMITED|L)|PRIVATE\s+LIMITED|CO|COMPANY)\b', re.IGNORECASE)
-    symbol_pattern = re.compile(r'[^a-zA-Z0-9\s]')
+    pvt_ltd_pattern = re.compile(r'\b(PVT|LTD|LT|LIMITED|LIM|PRIVATE|CO|COMPANY)\b', re.IGNORECASE)
+    symbol_pattern = re.compile(r'[^a-zA-Z0-9\s\.]')
     
     # 1. Generate no-symbol queries (keeping PVT LTD CO suffix)
     no_symbol_queries = []
@@ -762,7 +974,7 @@ async def search_and_download_vendor(page, vendor_name, allowed_state_codes, api
                 
             print(f"[*] Trying search query variant {q_idx+1}/{len(queries)}: '{query}'")
         target_est_id, download_paths, disclaimer = await execute_search_for_query(
-            page, query, allowed_state_codes, api_key
+            page, query, allowed_state_codes, api_key, office_state_map
         )
         if target_est_id:
             return target_est_id, download_paths, disclaimer
@@ -799,6 +1011,12 @@ async def run_scraper(limit=None, api_key=DEFAULT_API_KEY, headless=True, input_
         districts_data = json.load(f)
     district_states = {d["state"].upper(): d["stateCode"].upper() for d in districts_data["districts"]}
     
+    office_state_map = {}
+    for d in districts_data.get("districts", []):
+        dist_name = d.get("district", "").strip().upper()
+        if dist_name:
+            office_state_map[dist_name] = d.get("stateCode", "").strip().upper()
+    
     # Load existing results for resume capability
     results_file = "vendor_est_matches.json"
     results = {}
@@ -816,40 +1034,70 @@ async def run_scraper(limit=None, api_key=DEFAULT_API_KEY, headless=True, input_
     
     async with async_playwright() as p:
         import platform
-        if profile_dir == "chrome_profile":
+        if profile_dir == "chrome_profile" or profile_dir == "edge_profile":
             if platform.system() == "Windows":
-                user_data_dir = os.path.expandvars(r"%LOCALAPPDATA%\Google\Chrome\User Data")
+                user_data_dir = os.path.expandvars(r"%LOCALAPPDATA%\Microsoft\Edge\User Data")
             else:
-                user_data_dir = os.path.expanduser("~/.config/google-chrome")
-            print(f"[*] Launching browser in persistent context using system standard Chrome profile: '{user_data_dir}'...")
+                user_data_dir = os.path.expanduser("~/.config/microsoft-edge")
+            print(f"[*] Launching browser in persistent context using system standard Edge profile: '{user_data_dir}'...")
         else:
             user_data_dir = os.path.join(os.getcwd(), profile_dir)
             print(f"[*] Launching browser in persistent context using custom profile: '{user_data_dir}'...")
         selected_ua = random.choice(USER_AGENTS)
 
 
-        # Try launching with Google Chrome channel first, fallback to default Playwright Chromium
+        # Try launching with Microsoft Edge channel first, fallback to default Playwright Chromium
         try:
             context = await p.chromium.launch_persistent_context(
                 user_data_dir=user_data_dir,
-                channel="chrome",
+                channel="msedge",
                 headless=headless,
                 args=["--disable-blink-features=AutomationControlled"],
+                ignore_default_args=["--no-sandbox"],
                 user_agent=selected_ua,
                 viewport={"width": 1280, "height": 1024},
                 ignore_https_errors=True
             )
-            print("[+] Launched persistent context using Google Chrome channel.")
+            print("[+] Launched persistent context using Microsoft Edge channel.")
         except Exception as e:
-            print(f"[*] Fallback: Could not launch with Google Chrome channel ({e}). Launching default Chromium persistent context...")
-            context = await p.chromium.launch_persistent_context(
-                user_data_dir=user_data_dir,
-                headless=headless,
-                args=["--disable-blink-features=AutomationControlled"],
-                user_agent=selected_ua,
-                viewport={"width": 1280, "height": 1024},
-                ignore_https_errors=True
-            )
+            if "already in use" in str(e).lower() or "existing browser session" in str(e).lower():
+                print(f"[!] Warning: The Edge profile at '{user_data_dir}' is already in use by a running Edge browser.")
+                fallback_dir = os.path.join(os.getcwd(), "edge_profile_fallback")
+                print(f"[!] Falling back to a separate user data directory: '{fallback_dir}'...")
+                try:
+                    context = await p.chromium.launch_persistent_context(
+                        user_data_dir=fallback_dir,
+                        channel="msedge",
+                        headless=headless,
+                        args=["--disable-blink-features=AutomationControlled"],
+                        ignore_default_args=["--no-sandbox"],
+                        user_agent=selected_ua,
+                        viewport={"width": 1280, "height": 1024},
+                        ignore_https_errors=True
+                    )
+                    print("[+] Launched persistent context using Microsoft Edge channel with fallback profile.")
+                except Exception as fallback_e:
+                    print(f"[*] Fallback with Edge channel failed ({fallback_e}). Launching default Chromium persistent context...")
+                    context = await p.chromium.launch_persistent_context(
+                        user_data_dir=fallback_dir,
+                        headless=headless,
+                        args=["--disable-blink-features=AutomationControlled"],
+                        ignore_default_args=["--no-sandbox"],
+                        user_agent=selected_ua,
+                        viewport={"width": 1280, "height": 1024},
+                        ignore_https_errors=True
+                    )
+            else:
+                print(f"[*] Fallback: Could not launch with Microsoft Edge channel ({e}). Launching default Chromium persistent context...")
+                context = await p.chromium.launch_persistent_context(
+                    user_data_dir=user_data_dir,
+                    headless=headless,
+                    args=["--disable-blink-features=AutomationControlled"],
+                    ignore_default_args=["--no-sandbox"],
+                    user_agent=selected_ua,
+                    viewport={"width": 1280, "height": 1024},
+                    ignore_https_errors=True
+                )
 
 
             
@@ -888,7 +1136,7 @@ async def run_scraper(limit=None, api_key=DEFAULT_API_KEY, headless=True, input_
             
             try:
                 target_est_id, downloaded_files, disclaimer = await search_and_download_vendor(
-                    page, vendor_name, allowed_state_codes, api_key
+                    page, vendor_name, allowed_state_codes, api_key, office_state_map
                 )
                 
                 matched_est_ids = set()
@@ -896,14 +1144,14 @@ async def run_scraper(limit=None, api_key=DEFAULT_API_KEY, headless=True, input_
                 
                 if target_est_id and downloaded_files:
                     status = "success"
-                    # Scan downloaded Excel files for establishment IDs
+                    # Scan downloaded Excel files for establishment IDs and office names
                     for f_path in downloaded_files:
-                        all_ids = extract_establishment_ids_from_file(f_path)
-                        # Filter by state codes
-                        for eid in all_ids:
+                        pairs = extract_id_office_pairs(f_path)
+                        for eid, office in pairs:
                             prefix = eid[:2]
+                            office_state = find_state_for_office(office, office_state_map)
                             # If matching allowed state codes, or if disclaimer is present (state code mismatch was bypassed), collect all of them
-                            if prefix in allowed_state_codes or disclaimer:
+                            if (prefix in allowed_state_codes) or (office_state in allowed_state_codes) or disclaimer:
                                 matched_est_ids.add(eid)
                                 
                     print(f"[+] Found {len(matched_est_ids)} state-matching establishment IDs inside downloaded files.")
@@ -925,8 +1173,7 @@ async def run_scraper(limit=None, api_key=DEFAULT_API_KEY, headless=True, input_
                     results[vendor_code]["disclaimer"] = disclaimer
                 
                 # Save progress after every vendor
-                with open(results_file, "w", encoding="utf-8") as f:
-                    json.dump(results, f, indent=2, ensure_ascii=False)
+                save_results(results_file, results)
                 
                 count += 1
                 print("[*] Waiting 10 seconds before next vendor...")
@@ -941,8 +1188,7 @@ async def run_scraper(limit=None, api_key=DEFAULT_API_KEY, headless=True, input_
                     "status": f"failed_error: {str(e)}",
                     "matched_establishment_ids": []
                 }
-                with open(results_file, "w", encoding="utf-8") as f:
-                    json.dump(results, f, indent=2, ensure_ascii=False)
+                save_results(results_file, results)
                 # Small wait before trying next
                 print("[*] Waiting 10 seconds after failure before next vendor...")
                 await asyncio.sleep(10)
@@ -957,7 +1203,7 @@ def main():
     parser.add_argument("-l", "--limit", type=int, default=None, help="Limit the number of vendors to process (default: all)")
     parser.add_argument("-k", "--key", default=DEFAULT_API_KEY, help="Gemini API Key")
     parser.add_argument("--headless", action="store_true", help="Run browser in headless mode")
-    parser.add_argument("--profile", default="chrome_profile", help="Path to Chrome user data directory (default: chrome_profile)")
+    parser.add_argument("--profile", default="edge_profile", help="Path to Edge user data directory (default: edge_profile)")
     
     args = parser.parse_args()
     

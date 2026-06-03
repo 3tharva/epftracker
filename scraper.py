@@ -261,25 +261,35 @@ def remove_pvt_ltd(name):
     """
     if not isinstance(name, str):
         return ""
-    # Matches PVT LTD, PVT. LTD., PVT.LTD, PVT LTD., PVT LT, PVT. LT., PRIVATE LIMITED, CO, CO., COMPANY, etc.
-    pattern = re.compile(r'\b(PVT\.?\s*(LTD|LT|LIMITED|L)|PRIVATE\s+LIMITED|CO|COMPANY)\b\.?', re.IGNORECASE)
+    # Matches PVT, LTD, LT, LIMITED, LIM, PRIVATE, CO, COMPANY, etc.
+    pattern = re.compile(r'\b(PVT|LTD|LT|LIMITED|LIM|PRIVATE|CO|COMPANY)\b\.?', re.IGNORECASE)
     cleaned = pattern.sub("", name)
     cleaned = re.sub(r'\s+', ' ', cleaned)
     return cleaned.strip(" ,.-/")
 
 def remove_symbols(name):
     """
-    Removes all non-alphanumeric characters (except spaces) and collapses multiple spaces.
+    Removes all non-alphanumeric characters (except spaces and dots) and collapses multiple spaces.
     """
     if not isinstance(name, str):
         return ""
-    # Replace non-alphanumeric characters with nothing
-    cleaned = re.sub(r'[^a-zA-Z0-9\s]', '', name)
+    # Replace non-alphanumeric characters (except spaces and dots) with nothing
+    cleaned = re.sub(r'[^a-zA-Z0-9\s\.]', '', name)
     cleaned = re.sub(r'\s+', ' ', cleaned)
     return cleaned.strip()
 
 async def run_scraper(establishment_name, api_key, headless=True):
     queries = [establishment_name]
+    
+    # Generate dot-to-space variants
+    dot_space_queries = []
+    for q in queries:
+        if '.' in q:
+            dot_replaced = q.replace('.', ' ')
+            dot_replaced = re.sub(r'\s+', ' ', dot_replaced).strip()
+            if dot_replaced and dot_replaced not in queries and dot_replaced not in dot_space_queries:
+                dot_space_queries.append(dot_replaced)
+    queries.extend(dot_space_queries)
     
     # Ensure initial_queries are unique and order preserved
     initial_queries = []
@@ -287,8 +297,8 @@ async def run_scraper(establishment_name, api_key, headless=True):
         if q not in initial_queries:
             initial_queries.append(q)
             
-    pvt_ltd_pattern = re.compile(r'\b(PVT\.?\s*(LTD|LT|LIMITED|L)|PRIVATE\s+LIMITED|CO|COMPANY)\b', re.IGNORECASE)
-    symbol_pattern = re.compile(r'[^a-zA-Z0-9\s]')
+    pvt_ltd_pattern = re.compile(r'\b(PVT|LTD|LT|LIMITED|LIM|PRIVATE|CO|COMPANY)\b', re.IGNORECASE)
+    symbol_pattern = re.compile(r'[^a-zA-Z0-9\s\.]')
     
     # 1. Generate no-symbol queries (keeping PVT LTD CO suffix)
     no_symbol_queries = []
@@ -326,34 +336,65 @@ async def run_scraper(establishment_name, api_key, headless=True):
     async with async_playwright() as p:
         import platform
         if platform.system() == "Windows":
-            user_data_dir = os.path.expandvars(r"%LOCALAPPDATA%\Google\Chrome\User Data")
+            user_data_dir = os.path.expandvars(r"%LOCALAPPDATA%\Microsoft\Edge\User Data")
         else:
-            user_data_dir = os.path.expanduser("~/.config/google-chrome")
-        print(f"[*] Launching browser in persistent context using system Chrome profile: '{user_data_dir}'...")
+            user_data_dir = os.path.expanduser("~/.config/microsoft-edge")
+        print(f"[*] Launching browser in persistent context using system Edge profile: '{user_data_dir}'...")
         selected_ua = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
 
         
+        # Try launching with Microsoft Edge channel first, fallback to default Playwright Chromium
         try:
             context = await p.chromium.launch_persistent_context(
                 user_data_dir=user_data_dir,
-                channel="chrome",
+                channel="msedge",
                 headless=headless,
                 args=["--disable-blink-features=AutomationControlled"],
+                ignore_default_args=["--no-sandbox"],
                 user_agent=selected_ua,
                 viewport={"width": 1280, "height": 1024},
                 ignore_https_errors=True
             )
-            print("[+] Launched persistent context using Google Chrome channel.")
+            print("[+] Launched persistent context using Microsoft Edge channel.")
         except Exception as e:
-            print(f"[*] Fallback: Could not launch with Google Chrome channel ({e}). Launching default Chromium persistent context...")
-            context = await p.chromium.launch_persistent_context(
-                user_data_dir=user_data_dir,
-                headless=headless,
-                args=["--disable-blink-features=AutomationControlled"],
-                user_agent=selected_ua,
-                viewport={"width": 1280, "height": 1024},
-                ignore_https_errors=True
-            )
+            if "already in use" in str(e).lower() or "existing browser session" in str(e).lower():
+                print(f"[!] Warning: The Edge profile at '{user_data_dir}' is already in use by a running Edge browser.")
+                fallback_dir = os.path.join(os.getcwd(), "edge_profile_fallback")
+                print(f"[!] Falling back to a separate user data directory: '{fallback_dir}'...")
+                try:
+                    context = await p.chromium.launch_persistent_context(
+                        user_data_dir=fallback_dir,
+                        channel="msedge",
+                        headless=headless,
+                        args=["--disable-blink-features=AutomationControlled"],
+                        ignore_default_args=["--no-sandbox"],
+                        user_agent=selected_ua,
+                        viewport={"width": 1280, "height": 1024},
+                        ignore_https_errors=True
+                    )
+                    print("[+] Launched persistent context using Microsoft Edge channel with fallback profile.")
+                except Exception as fallback_e:
+                    print(f"[*] Fallback with Edge channel failed ({fallback_e}). Launching default Chromium persistent context...")
+                    context = await p.chromium.launch_persistent_context(
+                        user_data_dir=fallback_dir,
+                        headless=headless,
+                        args=["--disable-blink-features=AutomationControlled"],
+                        ignore_default_args=["--no-sandbox"],
+                        user_agent=selected_ua,
+                        viewport={"width": 1280, "height": 1024},
+                        ignore_https_errors=True
+                    )
+            else:
+                print(f"[*] Fallback: Could not launch with Microsoft Edge channel ({e}). Launching default Chromium persistent context...")
+                context = await p.chromium.launch_persistent_context(
+                    user_data_dir=user_data_dir,
+                    headless=headless,
+                    args=["--disable-blink-features=AutomationControlled"],
+                    ignore_default_args=["--no-sandbox"],
+                    user_agent=selected_ua,
+                    viewport={"width": 1280, "height": 1024},
+                    ignore_https_errors=True
+                )
             
         await apply_context_stealth(context)
         page = context.pages[0] if context.pages else await context.new_page()

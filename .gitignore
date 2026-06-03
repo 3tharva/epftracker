@@ -7,3 +7,4 @@ __pycache__/
 vendorList_cleaned.csv
 details_source.html
 test_profile/
+edge_profile_fallback/

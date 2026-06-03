@@ -77,34 +77,64 @@ async def main():
     async with async_playwright() as p:
         import platform
         if platform.system() == "Windows":
-            user_data_dir = os.path.expandvars(r"%LOCALAPPDATA%\Google\Chrome\User Data")
+            user_data_dir = os.path.expandvars(r"%LOCALAPPDATA%\Microsoft\Edge\User Data")
         else:
-            user_data_dir = os.path.expanduser("~/.config/google-chrome")
-        print(f"[*] Launching browser in persistent context using system Chrome profile: '{user_data_dir}'...")
+            user_data_dir = os.path.expanduser("~/.config/microsoft-edge")
+        print(f"[*] Launching browser in persistent context using system Edge profile: '{user_data_dir}'...")
         selected_ua = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
 
         
         try:
             context = await p.chromium.launch_persistent_context(
                 user_data_dir=user_data_dir,
-                channel="chrome",
+                channel="msedge",
                 headless=True,
                 args=["--disable-blink-features=AutomationControlled"],
+                ignore_default_args=["--no-sandbox"],
                 user_agent=selected_ua,
                 viewport={"width": 1280, "height": 1024},
                 ignore_https_errors=True
             )
-            print("[+] Launched persistent context using Google Chrome channel.")
+            print("[+] Launched persistent context using Microsoft Edge channel.")
         except Exception as e:
-            print(f"[*] Fallback: Could not launch with Google Chrome channel ({e}). Launching default Chromium persistent context...")
-            context = await p.chromium.launch_persistent_context(
-                user_data_dir=user_data_dir,
-                headless=True,
-                args=["--disable-blink-features=AutomationControlled"],
-                user_agent=selected_ua,
-                viewport={"width": 1280, "height": 1024},
-                ignore_https_errors=True
-            )
+            if "already in use" in str(e).lower() or "existing browser session" in str(e).lower():
+                print(f"[!] Warning: The Edge profile at '{user_data_dir}' is already in use by a running Edge browser.")
+                fallback_dir = os.path.join(os.getcwd(), "edge_profile_fallback")
+                print(f"[!] Falling back to a separate user data directory: '{fallback_dir}'...")
+                try:
+                    context = await p.chromium.launch_persistent_context(
+                        user_data_dir=fallback_dir,
+                        channel="msedge",
+                        headless=True,
+                        args=["--disable-blink-features=AutomationControlled"],
+                        ignore_default_args=["--no-sandbox"],
+                        user_agent=selected_ua,
+                        viewport={"width": 1280, "height": 1024},
+                        ignore_https_errors=True
+                    )
+                    print("[+] Launched persistent context using Microsoft Edge channel with fallback profile.")
+                except Exception as fallback_e:
+                    print(f"[*] Fallback with Edge channel failed ({fallback_e}). Launching default Chromium persistent context...")
+                    context = await p.chromium.launch_persistent_context(
+                        user_data_dir=fallback_dir,
+                        headless=True,
+                        args=["--disable-blink-features=AutomationControlled"],
+                        ignore_default_args=["--no-sandbox"],
+                        user_agent=selected_ua,
+                        viewport={"width": 1280, "height": 1024},
+                        ignore_https_errors=True
+                    )
+            else:
+                print(f"[*] Fallback: Could not launch with Microsoft Edge channel ({e}). Launching default Chromium persistent context...")
+                context = await p.chromium.launch_persistent_context(
+                    user_data_dir=user_data_dir,
+                    headless=True,
+                    args=["--disable-blink-features=AutomationControlled"],
+                    ignore_default_args=["--no-sandbox"],
+                    user_agent=selected_ua,
+                    viewport={"width": 1280, "height": 1024},
+                    ignore_https_errors=True
+                )
 
 
 
