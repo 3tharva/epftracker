@@ -1,12 +1,18 @@
 import asyncio
 import io
 import re
+import os
 from PIL import Image
 from playwright.async_api import async_playwright
 import google.generativeai as genai
+from dotenv import load_dotenv
 
-API_KEY = "AQ.Ab8RN6IDVNTxAAb1aRQZReNPVvmoB6t4Jw9sdJwuVpxzHK5yng"
+# Load environment variables
+load_dotenv()
+
+API_KEY = os.getenv("GEMINI_API_KEY", "")
 URL = "https://unifiedportal-emp.epfindia.gov.in/publicPortal/no-auth/misReport/home/loadEstSearchHome"
+
 
 def solve_captcha(image_bytes):
     genai.configure(api_key=API_KEY)
@@ -20,10 +26,24 @@ async def main():
     async with async_playwright() as p:
         print("[*] Launching browser...")
         browser = await p.chromium.launch(headless=True)
+        # Configure Zyte proxy if API key is present
+        zyte_api_key = os.getenv("ZYTE_API_KEY")
+        proxy_settings = None
+        if zyte_api_key:
+            print("[*] Configuring browser to route traffic via Zyte Smart Proxy...")
+            proxy_settings = {
+                "server": "http://api.zyte.com:8011",
+                "username": zyte_api_key,
+                "password": ""
+            }
+
         context = await browser.new_context(
             user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
-            viewport={"width": 1280, "height": 1024}
+            viewport={"width": 1280, "height": 1024},
+            proxy=proxy_settings,
+            ignore_https_errors=True if proxy_settings else False
         )
+
         page = await context.new_page()
         
         captcha_failed = False

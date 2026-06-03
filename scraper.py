@@ -7,10 +7,15 @@ import io
 from PIL import Image
 from playwright.async_api import async_playwright
 import google.generativeai as genai
+from dotenv import load_dotenv
 
-# Default Gemini API key provided by the user
-DEFAULT_API_KEY = "AQ.Ab8RN6IDVNTxAAb1aRQZReNPVvmoB6t4Jw9sdJwuVpxzHK5yng"
+# Load environment variables from .env
+load_dotenv()
+
+# Default Gemini API key loaded from environment
+DEFAULT_API_KEY = os.getenv("GEMINI_API_KEY", "")
 DEFAULT_URL = "https://unifiedportal-emp.epfindia.gov.in/publicPortal/no-auth/misReport/home/loadEstSearchHome"
+
 
 def solve_captcha(image_bytes, api_key):
     """
@@ -108,11 +113,25 @@ async def run_scraper(establishment_name, api_key, headless=True):
             args=["--disable-blink-features=AutomationControlled"]
         )
         
+        # Configure Zyte proxy if API key is present
+        zyte_api_key = os.getenv("ZYTE_API_KEY")
+        proxy_settings = None
+        if zyte_api_key:
+            print("[*] Configuring browser to route traffic via Zyte Smart Proxy...")
+            proxy_settings = {
+                "server": "http://api.zyte.com:8011",
+                "username": zyte_api_key,
+                "password": ""
+            }
+
         # Configure context with standard headers and resolution
         context = await browser.new_context(
             user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
-            viewport={"width": 1280, "height": 1024}
+            viewport={"width": 1280, "height": 1024},
+            proxy=proxy_settings,
+            ignore_https_errors=True if proxy_settings else False
         )
+
         
         page = await context.new_page()
         

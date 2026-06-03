@@ -11,7 +11,13 @@ from PIL import Image
 from playwright.async_api import async_playwright
 import time
 import random
-import pytesseract
+import google.generativeai as genai
+from dotenv import load_dotenv
+
+# Load environment variables from .env
+load_dotenv()
+
+
 
 async def human_delay(min_sec=1.0, max_sec=3.0):
     await asyncio.sleep(random.uniform(min_sec, max_sec))
@@ -129,35 +135,16 @@ async def apply_context_stealth(context):
     await context.add_init_script(stealth_js)
 
 
-# Configure Tesseract path for Windows
-pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
-
 # Default values
-DEFAULT_API_KEY = "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"
+
+DEFAULT_API_KEY = os.getenv("OPENROUTER_API_KEY") or os.getenv("GEMINI_API_KEY", "")
 DEFAULT_URL = "https://unifiedportal-emp.epfindia.gov.in/publicPortal/no-auth/misReport/home/loadEstSearchHome"
 
-def preprocess_image(image_bytes):
-    """
-    Applies image preprocessing to improve OCR accuracy on EPFO captchas.
-    """
-    img = Image.open(io.BytesIO(image_bytes))
-    
-    # 1. Convert to grayscale
-    img = img.convert('L')
-    
-    # 2. Resize to 3x for higher resolution text parsing
-    img = img.resize((img.width * 3, img.height * 3), Image.Resampling.LANCZOS)
-    
-    # 3. Threshold to binary (black text on white background)
-    threshold = 135
-    img = img.point(lambda p: 0 if p < threshold else 255)
-    
-    return img
 
 def solve_captcha(image_bytes, api_key=None):
     """
     Solves the captcha. If api_key starts with 'sk-or-v1-', uses OpenRouter API.
-    Otherwise, falls back to local Tesseract OCR.
+    Otherwise, uses Gemini API.
     """
     if api_key and api_key.startswith("sk-or-v1-"):
         print("[*] Solving captcha using OpenRouter API...")
@@ -211,21 +198,33 @@ def solve_captcha(image_bytes, api_key=None):
                 except Exception as e:
                     print(f"[!] OpenRouter ({model}) failed: {e}")
                     
-            print("[!] OpenRouter failed to solve captcha. Falling back to local Tesseract OCR...")
+            print("[!] OpenRouter failed to solve captcha. Falling back to Gemini API...")
         except Exception as outer_e:
             print(f"[!] OpenRouter request setup failed: {outer_e}")
 
-    # Local Tesseract fallback
+    # Google Gemini fallback
     try:
-        processed_img = preprocess_image(image_bytes)
-        custom_config = r'--psm 7 -c tessedit_char_whitelist=abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
-        solution = pytesseract.image_to_string(processed_img, config=custom_config)
+        print("[*] Solving captcha using Google Gemini API...")
+        if api_key:
+            genai.configure(api_key=api_key)
+        else:
+            genai.configure(api_key=os.environ.get("GEMINI_API_KEY"))
+            
+        model = genai.GenerativeModel('gemini-2.5-flash')
+        image = Image.open(io.BytesIO(image_bytes))
+        prompt = (
+            "Solve this captcha image. Output ONLY the alphanumeric captcha code exactly as shown, "
+            "with absolutely no other text, spaces, or explanation."
+        )
+        response = model.generate_content([prompt, image])
+        solution = response.text.strip()
         solution = re.sub(r'[^a-zA-Z0-9]', '', solution)
-        print(f"[+] Local Tesseract solved captcha: '{solution.strip()}'")
-        return solution.strip()
+        print(f"[+] Gemini solved captcha: '{solution}'")
+        return solution
     except Exception as e:
-        print(f"[!] Local Tesseract captcha solver failed: {e}")
+        print(f"[!] Gemini captcha solver failed: {e}")
         return ""
+
 
 def clean_and_deduplicate_csv(input_path, output_path):
     """
@@ -643,6 +642,17 @@ async def run_scraper(limit=None, api_key=DEFAULT_API_KEY, headless=True):
         user_data_dir = os.path.join(os.getcwd(), "chrome_profile")
         selected_ua = random.choice(USER_AGENTS)
         
+        # Configure Zyte proxy if API key is present
+        zyte_api_key = os.getenv("ZYTE_API_KEY")
+        proxy_settings = None
+        if zyte_api_key:
+            print("[*] Configuring browser to route traffic via Zyte Smart Proxy...")
+            proxy_settings = {
+                "server": "http://api.zyte.com:8011",
+                "username": zyte_api_key,
+                "password": ""
+            }
+
         # Try launching with Google Chrome channel first, fallback to default Playwright Chromium
         try:
             context = await p.chromium.launch_persistent_context(
@@ -651,7 +661,9 @@ async def run_scraper(limit=None, api_key=DEFAULT_API_KEY, headless=True):
                 headless=headless,
                 args=["--disable-blink-features=AutomationControlled"],
                 user_agent=selected_ua,
-                viewport={"width": 1280, "height": 1024}
+                viewport={"width": 1280, "height": 1024},
+                proxy=proxy_settings,
+                ignore_https_errors=True if proxy_settings else False
             )
             print("[+] Launched persistent context using Google Chrome channel.")
         except Exception as e:
@@ -661,7 +673,9 @@ async def run_scraper(limit=None, api_key=DEFAULT_API_KEY, headless=True):
                 headless=headless,
                 args=["--disable-blink-features=AutomationControlled"],
                 user_agent=selected_ua,
-                viewport={"width": 1280, "height": 1024}
+                viewport={"width": 1280, "height": 1024},
+                proxy=proxy_settings,
+                ignore_https_errors=True if proxy_settings else False
             )
             
         await apply_context_stealth(context)

@@ -6,4 +6,5 @@ openpyxl
 xlrd
 beautifulsoup4
 html5lib
-pytesseract
+requests
+python-dotenv
