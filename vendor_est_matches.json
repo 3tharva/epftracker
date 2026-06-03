@@ -1,0 +1,1113 @@
+{
+  "352712": {
+    "vendor_name": "M/S Power Pioneers",
+    "vendor_gstn": "23AHVPA7926K1ZY",
+    "status": "no_match_found",
+    "allowed_state_codes": [
+      "MP"
+    ],
+    "target_establishment_id": null,
+    "matched_establishment_ids": []
+  },
+  "611222": {
+    "vendor_name": "JAY MAHAKALI CONSTRUCTION",
+    "vendor_gstn": "08HFOPK3726P1ZK",
+    "status": "success",
+    "allowed_state_codes": [
+      "RJ"
+    ],
+    "target_establishment_id": "RJRAJ2854109000",
+    "matched_establishment_ids": [
+      "RJRAJ2854109000"
+    ]
+  },
+  "352711": {
+    "vendor_name": "M/S Power Pioneers",
+    "vendor_gstn": "08AHVPA7926K1ZQ",
+    "status": "no_match_found",
+    "allowed_state_codes": [
+      "RJ"
+    ],
+    "target_establishment_id": null,
+    "matched_establishment_ids": []
+  },
+  "352653": {
+    "vendor_name": "M/S PN Enterprises",
+    "vendor_gstn": "09AMLPK1754C1Z4",
+    "status": "no_match_found",
+    "allowed_state_codes": [
+      "UP"
+    ],
+    "target_establishment_id": null,
+    "matched_establishment_ids": []
+  },
+  "352710": {
+    "vendor_name": "M/S Power Pioneers",
+    "vendor_gstn": "09AHVPA7926K1ZO",
+    "status": "no_match_found",
+    "allowed_state_codes": [
+      "UP"
+    ],
+    "target_establishment_id": null,
+    "matched_establishment_ids": []
+  },
+  "237362": {
+    "vendor_name": "M/s Jay Mahakali Construction",
+    "vendor_gstn": "09HFOPK3726P1ZI",
+    "status": "no_match_found",
+    "allowed_state_codes": [
+      "UP"
+    ],
+    "target_establishment_id": null,
+    "matched_establishment_ids": []
+  },
+  "236083": {
+    "vendor_name": "ARVIND TECHNO INFRA PRIVATE LIMITED",
+    "vendor_gstn": "09AAVCA0267B1ZO",
+    "status": "success",
+    "allowed_state_codes": [
+      "UP"
+    ],
+    "target_establishment_id": "DLCPM2342274000",
+    "matched_establishment_ids": [
+      "DLCPM2342274000"
+    ],
+    "disclaimer": "Single search result found. State code mismatch ignored (Target: ['UP'], Found: DL)."
+  },
+  "236214": {
+    "vendor_name": "Mundan Infraprojects Private Limite",
+    "vendor_gstn": "09AAMCM9190N1ZG",
+    "status": "success",
+    "allowed_state_codes": [
+      "UP"
+    ],
+    "target_establishment_id": "RJJOD2058861000",
+    "matched_establishment_ids": [
+      "RJJOD2058861000"
+    ],
+    "disclaimer": "Single search result found. State code mismatch ignored (Target: ['UP'], Found: RJ)."
+  },
+  "236636": {
+    "vendor_name": "SHREEPOWERTECH ALLIED PRIVATE LIMIT",
+    "vendor_gstn": "09ABCCS3146F1ZF",
+    "status": "success",
+    "allowed_state_codes": [
+      "UP"
+    ],
+    "target_establishment_id": "UPLKO2923080000",
+    "matched_establishment_ids": [
+      "UPLKO2923080000"
+    ]
+  },
+  "339260": {
+    "vendor_name": "M.F. CONSTRUCTION",
+    "vendor_gstn": "27ABOPF1518R1Z6",
+    "status": "no_match_found",
+    "allowed_state_codes": [
+      "MH"
+    ],
+    "target_establishment_id": null,
+    "matched_establishment_ids": []
+  },
+  "236212": {
+    "vendor_name": "SBCC Buildcon Pvt. Ltd.",
+    "vendor_gstn": "10ABLCS9790E1Z3",
+    "status": "no_match_found",
+    "allowed_state_codes": [
+      "BR"
+    ],
+    "target_establishment_id": null,
+    "matched_establishment_ids": []
+  },
+  "235993": {
+    "vendor_name": "PN ENTERPRISES",
+    "vendor_gstn": "10AMLPK1754C1ZL",
+    "status": "success",
+    "allowed_state_codes": [
+      "BR"
+    ],
+    "target_establishment_id": "BRMUZ2317167000",
+    "matched_establishment_ids": [
+      "BRPAT2268682000",
+      "BRMUZ2317167000"
+    ]
+  },
+  "236056": {
+    "vendor_name": "MAA VINDHYAVASINI DEVELOPERS",
+    "vendor_gstn": "10CYAPK7079M1Z7",
+    "status": "no_match_found",
+    "allowed_state_codes": [
+      "BR"
+    ],
+    "target_establishment_id": null,
+    "matched_establishment_ids": []
+  },
+  "236157": {
+    "vendor_name": "SHREE SAI POWER CONTROL PRIVATE LIM",
+    "vendor_gstn": "29AARCS3448Q1Z8",
+    "status": "no_match_found",
+    "allowed_state_codes": [
+      "KA"
+    ],
+    "target_establishment_id": null,
+    "matched_establishment_ids": []
+  },
+  "236483": {
+    "vendor_name": "DRN Infrastructure Pvt.Ltd",
+    "vendor_gstn": "29AAHCD2154N1ZA",
+    "status": "no_match_found",
+    "allowed_state_codes": [
+      "KA"
+    ],
+    "target_establishment_id": null,
+    "matched_establishment_ids": []
+  },
+  "236492": {
+    "vendor_name": "Raj Enterprises",
+    "vendor_gstn": "29ANHPM9743J2Z9",
+    "status": "no_match_found",
+    "allowed_state_codes": [
+      "KA"
+    ],
+    "target_establishment_id": null,
+    "matched_establishment_ids": []
+  },
+  "236158": {
+    "vendor_name": "STRATA GEOSYSTEMS INDIA PRIVATE LIM",
+    "vendor_gstn": "29AAICS3717K1ZX",
+    "status": "no_match_found",
+    "allowed_state_codes": [
+      "KA"
+    ],
+    "target_establishment_id": null,
+    "matched_establishment_ids": []
+  },
+  "236177": {
+    "vendor_name": "SRL MINING AND DEVELOPER PRIVATE LI",
+    "vendor_gstn": "29AAXCS7720F1ZQ",
+    "status": "success",
+    "allowed_state_codes": [
+      "KA"
+    ],
+    "target_establishment_id": "CGRAI1727864000",
+    "matched_establishment_ids": [
+      "CGRAI1727864000"
+    ],
+    "disclaimer": "Single search result found. State code mismatch ignored (Target: ['KA'], Found: CG)."
+  },
+  "237361": {
+    "vendor_name": "BLOSSOM INFRAVENTURES INDIA PRIVATE",
+    "vendor_gstn": "29AADCB7334A1ZZ",
+    "status": "no_match_found",
+    "allowed_state_codes": [
+      "KA"
+    ],
+    "target_establishment_id": null,
+    "matched_establishment_ids": []
+  },
+  "2230": {
+    "vendor_name": "Strata Geosystems (India) Pvt. Ltd.",
+    "vendor_gstn": "24AAICS3717K1Z7",
+    "status": "no_match_found",
+    "allowed_state_codes": [
+      "GJ"
+    ],
+    "target_establishment_id": null,
+    "matched_establishment_ids": []
+  },
+  "234205": {
+    "vendor_name": "VINAYAK INFRATECHS",
+    "vendor_gstn": "24AAKFV1803G1ZE",
+    "status": "success",
+    "allowed_state_codes": [
+      "GJ"
+    ],
+    "target_establishment_id": "GJRAJ0078298000",
+    "matched_establishment_ids": [
+      "GJRAJ0078298000"
+    ]
+  },
+  "610106": {
+    "vendor_name": "SHANKAR TRANSPORT",
+    "vendor_gstn": "24ACUPC2751Q1Z4",
+    "status": "success",
+    "allowed_state_codes": [
+      "GJ"
+    ],
+    "target_establishment_id": "GJRAJ1829663000",
+    "matched_establishment_ids": [
+      "GJRAJ1829663000"
+    ]
+  },
+  "232065": {
+    "vendor_name": "M/S SHALIMAR ARTS",
+    "vendor_gstn": "24AMCPR7353K1ZQ",
+    "status": "no_match_found",
+    "allowed_state_codes": [
+      "GJ"
+    ],
+    "target_establishment_id": null,
+    "matched_establishment_ids": []
+  },
+  "612262": {
+    "vendor_name": "M & K Infraprojects",
+    "vendor_gstn": "24AUBPM6703F1ZZ",
+    "status": "success",
+    "allowed_state_codes": [
+      "GJ"
+    ],
+    "target_establishment_id": "GJRAJ3624324000",
+    "matched_establishment_ids": [
+      "GJRAJ3624324000"
+    ]
+  },
+  "237033": {
+    "vendor_name": "M/s. J R CONSTRUCTION",
+    "vendor_gstn": "24BLIPP1108C1ZN",
+    "status": "no_match_found",
+    "allowed_state_codes": [
+      "GJ"
+    ],
+    "target_establishment_id": null,
+    "matched_establishment_ids": []
+  },
+  "237284": {
+    "vendor_name": "Jaimanu Enterprise",
+    "vendor_gstn": "24DUYPK9221G1Z6",
+    "status": "no_match_found",
+    "allowed_state_codes": [
+      "GJ"
+    ],
+    "target_establishment_id": null,
+    "matched_establishment_ids": []
+  },
+  "236633": {
+    "vendor_name": "AMBICA ENTERPRISE",
+    "vendor_gstn": "24AQIPD9948E1ZQ",
+    "status": "success",
+    "allowed_state_codes": [
+      "GJ"
+    ],
+    "target_establishment_id": "GJAHD0026313000",
+    "matched_establishment_ids": [
+      "GJRAJ0042247000",
+      "GJAHD0056065000",
+      "GJRAJ1728168000",
+      "GJAHD1598669000",
+      "GJAHD2122413000",
+      "GJNRD3582788000",
+      "GJAHD2985513000",
+      "GJVAT1630089000",
+      "GJAHD0056379000",
+      "GJNRD0062622000",
+      "GJAHD0026313000",
+      "GJAHD1808168000",
+      "GJAHD0051199000",
+      "GJRAJ0042341000"
+    ]
+  },
+  "21040211": {
+    "vendor_name": "SAMAR INFRA PRIVATE LIMITED",
+    "vendor_gstn": "09AAGCD6106M1ZF",
+    "status": "success",
+    "allowed_state_codes": [
+      "UP"
+    ],
+    "target_establishment_id": "MRMRT2706579000",
+    "matched_establishment_ids": [
+      "MRMRT2706579000"
+    ],
+    "disclaimer": "Single search result found. State code mismatch ignored (Target: ['UP'], Found: MR)."
+  },
+  "234296": {
+    "vendor_name": "M/S R R CONSTRUCTION",
+    "vendor_gstn": "09AEAFS4605K1ZW",
+    "status": "no_match_found",
+    "allowed_state_codes": [
+      "UP"
+    ],
+    "target_establishment_id": null,
+    "matched_establishment_ids": []
+  },
+  "231635": {
+    "vendor_name": "AMAN ELECTRICALS",
+    "vendor_gstn": "09AIQPS1543J1ZP",
+    "status": "no_match_found",
+    "allowed_state_codes": [
+      "UP"
+    ],
+    "target_establishment_id": null,
+    "matched_establishment_ids": []
+  },
+  "236012": {
+    "vendor_name": "Ayush procon private limited",
+    "vendor_gstn": "09AAQCA7139M1ZX",
+    "status": "success",
+    "allowed_state_codes": [
+      "UP"
+    ],
+    "target_establishment_id": "GJRAJ1729056000",
+    "matched_establishment_ids": [
+      "GJRAJ1729056000"
+    ],
+    "disclaimer": "Single search result found. State code mismatch ignored (Target: ['UP'], Found: GJ)."
+  },
+  "233288": {
+    "vendor_name": "STRATA GEOSYSTEMS (INDIA)PVT.LTD.",
+    "vendor_gstn": "09AAICS3717K1ZZ",
+    "status": "no_match_found",
+    "allowed_state_codes": [
+      "UP"
+    ],
+    "target_establishment_id": null,
+    "matched_establishment_ids": []
+  },
+  "236504": {
+    "vendor_name": "P. C. CONTRACTOR AND SUPPLIER",
+    "vendor_gstn": "09FPKPS0838N1Z0",
+    "status": "no_match_found",
+    "allowed_state_codes": [
+      "UP"
+    ],
+    "target_establishment_id": null,
+    "matched_establishment_ids": []
+  },
+  "337099": {
+    "vendor_name": "A.K.INFRATECH",
+    "vendor_gstn": "09BJAPA2524D1ZY",
+    "status": "no_match_found",
+    "allowed_state_codes": [
+      "UP"
+    ],
+    "target_establishment_id": null,
+    "matched_establishment_ids": []
+  },
+  "236957": {
+    "vendor_name": "AVC CONSTRUCTIONS AND SUPPLIERS",
+    "vendor_gstn": "09ACEFA4670L1Z3",
+    "status": "success",
+    "allowed_state_codes": [
+      "UP"
+    ],
+    "target_establishment_id": "UPLKO3328931000",
+    "matched_establishment_ids": [
+      "UPLKO3328931000"
+    ]
+  },
+  "608904": {
+    "vendor_name": "SHIVAM CONSTRUCTION COMPANY",
+    "vendor_gstn": "09ABLPY7083K1ZM",
+    "status": "no_match_found",
+    "allowed_state_codes": [
+      "UP"
+    ],
+    "target_establishment_id": null,
+    "matched_establishment_ids": []
+  },
+  "237043": {
+    "vendor_name": "PSH INFRA TECH PRIVATE LIMITED",
+    "vendor_gstn": "09AAPCP8400K1ZX",
+    "status": "success",
+    "allowed_state_codes": [
+      "UP"
+    ],
+    "target_establishment_id": "MRMRT3609560000",
+    "matched_establishment_ids": [
+      "MRMRT3609560000"
+    ],
+    "disclaimer": "Single search result found. State code mismatch ignored (Target: ['UP'], Found: MR)."
+  },
+  "237088": {
+    "vendor_name": "SHAILESH GOND",
+    "vendor_gstn": "09CFWPG4115H1Z7",
+    "status": "no_match_found",
+    "allowed_state_codes": [
+      "UP"
+    ],
+    "target_establishment_id": null,
+    "matched_establishment_ids": []
+  },
+  "353024": {
+    "vendor_name": "VISHWAKARMA HIGHWAY PRIVATE LIMITED",
+    "vendor_gstn": "22AALCV7522L1Z0",
+    "status": "success",
+    "allowed_state_codes": [
+      "RY",
+      "CG"
+    ],
+    "target_establishment_id": "GNRTK3842971000",
+    "matched_establishment_ids": [
+      "GNRTK3842971000"
+    ],
+    "disclaimer": "Single search result found. State code mismatch ignored (Target: ['RY', 'CG'], Found: GN)."
+  },
+  "244474": {
+    "vendor_name": "CURRENT INFRAPROJECTS LIMITED",
+    "vendor_gstn": "24AAFCC5295H1ZK",
+    "status": "success",
+    "allowed_state_codes": [
+      "GJ"
+    ],
+    "target_establishment_id": "RJRAJ0026875000",
+    "matched_establishment_ids": [
+      "RJRAJ0026875000"
+    ],
+    "disclaimer": "Single search result found. State code mismatch ignored (Target: ['GJ'], Found: RJ)."
+  },
+  "236241": {
+    "vendor_name": "M/S SHIVOM INFRAPROJECTS PRIVATE LI",
+    "vendor_gstn": "24ABMCS6169G1ZY",
+    "status": "success",
+    "allowed_state_codes": [
+      "GJ"
+    ],
+    "target_establishment_id": "GJRAJ3191400000",
+    "matched_establishment_ids": [
+      "GJRAJ3191400000"
+    ]
+  },
+  "237004": {
+    "vendor_name": "Y. N. Dhanani",
+    "vendor_gstn": "24ACCPD5885A1Z1",
+    "status": "no_match_found",
+    "allowed_state_codes": [
+      "GJ"
+    ],
+    "target_establishment_id": null,
+    "matched_establishment_ids": []
+  },
+  "613252": {
+    "vendor_name": "M/S J M SHAH",
+    "vendor_gstn": "24AALFJ8719J2ZW",
+    "status": "success",
+    "allowed_state_codes": [
+      "GJ"
+    ],
+    "target_establishment_id": "SRSRT1467196000",
+    "matched_establishment_ids": [
+      "SRSRT1467196000"
+    ],
+    "disclaimer": "Single search result found. State code mismatch ignored (Target: ['GJ'], Found: SR)."
+  },
+  "236751": {
+    "vendor_name": "ROADLINK INFRATECH PRIVATE LIMITED",
+    "vendor_gstn": "24AAICR1454N1Z4",
+    "status": "success",
+    "allowed_state_codes": [
+      "GJ"
+    ],
+    "target_establishment_id": "RJRAJ1580154000",
+    "matched_establishment_ids": [
+      "RJRAJ1580154000"
+    ],
+    "disclaimer": "Single search result found. State code mismatch ignored (Target: ['GJ'], Found: RJ)."
+  },
+  "236682": {
+    "vendor_name": "M/S A N SHAH",
+    "vendor_gstn": "24AANFM4951B1ZF",
+    "status": "no_match_found",
+    "allowed_state_codes": [
+      "GJ"
+    ],
+    "target_establishment_id": null,
+    "matched_establishment_ids": []
+  },
+  "231836": {
+    "vendor_name": "STRATA GEOSYSTEMS INDIA PVT LTD",
+    "vendor_gstn": "27AAICS3717K1Z1",
+    "status": "no_match_found",
+    "allowed_state_codes": [
+      "MH"
+    ],
+    "target_establishment_id": null,
+    "matched_establishment_ids": []
+  },
+  "339970": {
+    "vendor_name": "HKBN ELECTRICAL CONTRACTOR",
+    "vendor_gstn": "29AMHPB4953G1Z0",
+    "status": "no_match_found",
+    "allowed_state_codes": [
+      "KA"
+    ],
+    "target_establishment_id": null,
+    "matched_establishment_ids": []
+  },
+  "236130": {
+    "vendor_name": "RADHE ENGINEERS",
+    "vendor_gstn": "29AAIFR1651A1ZG",
+    "status": "no_match_found",
+    "allowed_state_codes": [
+      "KA"
+    ],
+    "target_establishment_id": null,
+    "matched_establishment_ids": []
+  },
+  "236202": {
+    "vendor_name": "M B INFRAPROJECTS PRIVATE LIMITED",
+    "vendor_gstn": "29AAICM7088D1Z2",
+    "status": "no_match_found",
+    "allowed_state_codes": [
+      "KA"
+    ],
+    "target_establishment_id": null,
+    "matched_establishment_ids": []
+  },
+  "236491": {
+    "vendor_name": "DKJ ENGINEERING PRIVATE LIMITED",
+    "vendor_gstn": "29AAKCD0117G1ZV",
+    "status": "success",
+    "allowed_state_codes": [
+      "KA"
+    ],
+    "target_establishment_id": "RJJOD2930890000",
+    "matched_establishment_ids": [
+      "RJJOD2930890000"
+    ],
+    "disclaimer": "Single search result found. State code mismatch ignored (Target: ['KA'], Found: RJ)."
+  },
+  "21040666": {
+    "vendor_name": "S&T INFRA",
+    "vendor_gstn": "36AFLFS7169E1ZI",
+    "status": "success",
+    "allowed_state_codes": [
+      "TS"
+    ],
+    "target_establishment_id": "MRNOI3795487000",
+    "matched_establishment_ids": [
+      "MRNOI3795487000"
+    ],
+    "disclaimer": "Single search result found. State code mismatch ignored (Target: ['TS'], Found: MR)."
+  },
+  "350587": {
+    "vendor_name": "VISION INFRA EQUIPMENT SOLUTIONS LI",
+    "vendor_gstn": "27AAJCV8920G1ZZ",
+    "status": "success",
+    "allowed_state_codes": [
+      "MH"
+    ],
+    "target_establishment_id": "PUPUN3178602000",
+    "matched_establishment_ids": [
+      "PUPUN3178602000"
+    ],
+    "disclaimer": "Single search result found. State code mismatch ignored (Target: ['MH'], Found: PU)."
+  },
+  "236884": {
+    "vendor_name": "REGAL INFRACORE LIMITED",
+    "vendor_gstn": "09AANCR9535K1ZJ",
+    "status": "no_match_found",
+    "allowed_state_codes": [
+      "UP"
+    ],
+    "target_establishment_id": null,
+    "matched_establishment_ids": []
+  },
+  "244370": {
+    "vendor_name": "ASSOCIATE ENGINEERING",
+    "vendor_gstn": "09BABPS8361Q1ZS",
+    "status": "no_match_found",
+    "allowed_state_codes": [
+      "UP"
+    ],
+    "target_establishment_id": null,
+    "matched_establishment_ids": []
+  },
+  "237332": {
+    "vendor_name": "G H CONTRACTOR",
+    "vendor_gstn": "09AOYPI9761E1Z6",
+    "status": "no_match_found",
+    "allowed_state_codes": [
+      "UP"
+    ],
+    "target_establishment_id": null,
+    "matched_establishment_ids": []
+  },
+  "235055": {
+    "vendor_name": "RUDRA INFRASTRUCTURE",
+    "vendor_gstn": "24AASFR2515H1Z5",
+    "status": "success",
+    "allowed_state_codes": [
+      "GJ"
+    ],
+    "target_establishment_id": "GJAHD0053313000",
+    "matched_establishment_ids": [
+      "GJAHD0053313000",
+      "GJRAJ3100951000",
+      "GJAHD1741444000"
+    ]
+  },
+  "236990": {
+    "vendor_name": "REGAL INFRACORE LIMITED",
+    "vendor_gstn": "03AANCR9535K1ZV",
+    "status": "no_match_found",
+    "allowed_state_codes": [
+      "PB"
+    ],
+    "target_establishment_id": null,
+    "matched_establishment_ids": []
+  },
+  "236303": {
+    "vendor_name": "STRATA GEOSYSTEMS INDIA PRIVATE LIM",
+    "vendor_gstn": "03AAICS3717K1ZB",
+    "status": "no_match_found",
+    "allowed_state_codes": [
+      "PB"
+    ],
+    "target_establishment_id": null,
+    "matched_establishment_ids": []
+  },
+  "232092": {
+    "vendor_name": "POWER PIONEERS",
+    "vendor_gstn": "37AHVPA7926K1ZP",
+    "status": "success",
+    "allowed_state_codes": [
+      "AP"
+    ],
+    "target_establishment_id": "APHYD0061652000",
+    "matched_establishment_ids": [
+      "APHYD0061652000"
+    ]
+  },
+  "235355": {
+    "vendor_name": "STRATA GEOSYSTEMS (INDIA) PVT LTD",
+    "vendor_gstn": "37AAICS3717K1Z0",
+    "status": "no_match_found",
+    "allowed_state_codes": [
+      "AP"
+    ],
+    "target_establishment_id": null,
+    "matched_establishment_ids": []
+  },
+  "236152": {
+    "vendor_name": "AI BUILDCON LLP",
+    "vendor_gstn": "37ABRFA5649P1ZG",
+    "status": "success",
+    "allowed_state_codes": [
+      "AP"
+    ],
+    "target_establishment_id": "PUPUN2313037000",
+    "matched_establishment_ids": [
+      "PUPUN2313037000"
+    ],
+    "disclaimer": "Single search result found. State code mismatch ignored (Target: ['AP'], Found: PU)."
+  },
+  "236280": {
+    "vendor_name": "JAIN PIPE TRADERS PRIVATE LIMITED",
+    "vendor_gstn": "37AAFCJ0381B1ZX",
+    "status": "success",
+    "allowed_state_codes": [
+      "AP"
+    ],
+    "target_establishment_id": "GNGGN2256275000",
+    "matched_establishment_ids": [
+      "GNGGN2256275000"
+    ],
+    "disclaimer": "Single search result found. State code mismatch ignored (Target: ['AP'], Found: GN)."
+  },
+  "236574": {
+    "vendor_name": "CHINTHAGALLA SANKAR",
+    "vendor_gstn": "37BCXPC3138D1ZL",
+    "status": "no_match_found",
+    "allowed_state_codes": [
+      "AP"
+    ],
+    "target_establishment_id": null,
+    "matched_establishment_ids": []
+  },
+  "236675": {
+    "vendor_name": "SHALIMAR ARTS",
+    "vendor_gstn": "37AMCPR7353K1ZJ",
+    "status": "no_match_found",
+    "allowed_state_codes": [
+      "AP"
+    ],
+    "target_establishment_id": null,
+    "matched_establishment_ids": []
+  },
+  "237341": {
+    "vendor_name": "MANDIPALLI MADHUSUDHAN REDDY",
+    "vendor_gstn": "37BMXPM1279D1ZK",
+    "status": "no_match_found",
+    "allowed_state_codes": [
+      "AP"
+    ],
+    "target_establishment_id": null,
+    "matched_establishment_ids": []
+  },
+  "237395": {
+    "vendor_name": "ADIL ALI KHAN PATTAN",
+    "vendor_gstn": "37KEYPK0539C1Z2",
+    "status": "no_match_found",
+    "allowed_state_codes": [
+      "AP"
+    ],
+    "target_establishment_id": null,
+    "matched_establishment_ids": []
+  },
+  "237279": {
+    "vendor_name": "AADHARSHILA INFRATECH PVT LTD",
+    "vendor_gstn": "10AAICA5990J1ZL",
+    "status": "no_match_found",
+    "allowed_state_codes": [
+      "BR"
+    ],
+    "target_establishment_id": null,
+    "matched_establishment_ids": []
+  },
+  "237092": {
+    "vendor_name": "SHIVAM CONCRETE TECH AND CONL PVT.L",
+    "vendor_gstn": "24AAMCS5791D1Z4",
+    "status": "no_match_found",
+    "allowed_state_codes": [
+      "GJ"
+    ],
+    "target_establishment_id": null,
+    "matched_establishment_ids": []
+  },
+  "236029": {
+    "vendor_name": "ECOSTRUCTIVE GEOSYSTEM LLP",
+    "vendor_gstn": "08AAKFE3222A1Z0",
+    "status": "success",
+    "allowed_state_codes": [
+      "RJ"
+    ],
+    "target_establishment_id": "UPLKO2980125000",
+    "matched_establishment_ids": [
+      "UPLKO2980125000"
+    ],
+    "disclaimer": "Single search result found. State code mismatch ignored (Target: ['RJ'], Found: UP)."
+  },
+  "234801": {
+    "vendor_name": "THE VISION HOUSE",
+    "vendor_gstn": "08AHVPG8733E1ZY",
+    "status": "success",
+    "allowed_state_codes": [
+      "RJ"
+    ],
+    "target_establishment_id": "RJRAJ0020267000",
+    "matched_establishment_ids": [
+      "RJRAJ0020267000"
+    ]
+  },
+  "234766": {
+    "vendor_name": "PN ENTERPRISES",
+    "vendor_gstn": "03AMLPK1754C1ZG",
+    "status": "no_match_found",
+    "allowed_state_codes": [
+      "PB"
+    ],
+    "target_establishment_id": null,
+    "matched_establishment_ids": []
+  },
+  "243698": {
+    "vendor_name": "AVTAR SINGH EARTH MOVER",
+    "vendor_gstn": "03CGTPS9409J1ZO",
+    "status": "no_match_found",
+    "allowed_state_codes": [
+      "PB"
+    ],
+    "target_establishment_id": null,
+    "matched_establishment_ids": []
+  },
+  "612014": {
+    "vendor_name": "BHANGAL BUILDING MATERIAL",
+    "vendor_gstn": "03AUPPB5464L1ZF",
+    "status": "no_match_found",
+    "allowed_state_codes": [
+      "PB"
+    ],
+    "target_establishment_id": null,
+    "matched_establishment_ids": []
+  },
+  "244541": {
+    "vendor_name": "PN ENTERPRISES",
+    "vendor_gstn": "08AMLPK1754C2Z5",
+    "status": "no_match_found",
+    "allowed_state_codes": [
+      "RJ"
+    ],
+    "target_establishment_id": null,
+    "matched_establishment_ids": []
+  },
+  "237392": {
+    "vendor_name": "DURGA CONSTRUCTION COMPANY",
+    "vendor_gstn": "09AAEFD6106G1ZO",
+    "status": "no_match_found",
+    "allowed_state_codes": [
+      "UP"
+    ],
+    "target_establishment_id": null,
+    "matched_establishment_ids": []
+  },
+  "609363": {
+    "vendor_name": "Shiv Enterprises",
+    "vendor_gstn": "08CRZPG9182M1ZL",
+    "status": "no_match_found",
+    "allowed_state_codes": [
+      "RJ"
+    ],
+    "target_establishment_id": null,
+    "matched_establishment_ids": []
+  },
+  "611798": {
+    "vendor_name": "N K M INFRA CONSTRUCTION",
+    "vendor_gstn": "23BUUPB6110R1ZA",
+    "status": "no_match_found",
+    "allowed_state_codes": [
+      "MP"
+    ],
+    "target_establishment_id": null,
+    "matched_establishment_ids": []
+  },
+  "352555": {
+    "vendor_name": "RAVI INFRABUILD PROJECTS LIMITED",
+    "vendor_gstn": "23AAECR2780H1ZG",
+    "status": "success",
+    "allowed_state_codes": [
+      "MP"
+    ],
+    "target_establishment_id": "RJUDR0012270000",
+    "matched_establishment_ids": [
+      "RJUDR0012270000"
+    ],
+    "disclaimer": "Single search result found. State code mismatch ignored (Target: ['MP'], Found: RJ)."
+  },
+  "236658": {
+    "vendor_name": "JP ENTERPRISES",
+    "vendor_gstn": "27AAAFJ0870H1ZJ",
+    "status": "no_match_found",
+    "allowed_state_codes": [
+      "MH"
+    ],
+    "target_establishment_id": null,
+    "matched_establishment_ids": []
+  },
+  "234154": {
+    "vendor_name": "DEVANSH INTERIORS",
+    "vendor_gstn": "29AKIPJ2230P1ZU",
+    "status": "failed_error: Locator.inner_text: Timeout 30000ms exceeded.\nCall log:\n  - waiting for locator(\"#tablecontainer\")\n",
+    "matched_establishment_ids": []
+  },
+  "236865": {
+    "vendor_name": "ANSH ENTERPRISES",
+    "vendor_gstn": "09ABYFA9817C1ZX",
+    "status": "no_match_found",
+    "allowed_state_codes": [
+      "UP"
+    ],
+    "target_establishment_id": null,
+    "matched_establishment_ids": []
+  },
+  "237272": {
+    "vendor_name": "MEER CHEM PRIVATE LIMITED",
+    "vendor_gstn": "22AARCM4619B1ZO",
+    "status": "success",
+    "allowed_state_codes": [
+      "RY",
+      "CG"
+    ],
+    "target_establishment_id": "CGRAI3135765000",
+    "matched_establishment_ids": [
+      "CGRAI3135765000"
+    ]
+  },
+  "237289": {
+    "vendor_name": "RAM CONSTRUCTION",
+    "vendor_gstn": "27APCPT0676G1ZP",
+    "status": "no_match_found",
+    "allowed_state_codes": [
+      "MH"
+    ],
+    "target_establishment_id": null,
+    "matched_establishment_ids": []
+  },
+  "351664": {
+    "vendor_name": "AUTOMARK INDUSTRIES (INDIA) PRIVATE",
+    "vendor_gstn": "27AABCA5098C1ZT",
+    "status": "success",
+    "allowed_state_codes": [
+      "MH"
+    ],
+    "target_establishment_id": "NGAKL0110731000",
+    "matched_establishment_ids": [
+      "NGAKL0110731000"
+    ],
+    "disclaimer": "Single search result found. State code mismatch ignored (Target: ['MH'], Found: NG)."
+  },
+  "237324": {
+    "vendor_name": "AKR NIRMAN PRIVATE LIMITED",
+    "vendor_gstn": "27AAZCA4314P1ZX",
+    "status": "success",
+    "allowed_state_codes": [
+      "MH"
+    ],
+    "target_establishment_id": "MRNOI3081116000",
+    "matched_establishment_ids": [
+      "MRNOI3081116000"
+    ],
+    "disclaimer": "Single search result found. State code mismatch ignored (Target: ['MH'], Found: MR)."
+  },
+  "237353": {
+    "vendor_name": "STELA INFRASTRUCTURE",
+    "vendor_gstn": "27EJHPS5100R1ZL",
+    "status": "success",
+    "allowed_state_codes": [
+      "MH"
+    ],
+    "target_establishment_id": "NGNAG3890661000",
+    "matched_establishment_ids": [
+      "NGNAG3890661000"
+    ],
+    "disclaimer": "Single search result found. State code mismatch ignored (Target: ['MH'], Found: NG)."
+  },
+  "237409": {
+    "vendor_name": "DARSHANSINGH DARASIN BAWARI",
+    "vendor_gstn": "nan",
+    "status": "skipped_no_state_code",
+    "matched_establishment_ids": []
+  },
+  "237462": {
+    "vendor_name": "GREENVENT PRIVATE LIMITED",
+    "vendor_gstn": "09AAHCG0917C1ZX",
+    "status": "success",
+    "allowed_state_codes": [
+      "UP"
+    ],
+    "target_establishment_id": "MRNOI3022989000",
+    "matched_establishment_ids": [
+      "MRNOI3022989000"
+    ],
+    "disclaimer": "Single search result found. State code mismatch ignored (Target: ['UP'], Found: MR)."
+  },
+  "654540": {
+    "vendor_name": "V&H CONSTRUCTIONS",
+    "vendor_gstn": "27AANFV7568H1ZD",
+    "status": "success",
+    "allowed_state_codes": [
+      "MH"
+    ],
+    "target_establishment_id": "MHBAN3155106000",
+    "matched_establishment_ids": [
+      "MHBAN3155106000"
+    ]
+  },
+  "234092": {
+    "vendor_name": "SHREE SAI POWER CONTROL PRIVATE LIM",
+    "vendor_gstn": "27AARCS3448Q1ZC",
+    "status": "no_match_found",
+    "allowed_state_codes": [
+      "MH"
+    ],
+    "target_establishment_id": null,
+    "matched_establishment_ids": []
+  },
+  "236850": {
+    "vendor_name": "BLOSSOM INFRAVENTURES INDIA PRIVATE",
+    "vendor_gstn": "27AADCB7334A1Z3",
+    "status": "no_match_found",
+    "allowed_state_codes": [
+      "MH"
+    ],
+    "target_establishment_id": null,
+    "matched_establishment_ids": []
+  },
+  "236911": {
+    "vendor_name": "MAHADEV CONTRACTOR",
+    "vendor_gstn": "27OSVPK2410K1Z2",
+    "status": "no_match_found",
+    "allowed_state_codes": [
+      "MH"
+    ],
+    "target_establishment_id": null,
+    "matched_establishment_ids": []
+  },
+  "237135": {
+    "vendor_name": "KHANDELWAL INFRAHEIGHTS PRIVATE LIM",
+    "vendor_gstn": "27AAGCK1162J1ZI",
+    "status": "no_match_found",
+    "allowed_state_codes": [
+      "MH"
+    ],
+    "target_establishment_id": null,
+    "matched_establishment_ids": []
+  },
+  "237201": {
+    "vendor_name": "GOTIYA CONSTRUCTION COMPANY",
+    "vendor_gstn": "27GCEPD8374L1Z2",
+    "status": "no_match_found",
+    "allowed_state_codes": [
+      "MH"
+    ],
+    "target_establishment_id": null,
+    "matched_establishment_ids": []
+  },
+  "237411": {
+    "vendor_name": "GLOBE INFRA SOLUTIONS",
+    "vendor_gstn": "27AARFG7990E1ZS",
+    "status": "no_match_found",
+    "allowed_state_codes": [
+      "MH"
+    ],
+    "target_establishment_id": null,
+    "matched_establishment_ids": []
+  },
+  "236371": {
+    "vendor_name": "SIDDHI VINAYAK ENTERPRISES",
+    "vendor_gstn": "08AONPY1278F1ZD",
+    "status": "no_match_found",
+    "allowed_state_codes": [
+      "RJ"
+    ],
+    "target_establishment_id": null,
+    "matched_establishment_ids": []
+  },
+  "235130": {
+    "vendor_name": "MAULI ENTERPRISES",
+    "vendor_gstn": "27BCDPS7988H1ZS",
+    "status": "no_match_found",
+    "allowed_state_codes": [
+      "MH"
+    ],
+    "target_establishment_id": null,
+    "matched_establishment_ids": []
+  },
+  "232052": {
+    "vendor_name": "SHALIMAR ARTS",
+    "vendor_gstn": "27AMCPR7353K1ZK",
+    "status": "no_match_found",
+    "allowed_state_codes": [
+      "MH"
+    ],
+    "target_establishment_id": null,
+    "matched_establishment_ids": []
+  },
+  "352346": {
+    "vendor_name": "Sohan Constructions",
+    "vendor_gstn": "09IGKPS7331Q1Z8",
+    "status": "no_match_found",
+    "allowed_state_codes": [
+      "UP"
+    ],
+    "target_establishment_id": null,
+    "matched_establishment_ids": []
+  },
+  "236886": {
+    "vendor_name": "GREEN INFRA",
+    "vendor_gstn": "08AMGPA1908F1ZJ",
+    "status": "no_match_found",
+    "allowed_state_codes": [
+      "RJ"
+    ],
+    "target_establishment_id": null,
+    "matched_establishment_ids": []
+  },
+  "237026": {
+    "vendor_name": "AMCC CONSTRUCTION",
+    "vendor_gstn": "08AVAPA2538E1Z5",
+    "status": "no_match_found",
+    "allowed_state_codes": [
+      "RJ"
+    ],
+    "target_establishment_id": null,
+    "matched_establishment_ids": []
+  }
+}
