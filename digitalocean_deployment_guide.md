@@ -67,7 +67,8 @@ Once your project files (specifically `requirements.txt`, `vendor_scraper.py`, `
 python3 -m venv venv
 
 # Automatically set the OpenRouter API Key when activating the virtual environment
-echo 'export OPENROUTER_API_KEY="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"' >> venv/bin/activate
+echo 'export OPENROUTER_API_KEY=
+>> venv/bin/activate
 
 # Activate the virtual environment
 source venv/bin/activate
