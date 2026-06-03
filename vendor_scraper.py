@@ -356,6 +356,22 @@ async def execute_search_for_query(page, query, allowed_state_codes, api_key):
     """
     Executes search for a single query. Returns (target_est_id, downloaded_files, disclaimer).
     """
+    captcha_failed = False
+    alert_msg = ""
+    
+    async def handle_alert(dialog):
+        nonlocal captcha_failed, alert_msg
+        alert_msg = dialog.message
+        msg_lower = alert_msg.lower()
+        if "no details found" in msg_lower or "valid establishment name" in msg_lower:
+            print(f"[-] Alert: '{alert_msg}'. No details found for this search. Will not retry captcha.")
+            captcha_failed = False
+        elif "captcha" in msg_lower or "invalid" in msg_lower or "wrong" in msg_lower:
+            captcha_failed = True
+        await dialog.dismiss()
+        
+    page.on("dialog", handle_alert)
+    
     max_attempts = 5
     for attempt in range(1, max_attempts + 1):
         # Go to home/reset page if we are not there
@@ -382,21 +398,10 @@ async def execute_search_for_query(page, query, allowed_state_codes, api_key):
             
         await human_type(page, "#captcha", captcha_solution)
         
+        # Reset states before click to ensure fresh capture
         captcha_failed = False
         alert_msg = ""
         
-        async def handle_alert(dialog):
-            nonlocal captcha_failed, alert_msg
-            alert_msg = dialog.message
-            msg_lower = alert_msg.lower()
-            if "no details found" in msg_lower or "valid establishment name" in msg_lower:
-                print(f"[-] Alert: '{alert_msg}'. No details found for this search. Will not retry captcha.")
-                captcha_failed = False
-            elif "captcha" in msg_lower or "invalid" in msg_lower or "wrong" in msg_lower:
-                captcha_failed = True
-            await dialog.dismiss()
-            
-        page.on("dialog", handle_alert)
         await human_click(page, "#searchEmployer")
         
         # Wait for loading overlay (blockUI) to hide
@@ -407,13 +412,13 @@ async def execute_search_for_query(page, query, allowed_state_codes, api_key):
             
         # Small wait for UI stabilization
         await human_delay(1.0, 2.0)
-        page.remove_listener("dialog", handle_alert)
         
         if captcha_failed:
             print("[!] Incorrect captcha. Retrying...")
             continue
             
         if alert_msg:
+            page.remove_listener("dialog", handle_alert)
             if "no details found" in alert_msg.lower() or "valid establishment name" in alert_msg.lower():
                 print(f"[-] Search blocked by 'No Details Found' alert. Skipping query: '{query}'")
                 return None, [], None
@@ -422,6 +427,7 @@ async def execute_search_for_query(page, query, allowed_state_codes, api_key):
             
         container_text = await page.locator("#tablecontainer").inner_text()
         if "no records" in container_text.lower():
+            page.remove_listener("dialog", handle_alert)
             print("[-] No records found for this query.")
             return None, [], None
             
@@ -571,8 +577,10 @@ async def execute_search_for_query(page, query, allowed_state_codes, api_key):
                 except Exception as e:
                     print(f"[!] Export download {i+1} failed: {e}")
                     
+        page.remove_listener("dialog", handle_alert)
         return target_est_id, download_paths, disclaimer
         
+    page.remove_listener("dialog", handle_alert)
     print("[!] Failed to solve captcha after maximum search attempts.")
     return None, [], None
 
@@ -878,6 +886,22 @@ async def scrape_establishment_by_code(page, matched_id, api_key):
     code_7 = matched_id[5:12]
     print(f"[*] Searching for matched ID: '{matched_id}' using 7-digit code: '{code_7}'")
     
+    captcha_failed = False
+    alert_msg = ""
+    
+    async def handle_alert(dialog):
+        nonlocal captcha_failed, alert_msg
+        alert_msg = dialog.message
+        msg_lower = alert_msg.lower()
+        if "no details found" in msg_lower or "valid establishment name" in msg_lower:
+            print(f"[-] Alert: '{alert_msg}'. No details found for this search. Will not retry captcha.")
+            captcha_failed = False
+        elif "captcha" in msg_lower or "invalid" in msg_lower or "wrong" in msg_lower:
+            captcha_failed = True
+        await dialog.dismiss()
+        
+    page.on("dialog", handle_alert)
+    
     max_attempts = 5
     for attempt in range(1, max_attempts + 1):
         await navigate_with_retry(page, DEFAULT_URL)
@@ -906,21 +930,10 @@ async def scrape_establishment_by_code(page, matched_id, api_key):
             
         await human_type(page, "#captcha", captcha_solution)
         
+        # Reset states before click to ensure fresh capture
         captcha_failed = False
         alert_msg = ""
         
-        async def handle_alert(dialog):
-            nonlocal captcha_failed, alert_msg
-            alert_msg = dialog.message
-            msg_lower = alert_msg.lower()
-            if "no details found" in msg_lower or "valid establishment name" in msg_lower:
-                print(f"[-] Alert: '{alert_msg}'. No details found for this search. Will not retry captcha.")
-                captcha_failed = False
-            elif "captcha" in msg_lower or "invalid" in msg_lower or "wrong" in msg_lower:
-                captcha_failed = True
-            await dialog.dismiss()
-            
-        page.on("dialog", handle_alert)
         await human_click(page, "#searchEmployer")
         
         # Wait for loading overlay (blockUI) to hide
@@ -931,13 +944,13 @@ async def scrape_establishment_by_code(page, matched_id, api_key):
             
         # Small wait for UI stabilization
         await human_delay(1.0, 2.0)
-        page.remove_listener("dialog", handle_alert)
         
         if captcha_failed:
             print("[!] Incorrect captcha. Retrying...")
             continue
             
         if alert_msg:
+            page.remove_listener("dialog", handle_alert)
             if "no details found" in alert_msg.lower() or "valid establishment name" in alert_msg.lower():
                 print(f"[-] Search blocked by 'No Details Found' alert. Skipping matched ID: '{matched_id}'")
                 return None, []
@@ -946,6 +959,7 @@ async def scrape_establishment_by_code(page, matched_id, api_key):
             
         container_text = await page.locator("#tablecontainer").inner_text()
         if "no records" in container_text.lower():
+            page.remove_listener("dialog", handle_alert)
             print(f"[-] No records found for matched ID: '{matched_id}'")
             return None, []
             
@@ -958,6 +972,7 @@ async def scrape_establishment_by_code(page, matched_id, api_key):
         tbody_tr = page.locator("#tablecontainer table tbody tr")
         row_count = await tbody_tr.count()
         if row_count == 0:
+            page.remove_listener("dialog", handle_alert)
             print("[-] Results table is empty.")
             return None, []
             
@@ -965,6 +980,7 @@ async def scrape_establishment_by_code(page, matched_id, api_key):
         action_cell = tds.last
         action_link = action_cell.locator("a, button, input[type='button']").first
         if await action_link.count() == 0:
+            page.remove_listener("dialog", handle_alert)
             print("[-] View Report action button not found.")
             return None, []
             
@@ -1003,8 +1019,10 @@ async def scrape_establishment_by_code(page, matched_id, api_key):
                 except Exception as e:
                     print(f"[!] Export download {i+1} failed: {e}")
                     
+        page.remove_listener("dialog", handle_alert)
         return tables_data, download_paths
         
+    page.remove_listener("dialog", handle_alert)
     print("[!] Failed to solve captcha after maximum attempts.")
     return None, []
 
