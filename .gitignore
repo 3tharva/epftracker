@@ -5,5 +5,4 @@ downloads/
 __pycache__/
 *.pyc
 vendorList_cleaned.csv
-vendor_est_matches.json
 details_source.html
