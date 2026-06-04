@@ -10,7 +10,7 @@ import base64
 import requests
 import pandas as pd
 from PIL import Image
-from playwright.async_api import async_playwright
+from patchright.async_api import async_playwright
 import time
 import random
 from dotenv import load_dotenv
@@ -112,28 +112,6 @@ USER_AGENTS = [
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:124.0) Gecko/20100101 Firefox/124.0",
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36 Edg/124.0.0.0"
 ]
-
-async def apply_context_stealth(context):
-    """
-    Applies stealth settings to the browser context to bypass WAF bot checks.
-    """
-    stealth_js = """
-    Object.defineProperty(navigator, 'webdriver', {
-        get: () => undefined
-    });
-    window.navigator.chrome = {
-        runtime: {},
-        loadTimes: () => {},
-        csi: () => {}
-    };
-    Object.defineProperty(navigator, 'plugins', {
-        get: () => [1, 2, 3, 4, 5]
-    });
-    Object.defineProperty(navigator, 'languages', {
-        get: () => ['en-US', 'en']
-    });
-    """
-    await context.add_init_script(stealth_js)
 
 
 # Load environment variables from local .env file if it exists
@@ -578,9 +556,10 @@ async def navigate_with_retry(page, url, retries=3):
             await asyncio.sleep(5)
     return False
 
-async def execute_search_for_query(page, query, allowed_state_codes, api_key, office_state_map):
+async def execute_search_for_query(page, query, allowed_state_codes, api_key, office_state_map, vendor_code="unknown"):
     """
     Executes search for a single query. Returns (target_est_id, downloaded_files, disclaimer).
+    Downloads are saved to downloads/{vendor_code}/ so concurrent workers never share a path.
     """
     captcha_failed = False
     alert_msg = ""
@@ -659,9 +638,9 @@ async def execute_search_for_query(page, query, allowed_state_codes, api_key, of
             page.remove_listener("dialog", handle_alert)
             if "no details found" in alert_msg.lower() or "valid establishment name" in alert_msg.lower():
                 print(f"[-] Search blocked by 'No Details Found' alert. Skipping query: '{query}'")
-                return None, [], None
+                return None, [], None, []
             print(f"[!] Search blocked by alert: '{alert_msg}'")
-            return None, [], None
+            return None, [], None, []
             
         container_text = await page.locator("#tablecontainer").inner_text()
         container_text_lower = container_text.lower()
@@ -673,7 +652,7 @@ async def execute_search_for_query(page, query, allowed_state_codes, api_key, of
         ):
             page.remove_listener("dialog", handle_alert)
             print(f"[-] No details/records found for query: '{query}'. Skipping query.")
-            return None, [], None
+            return None, [], None, []
             
         table_locator = page.locator("#tablecontainer table")
         if await table_locator.count() == 0:
@@ -708,7 +687,7 @@ async def execute_search_for_query(page, query, allowed_state_codes, api_key, of
         row_count = await tbody_tr.count()
         if row_count == 0:
             print(f"[-] No search results for query: '{query}'")
-            return None, [], None
+            return None, [], None, []
 
         # Extract headers to know where Office Name is
         headers = []
@@ -726,48 +705,73 @@ async def execute_search_for_query(page, query, allowed_state_codes, api_key, of
         found_matching_row = False
         target_est_id = None
         disclaimer = None
-        
-        # Directly click View Details on the first row of page 1
-        tds = tbody_tr.nth(0).locator("td")
-        td_count = await tds.count()
-        est_id = ""
-        for j in range(td_count):
-            cell_text = (await tds.nth(j).inner_text()).strip()
-            if re.match(r'^[A-Z]{5}[0-9]{10}$', cell_text):
-                est_id = cell_text
-                break
-        
-        if est_id:
-            prefix = est_id[:2]
-            target_est_id = est_id
-            found_matching_row = True
-            
-            # Get Office Name for the single row
-            office_name = ""
-            if office_name_col_idx != -1 and office_name_col_idx < td_count:
-                office_name = (await tds.nth(office_name_col_idx).inner_text()).strip()
-            elif td_count == 5:
-                office_name = (await tds.nth(3).inner_text()).strip()
-            elif td_count == 6:
-                office_name = (await tds.nth(4).inner_text()).strip()
-                
-            office_state = find_state_for_office(office_name, office_state_map)
-            
-            if (prefix in allowed_state_codes) or (office_state in allowed_state_codes):
-                print(f"[+] Found matching establishment ID: '{est_id}' (Office: '{office_name}' -> '{office_state}')")
-            else:
-                disclaimer = f"State code mismatch ignored (Target: {allowed_state_codes}, Found ID: {prefix}, Office: {office_name} -> {office_state})."
-                print(f"[!] {disclaimer}")
-            
-            action_cell = tds.last
-            action_link = action_cell.locator("a, button, input[type='button']").first
-            if await action_link.count() > 0:
-                await human_click(page, action_link)
+        action_link = None
+        search_results_list = []
 
-        if not found_matching_row:
-            print(f"[-] No search result matches state codes for query: '{query}'")
-            return None, [], None
+        # Collect details of all rows from search results HTML table
+        for r_idx in range(row_count):
+            row = tbody_tr.nth(r_idx)
+            tds = row.locator("td")
+            td_count = await tds.count()
             
+            est_id = ""
+            for j in range(td_count):
+                cell_text = (await tds.nth(j).inner_text()).strip()
+                if re.match(r'^[A-Z]{5}[0-9]{10}$', cell_text):
+                    est_id = cell_text
+                    break
+            
+            if est_id:
+                # Est Name is usually column index 2
+                est_name = ""
+                if td_count > 2:
+                    est_name = (await tds.nth(2).inner_text()).strip()
+                # Office Name column index
+                office_name = ""
+                if office_name_col_idx != -1 and office_name_col_idx < td_count:
+                    office_name = (await tds.nth(office_name_col_idx).inner_text()).strip()
+                elif td_count == 5:
+                    office_name = (await tds.nth(3).inner_text()).strip()
+                elif td_count == 6:
+                    office_name = (await tds.nth(4).inner_text()).strip()
+                
+                search_results_list.append({
+                    "establishment_id": est_id,
+                    "establishment_name": est_name,
+                    "office_name": office_name
+                })
+                
+                prefix = est_id[:2]
+                office_state = find_state_for_office(office_name, office_state_map)
+                
+                is_state_match = (prefix in allowed_state_codes) or (office_state in allowed_state_codes)
+                
+                # Check for state matching row. Fallback to first row.
+                if is_state_match or not found_matching_row:
+                    target_est_id = est_id
+                    found_matching_row = True
+                    
+                    if is_state_match:
+                        print(f"[+] Found matching establishment ID: '{est_id}' (Office: '{office_name}' -> '{office_state}')")
+                        disclaimer = None
+                    else:
+                        disclaimer = f"State code mismatch ignored (Target: {allowed_state_codes}, Found ID: {prefix}, Office: {office_name} -> {office_state})."
+                        print(f"[!] {disclaimer}")
+                    
+                    action_cell = tds.last
+                    action_link = action_cell.locator("a, button, input[type='button']").first
+                    
+                    # If it's a perfect state match, we can stop searching
+                    if is_state_match:
+                        break
+
+        if not found_matching_row or not action_link or await action_link.count() == 0:
+            print(f"[-] No search result matches for query: '{query}'")
+            return None, [], None, []
+
+        print(f"[*] Clicking View Details for best matched ID: {target_est_id}")
+        await human_click(page, action_link)
+
         # Wait for details page load
         print("[*] Waiting for details section/page to load...")
         await human_delay(4.0, 6.0)
@@ -789,22 +793,279 @@ async def execute_search_for_query(page, query, allowed_state_codes, api_key, of
                     async with page.expect_download(timeout=15000) as download_info:
                         await human_click(page, btn)
                     download = await download_info.value
-                    os.makedirs("downloads", exist_ok=True)
+                    os.makedirs(f"downloads/{vendor_code}", exist_ok=True)
                     suggested = download.suggested_filename
                     ext = os.path.splitext(suggested)[1] or ".xls"
-                    save_path = f"downloads/{target_est_id}_export_{i}{ext}"
+                    save_path = f"downloads/{vendor_code}/{target_est_id}_export_{i}{ext}"
                     await download.save_as(save_path)
                     print(f"[+] Download saved to: {save_path}")
                     download_paths.append(save_path)
                 except Exception as e:
                     print(f"[!] Export download {i+1} failed: {e}")
                     
-        page.remove_listener("dialog", handle_alert)
-        return target_est_id, download_paths, disclaimer
-        
+        # Return success immediately inside the attempt loop!
+        if target_est_id:
+            page.remove_listener("dialog", handle_alert)
+            return target_est_id, download_paths, disclaimer, search_results_list
+
     page.remove_listener("dialog", handle_alert)
     print("[!] Failed to solve captcha after maximum search attempts.")
-    return None, [], None
+    return None, [], None, []
+
+def get_7_digit_code(est_id):
+    # Strip any leading non-digits (state + office)
+    digits_only = re.sub(r'^[^0-9]+', '', est_id)
+    # Strip last 3 characters (extension/zeros)
+    if len(digits_only) >= 10:
+        digits_only = digits_only[:-3]
+    # Ensure it's exactly 7 digits
+    if len(digits_only) > 7:
+        digits_only = digits_only[:7]
+    return digits_only
+
+async def execute_payment_search_and_download(page, target_est_id, api_key, vendor_name, vendor_code):
+    est_code_7 = get_7_digit_code(target_est_id)
+    print(f"[*] Target full Est ID: {target_est_id} -> 7-digit code: {est_code_7}")
+    
+    captcha_failed = False
+    alert_msg = ""
+    
+    async def handle_alert(dialog):
+        nonlocal captcha_failed, alert_msg
+        alert_msg = dialog.message
+        msg_lower = alert_msg.lower()
+        if "no details found" in msg_lower or "valid establishment name" in msg_lower:
+            print(f"[-] Alert: '{alert_msg}'. No details found for this search. Will not retry captcha.")
+            captcha_failed = False
+        elif "captcha" in msg_lower or "invalid" in msg_lower or "wrong" in msg_lower or "incorrect" in msg_lower or "mismatch" in msg_lower or "does not match" in msg_lower:
+            captcha_failed = True
+        await dialog.dismiss()
+        
+    page.on("dialog", handle_alert)
+    
+    max_attempts = 5
+    for attempt in range(1, max_attempts + 1):
+        print(f"[*] Navigating to EPFO Portal for payment details search (Attempt {attempt}/{max_attempts})...")
+        await navigate_with_retry(page, DEFAULT_URL)
+        await human_delay(1.5, 3.0)
+        
+        # Enter 7-digit establishment code
+        await human_type(page, "#estCode", est_code_7)
+        
+        # Locate captcha image
+        captcha_img = page.locator("#capImg")
+        await captcha_img.wait_for(state="visible", timeout=15000)
+        
+        # Wait for captcha to load
+        try:
+            await page.wait_for_function(
+                "document.querySelector('#capImg') && document.querySelector('#capImg').complete && document.querySelector('#capImg').naturalWidth > 0",
+                timeout=8000
+            )
+        except Exception as e:
+            print(f"[!] Warning: Captcha load wait timed out: {e}")
+            
+        await human_delay(1.0, 2.0)
+        image_bytes = await captcha_img.screenshot()
+        
+        # Solve Captcha
+        try:
+            captcha_solution = solve_captcha(image_bytes, api_key)
+            print(f"[*] Attempt {attempt}: Captcha solved as '{captcha_solution}'")
+        except Exception as e:
+            print(f"[!] Captcha solver failed: {e}")
+            await asyncio.sleep(2)
+            continue
+            
+        await human_type(page, "#captcha", captcha_solution)
+        
+        # Reset states before click to ensure fresh capture
+        captcha_failed = False
+        alert_msg = ""
+        
+        await human_click(page, "#searchEmployer")
+        
+        # Wait for loading overlay (blockUI) to hide
+        try:
+            await page.locator(".blockUI").wait_for(state="hidden", timeout=15000)
+        except Exception:
+            pass
+            
+        # Small wait for UI stabilization
+        await human_delay(1.0, 2.0)
+        
+        if captcha_failed:
+            print("[!] Incorrect captcha. Retrying...")
+            continue
+            
+        if alert_msg:
+            page.remove_listener("dialog", handle_alert)
+            if "no details found" in alert_msg.lower() or "valid establishment name" in alert_msg.lower():
+                print(f"[-] Search blocked by 'No Details Found' alert for query: '{est_code_7}'")
+                return None, "No details found for this search"
+            print(f"[!] Search blocked by alert: '{alert_msg}'")
+            return None, f"Search blocked by alert: {alert_msg}"
+            
+        container_text = await page.locator("#tablecontainer").inner_text()
+        container_text_lower = container_text.lower()
+        
+        if (
+            "no records" in container_text_lower 
+            or "no details found" in container_text_lower 
+            or "no data available" in container_text_lower
+        ):
+            page.remove_listener("dialog", handle_alert)
+            print(f"[-] No details/records found for code: '{est_code_7}'.")
+            return None, "No details/records found on portal search"
+            
+        table_locator = page.locator("#tablecontainer table")
+        if await table_locator.count() == 0:
+            print("[*] Results table not visible. Retrying search...")
+            continue
+            
+        # Scroll naturally
+        await human_scroll(page)
+        
+        # Get rows
+        tbody_tr = page.locator("#tablecontainer table tbody tr")
+        row_count = await tbody_tr.count()
+        if row_count == 0:
+            print(f"[-] No search results rows found for code: '{est_code_7}'")
+            page.remove_listener("dialog", handle_alert)
+            return None, "No search result rows found"
+            
+        # Match the full establishment ID exactly in the table rows
+        target_row_index = -1
+        for r_idx in range(row_count):
+            row = tbody_tr.nth(r_idx)
+            tds = row.locator("td")
+            td_count = await tds.count()
+            
+            # Check cell values
+            for c_idx in range(td_count):
+                cell_text = (await tds.nth(c_idx).inner_text()).strip()
+                if cell_text == target_est_id:
+                    target_row_index = r_idx
+                    break
+            if target_row_index != -1:
+                break
+                
+        if target_row_index == -1:
+            print(f"[-] Full establishment ID '{target_est_id}' not found in search result rows.")
+            page.remove_listener("dialog", handle_alert)
+            return None, f"Full establishment ID not found in results rows matching 7-digit code {est_code_7}"
+            
+        # Click view details on that row
+        print(f"[+] Found row matching full Est ID '{target_est_id}' at index {target_row_index}. Clicking View Details...")
+        target_row = tbody_tr.nth(target_row_index)
+        
+        # Click the link (View Details) inside the matched row
+        action_cell = target_row.locator("td").last
+        action_link = action_cell.locator("a, button, input[type='button']").first
+        if await action_link.count() > 0:
+            await human_click(page, action_link)
+        else:
+            # Fallback to selector name GJRAJ1829663000
+            fallback_link = target_row.locator(f"a[name='{target_est_id}']")
+            if await fallback_link.count() > 0:
+                await human_click(page, fallback_link)
+            else:
+                # Text fallback
+                text_link = target_row.locator("a:has-text('View Details')")
+                if await text_link.count() > 0:
+                    await human_click(page, text_link)
+                else:
+                    page.remove_listener("dialog", handle_alert)
+                    return None, "Could not find 'View Details' link in the matched row"
+                    
+        # Wait for details section to load
+        print("[*] Waiting for details section/page to load...")
+        await human_delay(4.0, 6.0)
+        await human_scroll(page)
+        
+        # Locate "View Payment Details" link on the details page
+        payment_details_link = page.locator("a:has-text('View Payment Details'), a:has-text('Payment Details')")
+        if await payment_details_link.count() == 0:
+            payment_details_link = page.locator("a").filter(has_text=re.compile("payment", re.IGNORECASE))
+            
+        if await payment_details_link.count() == 0:
+            page.remove_listener("dialog", handle_alert)
+            return None, "Could not locate 'View Payment Details' link on the details page"
+            
+        # Click the link and wait for the popup window
+        print("[*] Clicking 'View Payment Details' to open new window...")
+        try:
+            async with page.context.expect_page(timeout=25000) as popup_info:
+                await human_click(page, payment_details_link.first)
+            popup_page = await popup_info.value
+            await popup_page.wait_for_load_state()
+            print("[+] Payment details popup window opened successfully.")
+        except Exception as e:
+            page.remove_listener("dialog", handle_alert)
+            return None, f"Failed to capture payment details popup window: {e}"
+            
+        page.remove_listener("dialog", handle_alert)
+        
+        # --- Handle popup content ---
+        try:
+            # Wait for content or Datatable to load in popup
+            try:
+                await popup_page.wait_for_selector("#table_pop_up, body", timeout=15000)
+            except Exception:
+                pass
+                
+            popup_text = await popup_page.locator("body").inner_text()
+            popup_text_lower = popup_text.lower()
+            
+            # Check for "No Payment details found for this Establishment" message
+            if (
+                "no payment details found for this establishment" in popup_text_lower 
+                or "no payment details found" in popup_text_lower 
+                or "no records found" in popup_text_lower
+                or "no details found" in popup_text_lower
+            ):
+                print(f"[-] Popup says: 'No Payment details found for this Establishment' for Est ID: {target_est_id}")
+                await popup_page.close()
+                return None, "No Payment details found for this Establishment"
+                
+            # Wait for Datatable Excel export button
+            excel_btn = popup_page.locator("a:has-text('Excel'), button:has-text('Excel'), .buttons-excel").first
+            try:
+                await excel_btn.wait_for(state="visible", timeout=10000)
+            except Exception:
+                if "tr" not in popup_text_lower:
+                    await popup_page.close()
+                    return None, "No Payment details found for this Establishment"
+                await popup_page.close()
+                return None, "Could not locate Excel export button in payment details popup"
+                
+            # Perform download
+            print("[*] Excel button found. Initializing download...")
+            async with popup_page.expect_download(timeout=15000) as download_info:
+                await human_click(popup_page, excel_btn)
+            download = await download_info.value
+            
+            # Save download
+            os.makedirs(f"downloads/{vendor_code}", exist_ok=True)
+            suggested = download.suggested_filename
+            ext = os.path.splitext(suggested)[1] or ".xlsx"
+            clean_vendor_name = re.sub(r'[^a-zA-Z0-9_-]', '_', vendor_name)
+            save_path = f"downloads/{vendor_code}/{clean_vendor_name}_{target_est_id}_payment_details{ext}"
+            await download.save_as(save_path)
+            print(f"[+] Payment details Excel saved to: {save_path}")
+            
+            await popup_page.close()
+            return save_path, None
+            
+        except Exception as pop_err:
+            try:
+                await popup_page.close()
+            except Exception:
+                pass
+            return None, f"Error while parsing popup details: {pop_err}"
+            
+    print("[!] Failed to solve captcha after maximum attempts for payment search.")
+    return None, "Failed to solve captcha after maximum attempts"
 
 def save_results(results_file, results):
     temp_file = results_file + ".tmp"
@@ -860,11 +1121,12 @@ def remove_symbols(name):
     cleaned = re.sub(r'\s+', ' ', cleaned)
     return cleaned.strip()
 
-async def search_and_download_vendor(page, vendor_name, allowed_state_codes, api_key, office_state_map):
+async def search_and_download_vendor(page, vendor_name, allowed_state_codes, api_key, office_state_map, vendor_code="unknown"):
     """
     Performs the search for a vendor. If M/s is present, it generates:
     1) Sanitized (without prefix, e.g. "Power Pioneers")
     2) Without slash (MS prefix, e.g. "MS Power Pioneers")
+    Downloads are namespaced under downloads/{vendor_code}/ to prevent concurrent collisions.
     """
     original_clean = vendor_name.strip()
     sanitized = sanitize_vendor_name(vendor_name)
@@ -958,292 +1220,626 @@ async def search_and_download_vendor(page, vendor_name, allowed_state_codes, api
                 print("\n[*] No-suffix fallback queries returned no matches. Trying fallback: both symbols and PVT LTD / CO removed...")
                 
             print(f"[*] Trying search query variant {q_idx+1}/{len(queries)}: '{query}'")
-        target_est_id, download_paths, disclaimer = await execute_search_for_query(
-            page, query, allowed_state_codes, api_key, office_state_map
+        target_est_id, download_paths, disclaimer, search_results_list = await execute_search_for_query(
+            page, query, allowed_state_codes, api_key, office_state_map, vendor_code=vendor_code
         )
         if target_est_id:
-            return target_est_id, download_paths, disclaimer
+            return target_est_id, download_paths, disclaimer, search_results_list
             
-    return None, [], None
+    return None, [], None, []
 
-async def run_scraper(limit=None, api_key=DEFAULT_API_KEY, headless=True, input_file="vendorList.csv", profile_dir="chrome_profile", sleep_delay=10):
-    # Setup data files
-    base_name, _ = os.path.splitext(input_file)
-    cleaned_file = f"{base_name}_cleaned.csv"
-    
-    if os.path.exists(input_file):
-        # Clean and deduplicate input file
-        df_vendors = clean_and_deduplicate_csv(input_file, cleaned_file)
-    elif os.path.exists(cleaned_file):
-        print(f"[*] {input_file} not found, but {cleaned_file} exists. Loading cleaned vendor list...")
-        df_vendors = pd.read_csv(cleaned_file, dtype=str)
-    else:
-        print(f"[!] Neither {input_file} nor {cleaned_file} found in the current directory.")
-        return
-    
-    # Load state codes mapping
-    if not os.path.exists("STATECODE.JSON"):
-        print("[!] STATECODE.JSON not found.")
-        return
+async def _launch_worker_context(p, worker_id, headless, stealth_args, ignore_automation_args):
+    """
+    Launches an isolated Patchright browser context for a single concurrent worker.
+    Each worker gets its own temporary profile directory so sessions never collide.
+    Tries Edge channel first, falls back to bundled Patchright Chromium.
+    """
+    import platform
+    import tempfile
+
+    # Each worker uses its own throwaway profile dir — no session sharing between workers.
+    worker_profile = os.path.join(tempfile.gettempdir(), f"epf_worker_{worker_id}_{os.getpid()}")
+    os.makedirs(worker_profile, exist_ok=True)
+
+    selected_ua = random.choice(USER_AGENTS)
+    assert "Headless" not in selected_ua, "User-Agent must not contain 'Headless'!"
+
+    launch_kwargs = dict(
+        headless=headless,
+        args=stealth_args,
+        ignore_default_args=ignore_automation_args,
+        user_agent=selected_ua,
+        viewport={"width": 1920, "height": 1080},
+        screen={"width": 1920, "height": 1080},
+        ignore_https_errors=True,
+    )
+
+    for attempt_channel in ["msedge", None]:
+        try:
+            if attempt_channel:
+                ctx = await p.chromium.launch_persistent_context(
+                    user_data_dir=worker_profile,
+                    channel=attempt_channel,
+                    **launch_kwargs
+                )
+            else:
+                ctx = await p.chromium.launch_persistent_context(
+                    user_data_dir=worker_profile,
+                    **launch_kwargs
+                )
+            label = f"Edge ({attempt_channel})" if attempt_channel else "Patchright Chromium"
+            print(f"[W{worker_id}] Launched browser context via {label} (profile: {worker_profile})")
+            return ctx, worker_profile
+        except Exception as e:
+            print(f"[W{worker_id}] Channel '{attempt_channel}' failed: {e}. Trying next...")
+
+    raise RuntimeError(f"[W{worker_id}] Could not launch any browser context.")
+
+
+async def _process_single_vendor(
+    worker_id, p, vendor_code, vendor_name, vendor_gstn,
+    allowed_state_codes, api_key, office_state_map,
+    results, results_lock, results_file,
+    headless, stealth_args, ignore_automation_args,
+    vendor_number, payment_mode=False
+):
+    """
+    Full lifecycle for one vendor: launch isolated context → search → download → save → close.
+    Runs entirely independently; shares nothing except the guarded results dict.
+    """
+    context = None
+    worker_profile = None
+    try:
+        print(f"\n[W{worker_id}] ========== Processing Vendor {vendor_number} (Code: {vendor_code}) ==========")
+        print(f"[W{worker_id}] Vendor Name: {vendor_name} | GSTN: {vendor_gstn}")
+
+        context, worker_profile = await _launch_worker_context(
+            p, worker_id, headless, stealth_args, ignore_automation_args
+        )
+        page = context.pages[0] if context.pages else await context.new_page()
+
+        if payment_mode:
+            # ── Payment mode execution ──
+            async with results_lock:
+                record = results.get(vendor_code) or results.get(vendor_code.lstrip('0'))
+            
+            if not record:
+                print(f"[W{worker_id}] No matching record found in results for {vendor_code}. Skipping.")
+                record = {
+                    "vendor_name": vendor_name,
+                    "vendor_gstn": vendor_gstn,
+                    "status": "no_match_found_skipped",
+                    "list_establishment_ids": [],
+                    "matched_establishment_ids": []
+                }
+            else:
+                matched_list = record.get("matched_establishment_ids", [])
+                if not matched_list:
+                    print(f"[W{worker_id}] No matched_establishment_ids found in results for {vendor_code}. Skipping payment details download.")
+                else:
+                    # Loop and download payment details for all matched establishment IDs
+                    for item in matched_list:
+                        est_id = item.get("establishment id")
+                        est_name = item.get("establishment Name") or vendor_name
+                        if not est_id:
+                            continue
+
+                        # Check if already processed
+                        if item.get("payment_details_status") in ["success", "No Payment details found for this Establishment"] and item.get("payment_details_file"):
+                            print(f"[W{worker_id}] Payment details already downloaded for {est_id}. Skipping.")
+                            continue
+                        if item.get("payment_details_status") == "No Payment details found for this Establishment":
+                            print(f"[W{worker_id}] No payments exist for {est_id}. Skipping.")
+                            continue
+
+                        print(f"[W{worker_id}] Running payment details download for Est ID: {est_id} ({est_name})")
+                        save_path, err = await execute_payment_search_and_download(
+                            page, est_id, api_key, est_name, vendor_code
+                        )
+
+                        if save_path:
+                            item["payment_details_status"] = "success"
+                            item["payment_details_file"] = save_path
+                            if "payment_details_error" in item:
+                                del item["payment_details_error"]
+                            print(f"[W{worker_id}] Successfully downloaded payment details for {est_id} to {save_path}")
+                        else:
+                            if err == "No Payment details found for this Establishment":
+                                item["payment_details_status"] = "No Payment details found for this Establishment"
+                                item["payment_details_file"] = ""
+                                if "payment_details_error" in item:
+                                    del item["payment_details_error"]
+                            else:
+                                item["payment_details_status"] = "failed"
+                                item["payment_details_error"] = err
+                                print(f"[W{worker_id}] Payment details download failed for {est_id}: {err}")
+
+                        # Intermediate save
+                        async with results_lock:
+                            actual_key = vendor_code
+                            if vendor_code.lstrip('0') in results:
+                                actual_key = vendor_code.lstrip('0')
+                            results[actual_key] = record
+                            save_results(results_file, results)
+
+                    # Aggregate statuses for top-level keys (backwards compatibility)
+                    successful_downloads = [it.get("payment_details_file") for it in matched_list if it.get("payment_details_status") == "success" and it.get("payment_details_file")]
+                    no_payment_msgs = [it for it in matched_list if it.get("payment_details_status") == "No Payment details found for this Establishment"]
+                    errors = [it.get("payment_details_error") for it in matched_list if it.get("payment_details_error")]
+
+                    if successful_downloads:
+                        record["payment_details_status"] = "success"
+                        record["payment_details_file"] = successful_downloads[0]
+                        if "payment_details_error" in record:
+                            del record["payment_details_error"]
+                    elif no_payment_msgs and len(no_payment_msgs) == len(matched_list):
+                        record["payment_details_status"] = "No Payment details found for this Establishment"
+                        record["payment_details_file"] = ""
+                        if "payment_details_error" in record:
+                            del record["payment_details_error"]
+                    elif errors:
+                        record["payment_details_status"] = "failed"
+                        record["payment_details_error"] = "; ".join(errors)
+
+        else:
+            # ── Standard matching mode execution ──
+            target_est_id, downloaded_files, disclaimer, search_results_list = await search_and_download_vendor(
+                page, vendor_name, allowed_state_codes, api_key, office_state_map, vendor_code=vendor_code
+            )
+
+            list_est_ids = []
+            matched_est_ids = []
+            status = "no_match_found"
+
+            # Combine candidates from search_results_list and downloaded details Excel
+            candidates = []
+            seen_cand_ids = set()
+
+            def add_candidate(eid, name, office):
+                if not eid or eid in seen_cand_ids:
+                    return
+                seen_cand_ids.add(eid)
+                candidates.append({
+                    "establishment_id": eid,
+                    "establishment_name": name,
+                    "office_name": office
+                })
+
+            if target_est_id and downloaded_files:
+                status = "success"
+                all_details = []
+                for f_path in downloaded_files:
+                    details = extract_establishment_details(f_path)
+                    all_details.extend(details)
+                for d in all_details:
+                    add_candidate(d["establishment_id"], d["establishment_name"], d["office_name"])
+
+            if search_results_list:
+                for r in search_results_list:
+                    add_candidate(r["establishment_id"], r["establishment_name"], r["office_name"])
+
+            if candidates:
+                for c in candidates:
+                    list_est_ids.append({
+                        "establishment Name": c["establishment_name"],
+                        "establishment id": c["establishment_id"]
+                    })
+
+                prefix_matches = []
+                office_matches = []
+                for c in candidates:
+                    eid = c["establishment_id"]
+                    name = c["establishment_name"]
+                    office = c["office_name"]
+                    prefix = eid[:2].upper()
+                    office_state = find_state_for_office(office, office_state_map)
+                    
+                    item = {
+                        "establishment Name": name,
+                        "establishment id": eid
+                    }
+                    if prefix in allowed_state_codes:
+                        prefix_matches.append((eid, item))
+                    elif office_state in allowed_state_codes:
+                        office_matches.append((eid, item))
+
+                if prefix_matches:
+                    target_est_id = prefix_matches[0][0]
+                    disclaimer = None
+                    matched_est_ids = [item for _, item in prefix_matches] + [item for _, item in office_matches]
+                elif office_matches:
+                    target_est_id = office_matches[0][0]
+                    disclaimer = None
+                    matched_est_ids = [item for _, item in office_matches]
+                else:
+                    # If no state match, fallback to the primary target clicked
+                    if target_est_id:
+                        fallback_item = None
+                        for c in candidates:
+                            if c["establishment_id"] == target_est_id:
+                                fallback_item = {
+                                    "establishment Name": c["establishment_name"],
+                                    "establishment id": c["establishment_id"]
+                                }
+                                break
+                        if not fallback_item:
+                            fallback_item = {
+                                "establishment Name": vendor_name,
+                                "establishment id": target_est_id
+                            }
+                        matched_est_ids = [fallback_item]
+                    else:
+                        matched_est_ids = []
+
+                print(f"[W{worker_id}] Found {len(matched_est_ids)} state-matching establishment IDs.")
+            elif target_est_id:
+                status = "no_downloads"
+                print(f"[W{worker_id}] Clicked view details but no export downloads succeeded.")
+            else:
+                print(f"[W{worker_id}] Search returned no matching results for vendor state.")
+
+            record = {
+                "vendor_name": vendor_name,
+                "vendor_gstn": vendor_gstn,
+                "status": status,
+                "allowed_state_codes": allowed_state_codes,
+                "target_establishment_id": target_est_id,
+                "list_establishment_ids": list_est_ids,
+                "matched_establishment_ids": matched_est_ids
+            }
+            if disclaimer:
+                record["disclaimer"] = disclaimer
+
+    except Exception as e:
+        print(f"[W{worker_id}] Error processing vendor {vendor_code}: {e}")
+        if payment_mode:
+            async with results_lock:
+                record = results.get(vendor_code) or results.get(vendor_code.lstrip('0')) or {
+                    "vendor_name": vendor_name,
+                    "vendor_gstn": vendor_gstn,
+                    "status": "success",
+                    "target_establishment_id": None
+                }
+            record["payment_details_error"] = f"Runtime error: {str(e)}"
+        else:
+            record = {
+                "vendor_name": vendor_name,
+                "vendor_gstn": vendor_gstn,
+                "status": f"failed_error: {str(e)}",
+                "list_establishment_ids": [],
+                "matched_establishment_ids": []
+            }
+    finally:
+        # Always close the context so the browser process is released
+        if context:
+            try:
+                await context.close()
+            except Exception:
+                pass
+
+        # ── Cleanup: delete vendor's download directory (ONLY in matching mode) ───────
+        if not payment_mode:
+            import shutil
+            vendor_dl_dir = os.path.join("downloads", vendor_code)
+            if os.path.isdir(vendor_dl_dir):
+                try:
+                    shutil.rmtree(vendor_dl_dir)
+                    print(f"[W{worker_id}] Cleaned up download dir: {vendor_dl_dir}")
+                except Exception as cleanup_err:
+                    print(f"[W{worker_id}] Warning: could not remove {vendor_dl_dir}: {cleanup_err}")
+
+    # ── Thread-safe results write ─────────────────────────────────────────────
+    async with results_lock:
+        actual_key = vendor_code
+        if vendor_code.lstrip('0') in results:
+            actual_key = vendor_code.lstrip('0')
+        results[actual_key] = record
+        save_results(results_file, results)
+
+    print(f"[W{worker_id}] Finished vendor {vendor_code} -> status: {record['status']}")
+
+
+def needs_payment_download(record):
+    if not record:
+        return False
+    matched_list = record.get("matched_establishment_ids", [])
+    if not matched_list:
+        return False
+        
+    for item in matched_list:
+        est_id = item.get("establishment id")
+        if not est_id:
+            continue
+        status = item.get("payment_details_status")
+        file_path = item.get("payment_details_file")
+        if status == "success" and file_path:
+            continue
+        if status == "No Payment details found for this Establishment":
+            continue
+        return True
+    return False
+
+
+async def run_scraper(
+    limit=None,
+    api_key=DEFAULT_API_KEY,
+    headless=True,
+    input_file="vendorList.csv",
+    profile_dir="chrome_profile",
+    sleep_delay=10,
+    workers=2,
+    payment_mode=False,
+):
+    """
+    Concurrent EPFO vendor scraper.
+
+    workers : int
+        Number of parallel browser contexts (2–3 recommended).
+        Each worker gets its own isolated Patchright context and profile dir.
+        A batch delay of 3–8 s fires after every `workers` vendors complete
+        to space out bursts and reduce WAF surface.
+    """
+    # ── Clamp concurrency to safe range ──────────────────────────────────────
+    CONCURRENCY = max(1, min(workers, 3))  # hard cap at 3
+    print(f"[*] Starting concurrent scraper — {CONCURRENCY} parallel worker(s).")
+
+    # ── Load reference data ───────────────────────────────────────────────────
+    for fname in ["STATECODE.JSON", "districts.json"]:
+        if not os.path.exists(fname):
+            print(f"[!] {fname} not found.")
+            return
+
     with open("STATECODE.JSON", "r", encoding="utf-8") as f:
         statecode_data = json.load(f)
-        
-    # Load district details for state codes
-    if not os.path.exists("districts.json"):
-        print("[!] districts.json not found.")
-        return
     with open("districts.json", "r", encoding="utf-8") as f:
         districts_data = json.load(f)
+
     district_states = {d["state"].upper(): d["stateCode"].upper() for d in districts_data["districts"]}
-    
-    office_state_map = {}
-    for d in districts_data.get("districts", []):
-        dist_name = d.get("district", "").strip().upper()
-        if dist_name:
-            office_state_map[dist_name] = d.get("stateCode", "").strip().upper()
-    
-    # Load existing results for resume capability
-    results_file = "vendor_est_matches.json"
+    office_state_map = {
+        d.get("district", "").strip().upper(): d.get("stateCode", "").strip().upper()
+        for d in districts_data.get("districts", [])
+        if d.get("district", "").strip()
+    }
+
+    # ── Resume from existing results ──────────────────────────────────────────
+    input_base = os.path.splitext(os.path.basename(input_file))[0]
+    if input_base.endswith("_cleaned"):
+        input_base = input_base[:-8]
+    results_file = f"{input_base}.json"
     results = {}
     if os.path.exists(results_file):
         try:
             with open(results_file, "r", encoding="utf-8") as f:
                 results = json.load(f)
             successful_runs = sum(1 for v in results.values() if v.get("status") == "success")
-            print(f"[+] Resuming scraping. Loaded {len(results)} processed vendors ({successful_runs} successfully matched, {len(results) - successful_runs} failed/unmatched will be retried).")
+            print(f"[+] Loaded matching database — {len(results)} vendors found ({successful_runs} successfully matched).")
         except Exception as e:
-            print(f"[!] Failed to parse existing results file: {e}. Starting fresh.")
-            
-    # Process vendors
-    count = 0
+            print(f"[!] Could not load existing results ({e}). Starting fresh.")
+
+    # ── Load vendor list ──────────────────────────────────────────────────────
+    df_vendors = None
+    if os.path.exists(input_file):
+        base_name, _ = os.path.splitext(input_file)
+        cleaned_file = f"{base_name}_cleaned.csv"
+        df_vendors = clean_and_deduplicate_csv(input_file, cleaned_file)
+    elif os.path.exists(f"{os.path.splitext(input_file)[0]}_cleaned.csv"):
+        cleaned_file = f"{os.path.splitext(input_file)[0]}_cleaned.csv"
+        print(f"[*] {input_file} not found, using {cleaned_file}.")
+        df_vendors = pd.read_csv(cleaned_file, dtype=str)
+
+    # ── Shared concurrency primitives ─────────────────────────────────────────
+    semaphore = asyncio.Semaphore(CONCURRENCY)
+    results_lock = asyncio.Lock()
+
+    # ── Stealth browser args ──────────────────────────────────────────────────
+    stealth_args = [
+        "--disable-blink-features=AutomationControlled",
+        "--window-size=1920,1080",
+        "--no-sandbox",
+        "--disable-dev-shm-usage",
+        "--disable-gpu",
+        "--disable-infobars",
+        "--disable-extensions",
+        "--start-maximized",
+        "--lang=en-US,en",
+    ]
+    ignore_automation_args = ["--enable-automation", "--no-sandbox"]
+
+    # ── PHASE 1: ESTABLISHMENT MATCHING ──────────────────────────────────────
+    # We run matching phase ONLY if NOT explicitly requested to run payment details only
+    run_phase1 = not payment_mode
     
-    async with async_playwright() as p:
-        import platform
-        if profile_dir == "chrome_profile" or profile_dir == "edge_profile":
-            if platform.system() == "Windows":
-                user_data_dir = os.path.expandvars(r"%LOCALAPPDATA%\Microsoft\Edge\User Data")
-            else:
-                user_data_dir = os.path.expanduser("~/.config/microsoft-edge")
-            print(f"[*] Launching browser in persistent context using system standard Edge profile: '{user_data_dir}'...")
-        else:
-            user_data_dir = os.path.join(os.getcwd(), profile_dir)
-            print(f"[*] Launching browser in persistent context using custom profile: '{user_data_dir}'...")
-        selected_ua = random.choice(USER_AGENTS)
+    if run_phase1:
+        if df_vendors is None:
+            print("[!] CSV vendor list is required for Establishment Matching mode.")
+            return
 
+        pending_match = []
+        for _, row in df_vendors.iterrows():
+            vc = str(row["Vendor"])
+            if results.get(vc, {}).get("status") == "success":
+                continue
+            pending_match.append(row)
+            if limit and len(pending_match) >= limit:
+                break
 
-        # Try launching with Microsoft Edge channel first, fallback to default Playwright Chromium
-        try:
-            context = await p.chromium.launch_persistent_context(
-                user_data_dir=user_data_dir,
-                channel="msedge",
-                headless=headless,
-                args=["--disable-blink-features=AutomationControlled"],
-                ignore_default_args=["--no-sandbox"],
-                user_agent=selected_ua,
-                viewport={"width": 1280, "height": 1024},
-                ignore_https_errors=True
-            )
-            print("[+] Launched persistent context using Microsoft Edge channel.")
-        except Exception as e:
-            if "already in use" in str(e).lower() or "existing browser session" in str(e).lower():
-                print(f"[!] Warning: The Edge profile at '{user_data_dir}' is already in use by a running Edge browser.")
-                fallback_dir = os.path.join(os.getcwd(), "edge_profile_fallback")
-                print(f"[!] Falling back to a separate user data directory: '{fallback_dir}'...")
-                try:
-                    context = await p.chromium.launch_persistent_context(
-                        user_data_dir=fallback_dir,
-                        channel="msedge",
+        if pending_match:
+            print(f"\n[*] ==========================================")
+            print(f"[*] Starting Phase 1: Establishment Matching")
+            print(f"[*] {len(pending_match)} vendor(s) to process matching")
+            print(f"[*] ==========================================\n")
+
+            async def worker_match(p, worker_id, row, vendor_number):
+                vendor_code = str(row["Vendor"])
+                vendor_name = str(row["Vendor Name"])
+                vendor_gstn = str(row["Vendor GSTN"])
+
+                allowed_state_codes = get_state_codes_for_gstn(vendor_gstn, statecode_data, district_states)
+                if not allowed_state_codes:
+                    print(f"[W{worker_id}] Skipped {vendor_code}: no state codes for GSTN '{vendor_gstn}'")
+                    async with results_lock:
+                        results[vendor_code] = {
+                            "vendor_name": vendor_name,
+                            "vendor_gstn": vendor_gstn,
+                            "status": "skipped_no_state_code",
+                            "list_establishment_ids": [],
+                            "matched_establishment_ids": []
+                        }
+                        save_results(results_file, results)
+                    return
+
+                async with semaphore:
+                    await _process_single_vendor(
+                        worker_id=worker_id,
+                        p=p,
+                        vendor_code=vendor_code,
+                        vendor_name=vendor_name,
+                        vendor_gstn=vendor_gstn,
+                        allowed_state_codes=allowed_state_codes,
+                        api_key=api_key,
+                        office_state_map=office_state_map,
+                        results=results,
+                        results_lock=results_lock,
+                        results_file=results_file,
                         headless=headless,
-                        args=["--disable-blink-features=AutomationControlled"],
-                        ignore_default_args=["--no-sandbox"],
-                        user_agent=selected_ua,
-                        viewport={"width": 1280, "height": 1024},
-                        ignore_https_errors=True
+                        stealth_args=stealth_args,
+                        ignore_automation_args=ignore_automation_args,
+                        vendor_number=vendor_number,
+                        payment_mode=False,
                     )
-                    print("[+] Launched persistent context using Microsoft Edge channel with fallback profile.")
-                except Exception as fallback_e:
-                    print(f"[*] Fallback with Edge channel failed ({fallback_e}). Launching default Chromium persistent context...")
-                    context = await p.chromium.launch_persistent_context(
-                        user_data_dir=fallback_dir,
-                        headless=headless,
-                        args=["--disable-blink-features=AutomationControlled"],
-                        ignore_default_args=["--no-sandbox"],
-                        user_agent=selected_ua,
-                        viewport={"width": 1280, "height": 1024},
-                        ignore_https_errors=True
-                    )
-            else:
-                print(f"[*] Fallback: Could not launch with Microsoft Edge channel ({e}). Launching default Chromium persistent context...")
-                context = await p.chromium.launch_persistent_context(
-                    user_data_dir=user_data_dir,
-                    headless=headless,
-                    args=["--disable-blink-features=AutomationControlled"],
-                    ignore_default_args=["--no-sandbox"],
-                    user_agent=selected_ua,
-                    viewport={"width": 1280, "height": 1024},
-                    ignore_https_errors=True
-                )
 
+            async with async_playwright() as p:
+                vendor_number = 0
+                for batch_start in range(0, len(pending_match), CONCURRENCY):
+                    batch = pending_match[batch_start: batch_start + CONCURRENCY]
+                    tasks = []
+                    for i, row in enumerate(batch):
+                        vendor_number += 1
+                        wid = (batch_start + i) % CONCURRENCY + 1
+                        tasks.append(asyncio.create_task(worker_match(p, wid, row, vendor_number)))
 
+                    await asyncio.gather(*tasks)
+
+                    # Batch delay
+                    if batch_start + CONCURRENCY < len(pending_match):
+                        batch_delay = random.uniform(3, 8)
+                        print(f"\n[*] Batch complete. Waiting {batch_delay:.1f}s before next batch...\n")
+                        await asyncio.sleep(batch_delay)
             
-        await apply_context_stealth(context)
-        page = context.pages[0] if context.pages else await context.new_page()
-        
-        for idx, row in df_vendors.iterrows():
+            print("\n[+] Phase 1 (Establishment Matching) completed successfully!")
+        else:
+            print("[*] Phase 1 (Establishment Matching) already complete. Skipping.")
+
+    # ── PHASE 2: PAYMENT DETAILS DOWNLOADING ──────────────────────────────────
+    # Run automatically after matching phase, or if payment_mode flag was explicitly set
+    pending_payment = []
+    
+    # Reload results from results file to get fresh updates from Phase 1
+    if os.path.exists(results_file):
+        try:
+            with open(results_file, "r", encoding="utf-8") as f:
+                results = json.load(f)
+        except Exception:
+            pass
+
+    if df_vendors is not None and not df_vendors.empty:
+        for _, row in df_vendors.iterrows():
+            vc = str(row["Vendor"])
+            record = results.get(vc) or results.get(vc.lstrip('0'))
+            if needs_payment_download(record):
+                pending_payment.append(row)
+    else:
+        print("[*] No vendor list CSV active, generating queue directly from matched results in JSON.")
+        for vc, record in results.items():
+            if needs_payment_download(record):
+                row_dict = {
+                    "Vendor": vc,
+                    "Vendor Name": record.get("vendor_name", ""),
+                    "Vendor GSTN": record.get("vendor_gstn", "")
+                }
+                pending_payment.append(row_dict)
+
+    if limit:
+        pending_payment = pending_payment[:limit]
+
+    if pending_payment:
+        print(f"\n[*] ==========================================")
+        print(f"[*] Starting Phase 2: Payment Details Downloading")
+        print(f"[*] {len(pending_payment)} vendor(s) to process downloads")
+        print(f"[*] ==========================================\n")
+
+        async def worker_payment(p, worker_id, row, vendor_number):
             vendor_code = str(row["Vendor"])
             vendor_name = str(row["Vendor Name"])
             vendor_gstn = str(row["Vendor GSTN"])
-            
-            # Skip only if already successfully processed
-            if vendor_code in results and results[vendor_code].get("status") == "success":
-                continue
-                
-            if limit and count >= limit:
-                print(f"[*] Reached limit of {limit} vendors. Halting.")
-                break
-                
-            allowed_state_codes = get_state_codes_for_gstn(vendor_gstn, statecode_data, district_states)
-            if not allowed_state_codes:
-                print(f"[-] Skipped Vendor {vendor_code}: Could not determine state codes from GSTN '{vendor_gstn}'")
-                results[vendor_code] = {
-                    "vendor_name": vendor_name,
-                    "vendor_gstn": vendor_gstn,
-                    "status": "skipped_no_state_code",
-                    "list_establishment_ids": [],
-                    "matched_establishment_ids": []
-                }
-                # Write intermediate progress
-                with open(results_file, "w", encoding="utf-8") as f:
-                    json.dump(results, f, indent=2, ensure_ascii=False)
-                continue
-                
-            print(f"\n========== Processing Vendor {count+1} (Code: {vendor_code}) ==========")
-            print(f"Vendor Name: {vendor_name} | GSTN: {vendor_gstn}")
-            
-            try:
-                target_est_id, downloaded_files, disclaimer = await search_and_download_vendor(
-                    page, vendor_name, allowed_state_codes, api_key, office_state_map
+
+            async with semaphore:
+                await _process_single_vendor(
+                    worker_id=worker_id,
+                    p=p,
+                    vendor_code=vendor_code,
+                    vendor_name=vendor_name,
+                    vendor_gstn=vendor_gstn,
+                    allowed_state_codes=[],
+                    api_key=api_key,
+                    office_state_map=office_state_map,
+                    results=results,
+                    results_lock=results_lock,
+                    results_file=results_file,
+                    headless=headless,
+                    stealth_args=stealth_args,
+                    ignore_automation_args=ignore_automation_args,
+                    vendor_number=vendor_number,
+                    payment_mode=True,
                 )
-                
-                list_est_ids = []
-                matched_est_ids = []
-                status = "no_match_found"
-                
-                if target_est_id and downloaded_files:
-                    status = "success"
-                    all_details = []
-                    for f_path in downloaded_files:
-                        details = extract_establishment_details(f_path)
-                        all_details.extend(details)
-                        
-                    # Deduplicate details by establishment_id
-                    seen_ids = set()
-                    unique_details = []
-                    for d in all_details:
-                        eid = d["establishment_id"]
-                        if eid not in seen_ids:
-                            seen_ids.add(eid)
-                            unique_details.append(d)
-                            
-                    # Construct list_establishment_ids node list
-                    for d in unique_details:
-                        list_est_ids.append({
-                            "establishment Name": d["establishment_name"],
-                            "establishment id": d["establishment_id"]
-                        })
-                        
-                    prefix_matches = []
-                    office_matches = []
-                    for d in unique_details:
-                        eid = d["establishment_id"]
-                        office = d["office_name"]
-                        prefix = eid[:2].upper()
-                        office_state = find_state_for_office(office, office_state_map)
-                        
-                        item = {
-                            "establishment Name": d["establishment_name"],
-                            "establishment id": eid
-                        }
-                        if prefix in allowed_state_codes:
-                            prefix_matches.append((eid, item))
-                        elif office_state in allowed_state_codes:
-                            office_matches.append((eid, item))
-                            
-                    if prefix_matches:
-                        target_est_id = prefix_matches[0][0]
-                        disclaimer = None
-                        matched_est_ids = [item for _, item in prefix_matches] + [item for _, item in office_matches]
-                    elif office_matches:
-                        target_est_id = office_matches[0][0]
-                        disclaimer = None
-                        matched_est_ids = [item for _, item in office_matches]
-                    else:
-                        matched_est_ids = []
-                                
-                    print(f"[+] Found {len(matched_est_ids)} state-matching establishment IDs inside downloaded files.")
-                elif target_est_id:
-                    status = "no_downloads"
-                    print("[-] Clicked view details but no export downloads succeeded.")
-                else:
-                    print("[-] Search returned no matching results for vendor state.")
-                    
-                results[vendor_code] = {
-                    "vendor_name": vendor_name,
-                    "vendor_gstn": vendor_gstn,
-                    "status": status,
-                    "allowed_state_codes": allowed_state_codes,
-                    "target_establishment_id": target_est_id,
-                    "list_establishment_ids": list_est_ids,
-                    "matched_establishment_ids": matched_est_ids
-                }
-                if disclaimer:
-                    results[vendor_code]["disclaimer"] = disclaimer
-                
-                # Save progress after every vendor
-                save_results(results_file, results)
-                
-                count += 1
-                print(f"[*] Waiting {sleep_delay} seconds before next vendor...")
-                await asyncio.sleep(sleep_delay)
-                
-            except Exception as e:
-                print(f"[!] Error processing vendor {vendor_code}: {e}")
-                # Save failure status to resume later
-                results[vendor_code] = {
-                    "vendor_name": vendor_name,
-                    "vendor_gstn": vendor_gstn,
-                    "status": f"failed_error: {str(e)}",
-                    "list_establishment_ids": [],
-                    "matched_establishment_ids": []
-                }
-                save_results(results_file, results)
-                # Small wait before trying next
-                print(f"[*] Waiting {sleep_delay} seconds after failure before next vendor...")
-                await asyncio.sleep(sleep_delay)
-                
-        await context.close()
+
+        async with async_playwright() as p:
+            vendor_number = 0
+            for batch_start in range(0, len(pending_payment), CONCURRENCY):
+                batch = pending_payment[batch_start: batch_start + CONCURRENCY]
+                tasks = []
+                for i, row in enumerate(batch):
+                    vendor_number += 1
+                    wid = (batch_start + i) % CONCURRENCY + 1
+                    tasks.append(asyncio.create_task(worker_payment(p, wid, row, vendor_number)))
+
+                await asyncio.gather(*tasks)
+
+                # Batch delay
+                if batch_start + CONCURRENCY < len(pending_payment):
+                    batch_delay = random.uniform(3, 8)
+                    print(f"\n[*] Batch complete. Waiting {batch_delay:.1f}s before next batch...\n")
+                    await asyncio.sleep(batch_delay)
         
-    print(f"\n[+] Processing complete. Filtered results saved to: {results_file}")
+        print("\n[+] Phase 2 (Payment Details Downloading) completed successfully!")
+    else:
+        print("[*] Phase 2 (Payment Details Downloading) already complete. Skipping.")
+
+    print(f"\n[+] Pipeline execution completed. All results saved to: {results_file}")
+
 
 def main():
-    parser = argparse.ArgumentParser(description="Deduplicate vendors and run EPFO state filtered search")
+    parser = argparse.ArgumentParser(description="Concurrent EPFO vendor EPFO state-filtered search")
     parser.add_argument("-i", "--input", default="vendorList.csv", help="Path to input vendor CSV file (default: vendorList.csv)")
     parser.add_argument("-l", "--limit", type=int, default=None, help="Limit the number of vendors to process (default: all)")
-    parser.add_argument("-k", "--key", default=DEFAULT_API_KEY, help="Gemini API Key")
+    parser.add_argument("-k", "--key", default=DEFAULT_API_KEY, help="OpenRouter API Key for captcha solving")
     parser.add_argument("--headless", action="store_true", help="Run browser in headless mode")
-    parser.add_argument("--profile", default="edge_profile", help="Path to Edge user data directory (default: edge_profile)")
-    parser.add_argument("--sleep", type=int, default=10, help="Sleep duration in seconds between vendors (default: 10)")
-    
+    parser.add_argument("--profile", default="edge_profile", help="Base profile dir name (default: edge_profile)")
+    parser.add_argument("--sleep", type=int, default=10, help="(Unused in concurrent mode — kept for dashboard compatibility)")
+    parser.add_argument("--workers", type=int, default=2, help="Number of concurrent browser workers (1–3, default: 2)")
+    parser.add_argument("--payment", action="store_true", help="Run in payment details downloading mode using matched JSON")
+
     args = parser.parse_args()
-    
-    # Run primary search
+
     asyncio.run(run_scraper(
         limit=args.limit,
         api_key=args.key,
         headless=args.headless,
         input_file=args.input,
         profile_dir=args.profile,
-        sleep_delay=args.sleep
+        sleep_delay=args.sleep,
+        workers=args.workers,
+        payment_mode=args.payment,
     ))
 
 

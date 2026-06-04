@@ -22,7 +22,7 @@
         <script src="/publicPortal/scripts/CustomValidation.js"></script>
         <script src="/publicPortal/scripts/epfo-ui.js"></script>
     </head>
-    <body class="olre-body" onload="fnOnBodyLoad();" style="">
+    <body class="olre-body" onload="fnOnBodyLoad();">
         
 
 
@@ -141,7 +141,7 @@
                         contentType: "application/json; charset=utf-8",
                         success: function (result) {
                             $.unblockUI();
-                            $("#captchaImg").load('/publicPortal/no-auth/ecr/loadCaptchaPage?_HDIV_STATE_=1288-2-4E7E3A4C2F1F081D2410B50BFDA5DF9B');
+                            $("#captchaImg").load('/publicPortal/no-auth/ecr/loadCaptchaPage?_HDIV_STATE_=4-2-1783F3DFBEC3FFA11EF4A48A80C6B21E');
                             $("#dvEstList_2").show();
                             $("#tablecontainer").html(result);
                             $("#captcha").val('');
@@ -228,7 +228,8 @@
                         <div class="col-sm-3 col-md-3 col-lg-3">
 
                             <div id="captchaImg">
-<img name="capImg" id="capImg" style="height: 50px;width: 190px;" src="/publicPortal/no-auth/captcha/createCaptcha?_HDIV_STATE_=1288-4-4E7E3A4C2F1F081D2410B50BFDA5DF9B"></div>
+                                <img name="capImg" id="capImg" style="height: 50px;width: 190px;" src="/publicPortal/no-auth/captcha/createCaptcha?_HDIV_STATE_=4-3-1783F3DFBEC3FFA11EF4A48A80C6B21E">
+                            </div>
 
                         </div>
                     </div>
@@ -244,11 +245,11 @@
                         <div class="col-sm-7 col-md-6 col-lg-6">
                         </div>
                         <div class="col-sm-3 col-md-2 col-lg-2">
-                            <input type="button" id="searchEmployer" style="height: 30px; text-align: center;" name="Search" class="btn btn-primary" value="Search" onclick="fnSearchEstb('/publicPortal/no-auth/estSearch/searchEstablishment?_HDIV_STATE_=1288-0-4E7E3A4C2F1F081D2410B50BFDA5DF9B');
+                            <input type="button" id="searchEmployer" style="height: 30px; text-align: center;" name="Search" class="btn btn-primary" value="Search" onclick="fnSearchEstb('/publicPortal/no-auth/estSearch/searchEstablishment?_HDIV_STATE_=4-0-1783F3DFBEC3FFA11EF4A48A80C6B21E');
                                     return false;">
-                            <input type="button" style="height: 30px; text-align: center;" class="btn btn-primary" value="Reset" onclick="fnReset('/publicPortal/no-auth/estSearch/loadEstSearchHome?_HDIV_STATE_=1288-1-4E7E3A4C2F1F081D2410B50BFDA5DF9B');
+                            <input type="button" style="height: 30px; text-align: center;" class="btn btn-primary" value="Reset" onclick="fnReset('/publicPortal/no-auth/estSearch/loadEstSearchHome?_HDIV_STATE_=4-1-1783F3DFBEC3FFA11EF4A48A80C6B21E');
                                     return false;">
-<!--                            <button class="btn btn-info btn-md btn-reset" name="btnReset" onclick="fnReset('/publicPortal/no-auth/estSearch/loadEstSearchHome?_HDIV_STATE_=1288-1-4E7E3A4C2F1F081D2410B50BFDA5DF9B');
+<!--                            <button class="btn btn-info btn-md btn-reset" name="btnReset" onclick="fnReset('/publicPortal/no-auth/estSearch/loadEstSearchHome?_HDIV_STATE_=4-1-1783F3DFBEC3FFA11EF4A48A80C6B21E');
                                     return false;"><i class="fa fa-refresh"></i> Reset</button>-->
 
                         </div>
@@ -260,7 +261,7 @@
                     </div>-->
         <!--        </div>-->
 
-        <div id="dvEstList_2" style="display: block;">
+        <div id="dvEstList_2">
             <!--            <div class="panel panel-default"> 
                             <div class="panel-body"> -->
             <div class="panel panel-info establishment-list"> 
@@ -282,27 +283,14 @@
                 </div>   
 
                 <div class="panel-body in" style="height: auto;">
-                    <div id="tablecontainer">
-
-
-
-
-    
-        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-        <title>JSP Page</title>
-    
-    
-          <div style="color: red; text-align: center;">Please enter valid captcha.</div>
-    
-
-</div>
+                    <div id="tablecontainer"></div>
                 </div>
             </div>   
             <!--                </div>
                         </div>-->
         </div>
 
-        <div id="dvValStatus_3" style="display: none;">
+        <div id="dvValStatus_3">
             <!--            <div class="panel panel-default"> 
                             <div class="panel-body"> -->
             <div class="panel panel-info validity-status"> 
@@ -331,7 +319,7 @@
                         </div>-->
         </div>
 
-        <div id="dvEstStatus_4" style="display: none;">
+        <div id="dvEstStatus_4">
             <!--            <div class="panel panel-default"> 
                             <div class="panel-body"> -->
             <div class="panel panel-info panel-asper-epfo-master"> 
@@ -360,7 +348,7 @@
                         </div>-->
         </div>
 
-        <div id="dvEstDetails_5" style="display: none;">
+        <div id="dvEstDetails_5">
             <!--            <div class="panel panel-default"> 
                             <div class="panel-body"> -->
             <div class="panel panel-info panel-establishment"> 
@@ -393,7 +381,7 @@
 
         
 
-        <div id="dvUnitsDetails_8" style="display: none;">
+        <div id="dvUnitsDetails_8">
             <div class="panel panel-info panel-branch"> 
                 <div class="panel-heading p-5">
                     <h5 class="panel-title">
@@ -418,7 +406,7 @@
             </div>
         </div>
 
-        <div id="dvOtherCode_9" style="display: none;">
+        <div id="dvOtherCode_9">
             <div class="panel panel-info panel-branch-sep-code"> 
                 <div class="panel-heading p-5">
                     <h5 class="panel-title">
@@ -443,7 +431,7 @@
             </div>
         </div>
 
-        <div id="dvBranchWoCode_10" style="display: none;">
+        <div id="dvBranchWoCode_10">
             <div class="panel panel-info panel-branch-wo-code"> 
                 <div class="panel-heading p-5">
                     <h5 class="panel-title">
@@ -468,7 +456,7 @@
             </div>
         </div>
 
-        <div id="dvEstSamePan_11" style="display: none;">
+        <div id="dvEstSamePan_11">
             <div class="panel panel-info panel-branch-dup-pan"> 
                 <div class="panel-heading p-5">
                     <h5 class="panel-title">
@@ -493,7 +481,7 @@
             </div>
         </div>
         
-        <div id="dvAddlInfo_12" style="display: none;">
+        <div id="dvAddlInfo_12">
             <div class="panel panel-info panel-branch-add_info"> 
                 <div class="panel-heading p-5">
                     <h5 class="panel-title">
@@ -519,7 +507,7 @@
         </div>
         
                     <!--GRAPHICAL STARTS-->
-        <div id="graphDashboard" style="display: none;">
+        <div id="graphDashboard">
            
         </div>
         

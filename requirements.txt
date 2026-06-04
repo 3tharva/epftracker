@@ -1,4 +1,4 @@
-playwright
+patchright
 pillow
 pandas
 openpyxl

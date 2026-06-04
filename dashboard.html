@@ -869,6 +869,45 @@
             font-weight: 500;
         }
 
+        .excel-tag {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            color: var(--color-success) !important;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .excel-tag:hover {
+            background: rgba(16, 185, 129, 0.2);
+            border-color: rgba(16, 185, 129, 0.4);
+            transform: translateY(-1px);
+        }
+        
+        .payment-status-tag {
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+        }
+        .payment-status-tag.empty {
+            background: var(--panel-border);
+            border: 1px solid var(--panel-border);
+            color: var(--text-muted);
+        }
+        .payment-status-tag.error {
+            background: rgba(244, 63, 94, 0.1);
+            border: 1px solid rgba(244, 63, 94, 0.2);
+            color: var(--color-danger);
+        }
+
         .eid-text {
             font-family: monospace;
             font-size: 0.85rem;
@@ -1343,41 +1382,60 @@
                     </div>
                 </div>
 
-                <!-- 2. Run Parameters Settings -->
-                <div class="glass-panel control-card">
-                    <div class="card-header-title">
-                        <i class="fa-solid fa-sliders" style="color:var(--accent-secondary)"></i>
-                        2. Scraper Estimation
-                    </div>
-                    
-                    <!-- Hidden configuration elements to preserve JavaScript references -->
-                    <div style="display: none;">
-                        <input type="number" id="sleep-delay-input" value="10">
-                        <input type="number" id="solver-time-input" value="15">
-                        <input type="checkbox" id="headless-checkbox" checked>
-                        <input type="password" id="apikey-input" value="">
-                    </div>
-
-                    <div class="estimate-box" id="runtime-estimate-box" style="margin-top: 0; background: rgba(99, 102, 241, 0.05); border: 1px solid rgba(99, 102, 241, 0.2); border-radius: 8px;">
-                        <i class="fa-solid fa-hourglass-half" style="color: var(--accent-primary);"></i>
+                <!-- Hidden configuration elements to preserve JavaScript references -->
+                <div style="display: none;">
+                    <input type="number" id="sleep-delay-input" value="10">
+                    <input type="number" id="solver-time-input" value="15">
+                    <input type="checkbox" id="headless-checkbox" checked>
+                    <input type="password" id="apikey-input" value="">
+                    <input type="number" id="workers-input" value="2" min="1" max="3">
+                    <div id="runtime-estimate-box">
                         <span id="runtime-estimate-text">No file loaded for estimation.</span>
                     </div>
+                    <select id="workers-select">
+                        <option value="1">1</option>
+                        <option value="2" selected>2</option>
+                        <option value="3">3</option>
+                    </select>
+                    <select id="mode-select">
+                        <option value="match" selected>match</option>
+                        <option value="payment">payment</option>
+                    </select>
                 </div>
 
-                <!-- 3. Execution Control Buttons -->
+                <!-- 2. Execution Control Buttons -->
                 <div class="glass-panel control-card">
                     <div class="card-header-title">
                         <i class="fa-solid fa-circle-play" style="color:var(--color-success)"></i>
-                        3. Process Controls
+                        2. Scraper Controls
                     </div>
+                    
+                    <!-- Dropdown to select active dataset -->
+                    <div style="margin-bottom: 12px; display: flex; flex-direction: column; gap: 4px;">
+                        <label for="active-file-select" style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">
+                            Select Database File:
+                        </label>
+                        <select id="active-file-select" class="select-input" onchange="changeActiveFile(this.value)" style="width: 100%; padding: 6px 10px; font-size: 0.85rem; border-radius: 6px; background: var(--panel-bg); border: 1px solid var(--panel-border); color: var(--text-main);">
+                            <option value="">No database files available</option>
+                        </select>
+                    </div>
+
                     <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-                        <button class="btn btn-primary" id="start-scraper-btn" onclick="startScraperProcess()" disabled>
-                            <i class="fa-solid fa-play"></i> Start Scraper
+                        <button class="btn btn-primary" id="start-full-pipeline-btn" onclick="startScraperProcess('match')" disabled>
+                            <i class="fa-solid fa-play"></i> Full Pipeline
                         </button>
-                        <button class="btn btn-danger" id="stop-scraper-btn" onclick="stopScraperProcess()" disabled>
+                        <button class="btn btn-secondary" id="rerun-payments-btn" onclick="startScraperProcess('payment')" disabled>
+                            <i class="fa-solid fa-rotate-right"></i> Rerun Payments
+                        </button>
+                    </div>
+                    <div style="margin-top: 10px;">
+                        <button class="btn btn-danger" id="stop-scraper-btn" onclick="stopScraperProcess()" style="width: 100%;" disabled>
                             <i class="fa-solid fa-stop"></i> Stop Scraper
                         </button>
                     </div>
+                    <p style="font-size:0.75rem; color:var(--text-muted); margin-top:4px; text-align:center;">
+                        <i class="fa-solid fa-circle-info"></i> Full Pipeline matches and downloads payments. Rerun Payments updates payments only.
+                    </p>
                 </div>
             </div>
 
@@ -1548,6 +1606,7 @@
                                     <th style="width: 130px;">Allowed States</th>
                                     <th>Target Establishment ID</th>
                                     <th>EPFO Region</th>
+                                    <th>Payment Details</th>
                                 </tr>
                             </thead>
                             <tbody id="table-body">
@@ -1737,12 +1796,14 @@
         const metaFilename = document.getElementById('meta-filename');
         const metaVendorCount = document.getElementById('meta-vendor-count');
         const runtimeEstimateText = document.getElementById('runtime-estimate-text');
-        const startScraperBtn = document.getElementById('start-scraper-btn');
+        const startFullBtn = document.getElementById('start-full-pipeline-btn');
+        const rerunPaymentsBtn = document.getElementById('rerun-payments-btn');
         const stopScraperBtn = document.getElementById('stop-scraper-btn');
         const sleepDelayInput = document.getElementById('sleep-delay-input');
         const solverTimeInput = document.getElementById('solver-time-input');
         const headlessCheckbox = document.getElementById('headless-checkbox');
         const apikeyInput = document.getElementById('apikey-input');
+        const workersSelect = document.getElementById('workers-select');
         
         // Progress labels
         const progressTextLabel = document.getElementById('progress-text-label');
@@ -1811,6 +1872,38 @@
                 const response = await fetch('/api/files');
                 if (response.ok) {
                     const files = await response.json();
+                    
+                    // Populate active-file-select dropdown with JSON files
+                    const activeFileSelect = document.getElementById('active-file-select');
+                    if (activeFileSelect) {
+                        const jsonFiles = files.filter(f => f.name.endsWith('.json') && !f.name.includes('/') && f.name !== 'STATECODE.JSON' && f.name !== 'districts.json');
+                        
+                        // Get the currently active filename to set selected attribute
+                        let currentActiveJson = 'vendorList.json';
+                        if (metaFilename && metaFilename.textContent !== 'None') {
+                            const activeBase = metaFilename.textContent.split('.')[0];
+                            currentActiveJson = `${activeBase}.json`;
+                        }
+                        
+                        activeFileSelect.innerHTML = '';
+                        if (jsonFiles.length === 0) {
+                            const opt = document.createElement('option');
+                            opt.value = '';
+                            opt.textContent = 'No database files available';
+                            activeFileSelect.appendChild(opt);
+                        } else {
+                            jsonFiles.forEach(f => {
+                                const opt = document.createElement('option');
+                                opt.value = f.name;
+                                opt.textContent = f.name;
+                                if (f.name === currentActiveJson) {
+                                    opt.selected = true;
+                                }
+                                activeFileSelect.appendChild(opt);
+                            });
+                        }
+                    }
+
                     if (files.length === 0) {
                         systemFileList.innerHTML = '<span style="color:var(--text-muted); font-size:0.8rem;">No generated files found yet.</span>';
                         return;
@@ -1832,6 +1925,37 @@
                 }
             } catch (err) {
                 console.log("Failed to load outputs files.", err);
+            }
+        }
+
+        // Switch active database file
+        async function changeActiveFile(filename) {
+            if (!filename) return;
+            
+            loaderText.textContent = "Switching active database file...";
+            loader.style.display = 'flex';
+            
+            try {
+                const response = await fetch('/api/select_active', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ filename })
+                });
+                
+                if (response.ok) {
+                    showToast(`Switched active database to: ${filename}`);
+                    // Force refresh status and data
+                    await pollStatus();
+                    await loadViewerData();
+                    await loadOutputFilesList();
+                } else {
+                    const err = await response.json();
+                    alert(`Failed to switch active file: ${err.error}`);
+                }
+            } catch (err) {
+                alert("Network error switching active database file.");
+            } finally {
+                loader.style.display = 'none';
             }
         }
 
@@ -1869,8 +1993,9 @@
                     
                     // Update controls button visibility states
                     if (status.running) {
-                        startScraperBtn.disabled = true;
-                        stopScraperBtn.disabled = false;
+                        if (startFullBtn) startFullBtn.disabled = true;
+                        if (rerunPaymentsBtn) rerunPaymentsBtn.disabled = true;
+                        if (stopScraperBtn) stopScraperBtn.disabled = false;
                         
                         // Disable configuration edits while running
                         sleepDelayInput.disabled = true;
@@ -1881,8 +2006,9 @@
                         fileIndicator.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin" style="color:var(--color-warning)"></i> Scraper is actively running...';
                         fileIndicator.className = 'file-status';
                     } else {
-                        startScraperBtn.disabled = totalCount === 0;
-                        stopScraperBtn.disabled = true;
+                        if (startFullBtn) startFullBtn.disabled = totalCount === 0;
+                        if (rerunPaymentsBtn) rerunPaymentsBtn.disabled = (status.processed_count === 0 && totalCount === 0);
+                        if (stopScraperBtn) stopScraperBtn.disabled = true;
                         
                         sleepDelayInput.disabled = false;
                         solverTimeInput.disabled = false;
@@ -1910,6 +2036,9 @@
 
                         const remaining = status.total_count - status.processed_count;
                         progressTextLabel.textContent = `Processed: ${status.processed_count} / ${status.total_count} vendors (${remaining} left)`;
+                        const pct = status.total_count > 0 ? Math.round((status.processed_count / status.total_count) * 100) : 0;
+                        progressPercentageLabel.textContent = pct + '%';
+                        progressBarFill.style.width = pct + '%';
                     } else {
                         progressPercentageLabel.textContent = '0%';
                         progressBarFill.style.width = '0%';
@@ -1947,7 +2076,7 @@
         }
 
         // Start execution trigger
-        async function startScraperProcess() {
+        async function startScraperProcess(mode = 'match') {
             if (totalCount === 0) {
                 alert("Please upload a vendor list spreadsheet before starting.");
                 return;
@@ -1960,13 +2089,16 @@
                 const sleepVal = sleepDelayInput.value;
                 const headlessVal = headlessCheckbox.checked ? 'true' : 'false';
                 const keyVal = apikeyInput.value;
+                const workersVal = workersSelect ? workersSelect.value : '2';
                 
                 const response = await fetch('/api/start', {
                     method: 'POST',
                     headers: {
                         'X-Headless': headlessVal,
                         'X-Sleep': sleepVal,
-                        'X-Api-Key': keyVal
+                        'X-Api-Key': keyVal,
+                        'X-Workers': workersVal,
+                        'X-Mode': mode
                     }
                 });
                 
@@ -2456,6 +2588,61 @@
                     officeDisplay = `<span style="font-weight: 500">${item.officeName}</span> <span style="font-size:0.75rem; color:var(--text-muted)">(${item.stateName})</span>`;
                 }
 
+                let paymentsDisplay = '<span style="color:var(--text-muted)">—</span>';
+                if (item.matched_establishment_ids && item.matched_establishment_ids.length > 0) {
+                    const downloadedItems = item.matched_establishment_ids.filter(m => m.payment_details_status === 'success' && m.payment_details_file);
+                    const notFoundItems = item.matched_establishment_ids.filter(m => m.payment_details_status === 'No Payment details found for this Establishment');
+                    const failedItems = item.matched_establishment_ids.filter(m => m.payment_details_status === 'failed');
+                    
+                    let htmlList = [];
+                    downloadedItems.forEach(m => {
+                        const shortEstId = m["establishment id"];
+                        htmlList.push(`
+                            <a href="/${m.payment_details_file}" class="excel-tag" download onclick="event.stopPropagation();" title="Download Excel for ${shortEstId} (${m["establishment Name"]})">
+                                <i class="fa-solid fa-file-excel" style="color:#10b981; margin-right:4px;"></i> ${shortEstId}
+                            </a>
+                        `);
+                    });
+                    
+                    notFoundItems.forEach(m => {
+                        htmlList.push(`
+                            <span class="payment-status-tag empty" title="No payment details found for ${m["establishment id"]}">
+                                <i class="fa-solid fa-circle-minus" style="color:var(--text-muted); margin-right:4px;"></i> ${m["establishment id"]}
+                            </span>
+                        `);
+                    });
+
+                    failedItems.forEach(m => {
+                        htmlList.push(`
+                            <span class="payment-status-tag error" title="Download failed: ${m.payment_details_error || 'unknown error'}">
+                                <i class="fa-solid fa-circle-exclamation" style="color:var(--color-danger); margin-right:4px;"></i> ${m["establishment id"]}
+                            </span>
+                        `);
+                    });
+                    
+                    if (htmlList.length > 0) {
+                        paymentsDisplay = `<div style="display:flex; flex-wrap:wrap; gap:6px;">${htmlList.join('')}</div>`;
+                    }
+                }
+                
+                if (paymentsDisplay === '<span style="color:var(--text-muted)">—</span>' && item.raw.payment_details_file) {
+                    const filename = item.raw.payment_details_file.split('/').pop();
+                    const status = item.raw.payment_details_status;
+                    if (status === 'success') {
+                        paymentsDisplay = `
+                            <a href="/${item.raw.payment_details_file}" class="excel-tag" download onclick="event.stopPropagation();" title="Download Excel: ${filename}">
+                                <i class="fa-solid fa-file-excel" style="color:#10b981; margin-right:4px;"></i> Download Excel
+                            </a>
+                        `;
+                    } else if (status === 'No Payment details found for this Establishment') {
+                        paymentsDisplay = `
+                            <span class="payment-status-tag empty" title="No payment details found">
+                                <i class="fa-solid fa-circle-minus" style="color:var(--text-muted); margin-right:4px;"></i> No Details
+                            </span>
+                        `;
+                    }
+                }
+
                 tr.innerHTML = `
                     <td style="font-family: monospace; font-weight:600;">${item.id}</td>
                     <td>
@@ -2468,6 +2655,7 @@
                     <td>${stateBadges || '<span style="color:var(--text-muted)">None</span>'}</td>
                     <td>${eidDisplay}</td>
                     <td>${officeDisplay}</td>
+                    <td>${paymentsDisplay}</td>
                 `;
                 tableBody.appendChild(tr);
             });
@@ -2642,6 +2830,51 @@
                         icons += '<span class="badge badge-info" style="font-size: 0.7rem; padding: 2px 6px;">Matched Option</span>';
                     }
 
+                    const matchedEstRecord = item.matched_establishment_ids.find(m => m["establishment id"] === estId);
+                    let paymentDownloadButton = '';
+                    if (matchedEstRecord) {
+                        const status = matchedEstRecord.payment_details_status;
+                        const file = matchedEstRecord.payment_details_file;
+                        if (status === 'success' && file) {
+                            paymentDownloadButton = `
+                                <a href="/${file}" class="btn btn-secondary excel-tag" style="margin-top: 8px; width: fit-content;" download title="Download Excel sheet for payment details">
+                                    <i class="fa-solid fa-file-excel" style="color:#10b981; margin-right:6px;"></i> View Excel
+                                </a>
+                            `;
+                        } else if (status === 'No Payment details found for this Establishment') {
+                            paymentDownloadButton = `
+                                <div class="payment-status-tag empty" style="margin-top: 8px; width: fit-content;">
+                                    <i class="fa-solid fa-circle-minus" style="margin-right:6px;"></i> No Payment Details Found
+                                </div>
+                            `;
+                        } else if (status === 'failed' || matchedEstRecord.payment_details_error) {
+                            paymentDownloadButton = `
+                                <div class="payment-status-tag error" style="margin-top: 8px; width: fit-content;" title="Error: ${matchedEstRecord.payment_details_error || 'unknown error'}">
+                                    <i class="fa-solid fa-circle-exclamation" style="margin-right:6px;"></i> Download Failed
+                                </div>
+                            `;
+                        }
+                    } else {
+                        // Fallback: check if this is the target_establishment_id and top-level has a file
+                        if (estId === item.target_establishment_id && item.raw.payment_details_file) {
+                            const status = item.raw.payment_details_status;
+                            const file = item.raw.payment_details_file;
+                            if (status === 'success' && file) {
+                                paymentDownloadButton = `
+                                    <a href="/${file}" class="btn btn-secondary excel-tag" style="margin-top: 8px; width: fit-content;" download title="Download Excel sheet for payment details">
+                                        <i class="fa-solid fa-file-excel" style="color:#10b981; margin-right:6px;"></i> View Excel
+                                    </a>
+                                `;
+                            } else if (status === 'No Payment details found for this Establishment') {
+                                paymentDownloadButton = `
+                                    <div class="payment-status-tag empty" style="margin-top: 8px; width: fit-content;">
+                                        <i class="fa-solid fa-circle-minus" style="margin-right:6px;"></i> No Payment Details Found
+                                    </div>
+                                `;
+                            }
+                        }
+                    }
+
                     div.innerHTML = `
                         <div class="est-item-header">
                             <span class="est-name">${estName}</span>
@@ -2652,6 +2885,7 @@
                             <span class="est-tag"><i class="fa-solid fa-location-dot"></i> ${parsed.officeName}</span>
                             <span class="est-tag"><i class="fa-solid fa-map"></i> ${parsed.stateName} (${parsed.stateCode})</span>
                         </div>
+                        ${paymentDownloadButton}
                     `;
                     estList.appendChild(div);
                 });

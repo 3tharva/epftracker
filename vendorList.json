@@ -38,7 +38,9 @@
         "establishment Name": "MAA KALI FABRICATORS",
         "establishment id": "WBCAL0061652000"
       }
-    ]
+    ],
+    "payment_details_status": "success",
+    "payment_details_file": "downloads/0000352712/M_S_Power_Pioneers_payment_details.xlsx"
   },
   "611222": {
     "vendor_name": "JAY MAHAKALI CONSTRUCTION",
@@ -51,7 +53,9 @@
     "matched_establishment_ids": [
       {
         "establishment Name": "JAY MAHAKALI CONSTRUCTION",
-        "establishment id": "RJRAJ2854109000"
+        "establishment id": "RJRAJ2854109000",
+        "payment_details_status": "success",
+        "payment_details_file": "downloads/0000611222/JAY_MAHAKALI_CONSTRUCTION_RJRAJ2854109000_payment_details.xlsx"
       }
     ],
     "list_establishment_ids": [
@@ -67,7 +71,9 @@
         "establishment Name": "JAY MAHAKALI CONSTRUCTION",
         "establishment id": "VDBRD2695915000"
       }
-    ]
+    ],
+    "payment_details_status": "success",
+    "payment_details_file": "downloads/0000611222/JAY_MAHAKALI_CONSTRUCTION_RJRAJ2854109000_payment_details.xlsx"
   },
   "352711": {
     "vendor_name": "M/S Power Pioneers",
@@ -250,7 +256,9 @@
     "matched_establishment_ids": [
       {
         "establishment Name": "M/S Power Pioneers",
-        "establishment id": "UPLKO0061652000"
+        "establishment id": "UPLKO0061652000",
+        "payment_details_status": "No Payment details found for this Establishment",
+        "payment_details_file": ""
       }
     ],
     "list_establishment_ids": [
@@ -282,7 +290,9 @@
         "establishment Name": "M/S Power Pioneers",
         "establishment id": "WBCAL0061652000"
       }
-    ]
+    ],
+    "payment_details_status": "No Payment details found for this Establishment",
+    "payment_details_file": ""
   },
   "237362": {
     "vendor_name": "M/s Jay Mahakali Construction",
@@ -354,7 +364,9 @@
     "matched_establishment_ids": [
       {
         "establishment Name": "SHREEPOWERTECH ALLIED PRIVATE LIMIT",
-        "establishment id": "UPLKO2923080000"
+        "establishment id": "UPLKO2923080000",
+        "payment_details_status": "success",
+        "payment_details_file": "downloads/0000236636/SHREEPOWERTECH_ALLIED_PRIVATE_LIMIT_UPLKO2923080000_payment_details.xlsx"
       }
     ],
     "list_establishment_ids": [
@@ -362,7 +374,9 @@
         "establishment Name": "SHREEPOWERTECH ALLIED PRIVATE LIMIT",
         "establishment id": "UPLKO2923080000"
       }
-    ]
+    ],
+    "payment_details_status": "success",
+    "payment_details_file": "downloads/0000236636/SHREEPOWERTECH_ALLIED_PRIVATE_LIMIT_UPLKO2923080000_payment_details.xlsx"
   },
   "339260": {
     "vendor_name": "M.F. CONSTRUCTION",
@@ -421,11 +435,15 @@
     "matched_establishment_ids": [
       {
         "establishment Name": "PN ENTERPRISES",
-        "establishment id": "BRPAT2268682000"
+        "establishment id": "BRPAT2268682000",
+        "payment_details_status": "success",
+        "payment_details_file": "downloads/0000235993/PN_ENTERPRISES_BRPAT2268682000_payment_details.xlsx"
       },
       {
         "establishment Name": "PN ENTERPRISES",
-        "establishment id": "BRMUZ2317167000"
+        "establishment id": "BRMUZ2317167000",
+        "payment_details_status": "No Payment details found for this Establishment",
+        "payment_details_file": ""
       }
     ],
     "list_establishment_ids": [
@@ -437,7 +455,9 @@
         "establishment Name": "PN ENTERPRISES",
         "establishment id": "BRMUZ2317167000"
       }
-    ]
+    ],
+    "payment_details_status": "success",
+    "payment_details_file": "downloads/0000235993/PN_ENTERPRISES_BRPAT2268682000_payment_details.xlsx"
   },
   "236056": {
     "vendor_name": "MAA VINDHYAVASINI DEVELOPERS",
@@ -503,35 +523,51 @@
     "matched_establishment_ids": [
       {
         "establishment Name": "Raj Enterprises",
-        "establishment id": "GBBLR0028725000"
+        "establishment id": "GBBLR0028725000",
+        "payment_details_status": "failed",
+        "payment_details_error": "Could not locate Excel export button in payment details popup"
       },
       {
         "establishment Name": "Raj Enterprises",
-        "establishment id": "GBBLR0059503000"
+        "establishment id": "GBBLR0059503000",
+        "payment_details_status": "No Payment details found for this Establishment",
+        "payment_details_file": ""
       },
       {
         "establishment Name": "Raj Enterprises",
-        "establishment id": "GBBLR1477922000"
+        "establishment id": "GBBLR1477922000",
+        "payment_details_status": "failed",
+        "payment_details_error": "Could not locate Excel export button in payment details popup"
       },
       {
         "establishment Name": "Raj Enterprises",
-        "establishment id": "GBBLR1610472000"
+        "establishment id": "GBBLR1610472000",
+        "payment_details_status": "failed",
+        "payment_details_error": "Could not locate 'View Payment Details' link on the details page"
       },
       {
         "establishment Name": "Raj Enterprises",
-        "establishment id": "GBBLR1667087000"
+        "establishment id": "GBBLR1667087000",
+        "payment_details_status": "failed",
+        "payment_details_error": "Could not locate Excel export button in payment details popup"
       },
       {
         "establishment Name": "Raj Enterprises",
-        "establishment id": "GBBLR1980115000"
+        "establishment id": "GBBLR1980115000",
+        "payment_details_status": "No Payment details found for this Establishment",
+        "payment_details_file": ""
       },
       {
         "establishment Name": "Raj Enterprises",
-        "establishment id": "GBBLR2103391000"
+        "establishment id": "GBBLR2103391000",
+        "payment_details_status": "failed",
+        "payment_details_error": "Could not locate 'View Payment Details' link on the details page"
       },
       {
         "establishment Name": "Raj Enterprises",
-        "establishment id": "GBBLR2449058000"
+        "establishment id": "GBBLR2449058000",
+        "payment_details_status": "failed",
+        "payment_details_error": "Could not locate 'View Payment Details' link on the details page"
       },
       {
         "establishment Name": "Raj Enterprises",
@@ -8471,7 +8507,8 @@
         "establishment Name": "Raj Enterprises",
         "establishment id": "WBTLO2064299000"
       }
-    ]
+    ],
+    "payment_details_error": "Runtime error: Locator.click: Timeout 30000ms exceeded.\nCall log:\n  - waiting for locator(\"#estCode\")\n"
   },
   "236158": {
     "vendor_name": "STRATA GEOSYSTEMS INDIA PRIVATE LIM",
@@ -8534,7 +8571,9 @@
     "matched_establishment_ids": [
       {
         "establishment Name": "VINAYAK INFRATECHS",
-        "establishment id": "GJRAJ0078298000"
+        "establishment id": "GJRAJ0078298000",
+        "payment_details_status": "success",
+        "payment_details_file": "downloads/0000234205/VINAYAK_INFRATECHS_GJRAJ0078298000_payment_details.xlsx"
       }
     ],
     "list_establishment_ids": [
@@ -8542,7 +8581,9 @@
         "establishment Name": "VINAYAK INFRATECHS",
         "establishment id": "GJRAJ0078298000"
       }
-    ]
+    ],
+    "payment_details_status": "success",
+    "payment_details_file": "downloads/0000234205/VINAYAK_INFRATECHS_GJRAJ0078298000_payment_details.xlsx"
   },
   "610106": {
     "vendor_name": "SHANKAR TRANSPORT",
@@ -8555,7 +8596,9 @@
     "matched_establishment_ids": [
       {
         "establishment Name": "SHANKAR TRANSPORT",
-        "establishment id": "GJRAJ1829663000"
+        "establishment id": "GJRAJ1829663000",
+        "payment_details_status": "No Payment details found for this Establishment",
+        "payment_details_file": ""
       }
     ],
     "list_establishment_ids": [
@@ -8563,7 +8606,9 @@
         "establishment Name": "SHANKAR TRANSPORT",
         "establishment id": "GJRAJ1829663000"
       }
-    ]
+    ],
+    "payment_details_status": "No Payment details found for this Establishment",
+    "payment_details_file": ""
   },
   "232065": {
     "vendor_name": "M/S SHALIMAR ARTS",
@@ -8587,7 +8632,9 @@
     "matched_establishment_ids": [
       {
         "establishment Name": "M & K Infraprojects",
-        "establishment id": "GJRAJ3624324000"
+        "establishment id": "GJRAJ3624324000",
+        "payment_details_status": "success",
+        "payment_details_file": "downloads/0000612262/M___K_Infraprojects_GJRAJ3624324000_payment_details.xlsx"
       }
     ],
     "list_establishment_ids": [
@@ -8595,7 +8642,9 @@
         "establishment Name": "M & K Infraprojects",
         "establishment id": "GJRAJ3624324000"
       }
-    ]
+    ],
+    "payment_details_status": "success",
+    "payment_details_file": "downloads/0000612262/M___K_Infraprojects_GJRAJ3624324000_payment_details.xlsx"
   },
   "237033": {
     "vendor_name": "M/s. J R CONSTRUCTION",
@@ -8608,15 +8657,21 @@
     "matched_establishment_ids": [
       {
         "establishment Name": "S J R CONSTRUCTIONS",
-        "establishment id": "APPTC1435197000"
+        "establishment id": "APPTC1435197000",
+        "payment_details_status": "success",
+        "payment_details_file": "downloads/0000237033/S_J_R_CONSTRUCTIONS_APPTC1435197000_payment_details.xlsx"
       },
       {
         "establishment Name": "J R CONSTRUCTION",
-        "establishment id": "VDBRD0065381000"
+        "establishment id": "VDBRD0065381000",
+        "payment_details_status": "No Payment details found for this Establishment",
+        "payment_details_file": ""
       },
       {
         "establishment Name": "J R CONSTRUCTION",
-        "establishment id": "VDBRD2529977000"
+        "establishment id": "VDBRD2529977000",
+        "payment_details_status": "success",
+        "payment_details_file": "downloads/0000237033/J_R_CONSTRUCTION_VDBRD2529977000_payment_details.xlsx"
       }
     ],
     "list_establishment_ids": [
@@ -8768,7 +8823,9 @@
         "establishment Name": "J R CONSTRUCTION",
         "establishment id": "WBDGP1608213000"
       }
-    ]
+    ],
+    "payment_details_status": "success",
+    "payment_details_file": "downloads/0000237033/S_J_R_CONSTRUCTIONS_APPTC1435197000_payment_details.xlsx"
   },
   "237284": {
     "vendor_name": "Jaimanu Enterprise",
@@ -8792,7 +8849,9 @@
     "matched_establishment_ids": [
       {
         "establishment Name": "AMBICA ENTERPRISE",
-        "establishment id": "GJRAJ0042247000"
+        "establishment id": "GJRAJ0042247000",
+        "payment_details_status": "No Payment details found for this Establishment",
+        "payment_details_file": ""
       },
       {
         "establishment Name": "AMBICA ENTERPRISE",
@@ -8904,7 +8963,8 @@
         "establishment Name": "AMBICA ENTERPRISE",
         "establishment id": "GJRAJ0042341000"
       }
-    ]
+    ],
+    "payment_details_error": "Runtime error: Locator.click: Timeout 30000ms exceeded.\nCall log:\n  - waiting for locator(\"#estCode\")\n"
   },
   "21040211": {
     "vendor_name": "SAMAR INFRA PRIVATE LIMITED",
@@ -8917,7 +8977,9 @@
     "matched_establishment_ids": [
       {
         "establishment Name": "SAMAR INFRA PRIVATE LIMITED",
-        "establishment id": "MRMRT2706579000"
+        "establishment id": "MRMRT2706579000",
+        "payment_details_status": "success",
+        "payment_details_file": "downloads/0021040211/SAMAR_INFRA_PRIVATE_LIMITED_MRMRT2706579000_payment_details.xlsx"
       }
     ],
     "list_establishment_ids": [
@@ -8925,7 +8987,9 @@
         "establishment Name": "SAMAR INFRA PRIVATE LIMITED",
         "establishment id": "MRMRT2706579000"
       }
-    ]
+    ],
+    "payment_details_status": "success",
+    "payment_details_file": "downloads/0021040211/SAMAR_INFRA_PRIVATE_LIMITED_MRMRT2706579000_payment_details.xlsx"
   },
   "234296": {
     "vendor_name": "M/S R R CONSTRUCTION",
@@ -8938,95 +9002,141 @@
     "matched_establishment_ids": [
       {
         "establishment Name": "M/S R R CONSTRUCTION",
-        "establishment id": "UPALD1490215000"
+        "establishment id": "UPALD1490215000",
+        "payment_details_status": "success",
+        "payment_details_file": "downloads/0000234296/M_S_R_R_CONSTRUCTION_UPALD1490215000_payment_details.xlsx"
       },
       {
         "establishment Name": "M/S R R CONSTRUCTION",
-        "establishment id": "UPALD1763420000"
+        "establishment id": "UPALD1763420000",
+        "payment_details_status": "success",
+        "payment_details_file": "downloads/0000234296/M_S_R_R_CONSTRUCTION_UPALD1763420000_payment_details.xlsx"
       },
       {
         "establishment Name": "M/S R R CONSTRUCTION",
-        "establishment id": "UPALD2017145000"
+        "establishment id": "UPALD2017145000",
+        "payment_details_status": "success",
+        "payment_details_file": "downloads/0000234296/M_S_R_R_CONSTRUCTION_UPALD2017145000_payment_details.xlsx"
       },
       {
         "establishment Name": "M/S R R CONSTRUCTION",
-        "establishment id": "UPALD3580233000"
+        "establishment id": "UPALD3580233000",
+        "payment_details_status": "No Payment details found for this Establishment",
+        "payment_details_file": ""
       },
       {
         "establishment Name": "M/S R R CONSTRUCTION",
-        "establishment id": "UPGKP2729156000"
+        "establishment id": "UPGKP2729156000",
+        "payment_details_status": "No Payment details found for this Establishment",
+        "payment_details_file": ""
       },
       {
         "establishment Name": "M/S R R CONSTRUCTION",
-        "establishment id": "UPKNP1418581000"
+        "establishment id": "UPKNP1418581000",
+        "payment_details_status": "success",
+        "payment_details_file": "downloads/0000234296/M_S_R_R_CONSTRUCTION_UPKNP1418581000_payment_details.xlsx"
       },
       {
         "establishment Name": "M/S R R CONSTRUCTION",
-        "establishment id": "UPKNP2018482000"
+        "establishment id": "UPKNP2018482000",
+        "payment_details_status": "success",
+        "payment_details_file": "downloads/0000234296/M_S_R_R_CONSTRUCTION_UPKNP2018482000_payment_details.xlsx"
       },
       {
         "establishment Name": "M/S R R CONSTRUCTION",
-        "establishment id": "UPKNP3449880000"
+        "establishment id": "UPKNP3449880000",
+        "payment_details_status": "success",
+        "payment_details_file": "downloads/0000234296/M_S_R_R_CONSTRUCTION_UPKNP3449880000_payment_details.xlsx"
       },
       {
         "establishment Name": "M/S R R CONSTRUCTION",
-        "establishment id": "UPKNP3687175000"
+        "establishment id": "UPKNP3687175000",
+        "payment_details_status": "success",
+        "payment_details_file": "downloads/0000234296/M_S_R_R_CONSTRUCTION_UPKNP3687175000_payment_details.xlsx"
       },
       {
         "establishment Name": "M/S R R CONSTRUCTION",
-        "establishment id": "UPLKO2865364000"
+        "establishment id": "UPLKO2865364000",
+        "payment_details_status": "No Payment details found for this Establishment",
+        "payment_details_file": ""
       },
       {
         "establishment Name": "M/S R R CONSTRUCTION",
-        "establishment id": "UPLKO3663404000"
+        "establishment id": "UPLKO3663404000",
+        "payment_details_status": "No Payment details found for this Establishment",
+        "payment_details_file": ""
       },
       {
         "establishment Name": "M/S R R CONSTRUCTION",
-        "establishment id": "UPVNS1857298000"
+        "establishment id": "UPVNS1857298000",
+        "payment_details_status": "success",
+        "payment_details_file": "downloads/0000234296/M_S_R_R_CONSTRUCTION_UPVNS1857298000_payment_details.xlsx"
       },
       {
         "establishment Name": "M/S R R CONSTRUCTION",
-        "establishment id": "UPVNS2165683000"
+        "establishment id": "UPVNS2165683000",
+        "payment_details_status": "success",
+        "payment_details_file": "downloads/0000234296/M_S_R_R_CONSTRUCTION_UPVNS2165683000_payment_details.xlsx"
       },
       {
         "establishment Name": "M/S R R CONSTRUCTION",
-        "establishment id": "UPVNS3938209000"
+        "establishment id": "UPVNS3938209000",
+        "payment_details_status": "No Payment details found for this Establishment",
+        "payment_details_file": ""
       },
       {
         "establishment Name": "M/S R R CONSTRUCTION",
-        "establishment id": "MRAGR1048415000"
+        "establishment id": "MRAGR1048415000",
+        "payment_details_status": "No Payment details found for this Establishment",
+        "payment_details_file": ""
       },
       {
         "establishment Name": "M/S R R CONSTRUCTION",
-        "establishment id": "MRAGR2901227000"
+        "establishment id": "MRAGR2901227000",
+        "payment_details_status": "No Payment details found for this Establishment",
+        "payment_details_file": ""
       },
       {
         "establishment Name": "M/S R R CONSTRUCTION",
-        "establishment id": "MRAGR2910416000"
+        "establishment id": "MRAGR2910416000",
+        "payment_details_status": "No Payment details found for this Establishment",
+        "payment_details_file": ""
       },
       {
         "establishment Name": "M/S R R CONSTRUCTION",
-        "establishment id": "MRMRT1057882000"
+        "establishment id": "MRMRT1057882000",
+        "payment_details_status": "No Payment details found for this Establishment",
+        "payment_details_file": ""
       },
       {
         "establishment Name": "M/S R R CONSTRUCTION",
-        "establishment id": "MRMRT2007951000"
+        "establishment id": "MRMRT2007951000",
+        "payment_details_status": "No Payment details found for this Establishment",
+        "payment_details_file": ""
       },
       {
         "establishment Name": "M/S R R CONSTRUCTION",
-        "establishment id": "MRMRT3129968000"
+        "establishment id": "MRMRT3129968000",
+        "payment_details_status": "success",
+        "payment_details_file": "downloads/0000234296/M_S_R_R_CONSTRUCTION_MRMRT3129968000_payment_details.xlsx"
       },
       {
         "establishment Name": "M/S R R CONSTRUCTION",
-        "establishment id": "MRNOI1432909000"
+        "establishment id": "MRNOI1432909000",
+        "payment_details_status": "success",
+        "payment_details_file": "downloads/0000234296/M_S_R_R_CONSTRUCTION_MRNOI1432909000_payment_details.xlsx"
       },
       {
         "establishment Name": "M/S R R CONSTRUCTION",
-        "establishment id": "MRNOI1650939000"
+        "establishment id": "MRNOI1650939000",
+        "payment_details_status": "success",
+        "payment_details_file": "downloads/0000234296/M_S_R_R_CONSTRUCTION_MRNOI1650939000_payment_details.xlsx"
       },
       {
         "establishment Name": "M/S R R CONSTRUCTION",
-        "establishment id": "MRNOI2671179000"
+        "establishment id": "MRNOI2671179000",
+        "payment_details_status": "success",
+        "payment_details_file": "downloads/0000234296/M_S_R_R_CONSTRUCTION_MRNOI2671179000_payment_details.xlsx"
       }
     ],
     "list_establishment_ids": [
@@ -9734,7 +9844,9 @@
         "establishment Name": "M/S R R CONSTRUCTION",
         "establishment id": "WBDGP3625828000"
       }
-    ]
+    ],
+    "payment_details_status": "success",
+    "payment_details_file": "downloads/0000234296/M_S_R_R_CONSTRUCTION_UPALD1490215000_payment_details.xlsx"
   },
   "231635": {
     "vendor_name": "AMAN ELECTRICALS",
@@ -9747,27 +9859,39 @@
     "matched_establishment_ids": [
       {
         "establishment Name": "AMAN ELECTRICALS",
-        "establishment id": "UPVNS2052647000"
+        "establishment id": "UPVNS2052647000",
+        "payment_details_status": "No Payment details found for this Establishment",
+        "payment_details_file": ""
       },
       {
         "establishment Name": "AMAN ELECTRICALS",
-        "establishment id": "UPKNP0029729000"
+        "establishment id": "UPKNP0029729000",
+        "payment_details_status": "No Payment details found for this Establishment",
+        "payment_details_file": ""
       },
       {
         "establishment Name": "AMAN ELECTRICALS",
-        "establishment id": "MRAGR0006213000"
+        "establishment id": "MRAGR0006213000",
+        "payment_details_status": "No Payment details found for this Establishment",
+        "payment_details_file": ""
       },
       {
         "establishment Name": "AMAN ELECTRICALS",
-        "establishment id": "MRNOI0013290000"
+        "establishment id": "MRNOI0013290000",
+        "payment_details_status": "failed",
+        "payment_details_error": "Full establishment ID not found in results rows matching 7-digit code 0013290"
       },
       {
         "establishment Name": "AMAN ELECTRICALS",
-        "establishment id": "MRMRT1527249000"
+        "establishment id": "MRMRT1527249000",
+        "payment_details_status": "success",
+        "payment_details_file": "downloads/0000231635/AMAN_ELECTRICALS_MRMRT1527249000_payment_details.xlsx"
       },
       {
         "establishment Name": "AMAN ELECTRICALS",
-        "establishment id": "MRMRT2305608000"
+        "establishment id": "MRMRT2305608000",
+        "payment_details_status": "No Payment details found for this Establishment",
+        "payment_details_file": ""
       }
     ],
     "list_establishment_ids": [
@@ -9891,7 +10015,9 @@
         "establishment Name": "AMAN ELECTRICALS",
         "establishment id": "MRMRT2305608000"
       }
-    ]
+    ],
+    "payment_details_status": "success",
+    "payment_details_file": "downloads/0000231635/AMAN_ELECTRICALS_MRMRT1527249000_payment_details.xlsx"
   },
   "236012": {
     "vendor_name": "Ayush procon private limited",
@@ -9943,11 +10069,15 @@
     "matched_establishment_ids": [
       {
         "establishment Name": "A.K.INFRATECH",
-        "establishment id": "MRMRT2170193000"
+        "establishment id": "MRMRT2170193000",
+        "payment_details_status": "success",
+        "payment_details_file": "downloads/0000337099/A_K_INFRATECH_MRMRT2170193000_payment_details.xlsx"
       },
       {
         "establishment Name": "A.K.INFRATECH",
-        "establishment id": "MRMRT3043924000"
+        "establishment id": "MRMRT3043924000",
+        "payment_details_status": "success",
+        "payment_details_file": "downloads/0000337099/A_K_INFRATECH_MRMRT3043924000_payment_details.xlsx"
       }
     ],
     "list_establishment_ids": [
@@ -9959,7 +10089,9 @@
         "establishment Name": "A.K.INFRATECH",
         "establishment id": "MRMRT3043924000"
       }
-    ]
+    ],
+    "payment_details_status": "success",
+    "payment_details_file": "downloads/0000337099/A_K_INFRATECH_MRMRT2170193000_payment_details.xlsx"
   },
   "236957": {
     "vendor_name": "AVC CONSTRUCTIONS AND SUPPLIERS",
@@ -9972,7 +10104,9 @@
     "matched_establishment_ids": [
       {
         "establishment Name": "AVC CONSTRUCTIONS AND SUPPLIERS",
-        "establishment id": "UPLKO3328931000"
+        "establishment id": "UPLKO3328931000",
+        "payment_details_status": "No Payment details found for this Establishment",
+        "payment_details_file": ""
       }
     ],
     "list_establishment_ids": [
@@ -9980,7 +10114,9 @@
         "establishment Name": "AVC CONSTRUCTIONS AND SUPPLIERS",
         "establishment id": "UPLKO3328931000"
       }
-    ]
+    ],
+    "payment_details_status": "No Payment details found for this Establishment",
+    "payment_details_file": ""
   },
   "608904": {
     "vendor_name": "SHIVAM CONSTRUCTION COMPANY",
@@ -10109,7 +10245,8 @@
         "establishment Name": "SHIVAM CONSTRUCTION COMPANY",
         "establishment id": "DSSHD2282397000"
       }
-    ]
+    ],
+    "payment_details_error": "Runtime error: Locator.click: Timeout 30000ms exceeded.\nCall log:\n  - waiting for locator(\"#estCode\")\n"
   },
   "237043": {
     "vendor_name": "PSH INFRA TECH PRIVATE LIMITED",
@@ -10122,7 +10259,9 @@
     "matched_establishment_ids": [
       {
         "establishment Name": "PSH INFRA TECH PRIVATE LIMITED",
-        "establishment id": "MRMRT3609560000"
+        "establishment id": "MRMRT3609560000",
+        "payment_details_status": "success",
+        "payment_details_file": "downloads/0000237043/PSH_INFRA_TECH_PRIVATE_LIMITED_MRMRT3609560000_payment_details.xlsx"
       }
     ],
     "list_establishment_ids": [
@@ -10130,7 +10269,9 @@
         "establishment Name": "PSH INFRA TECH PRIVATE LIMITED",
         "establishment id": "MRMRT3609560000"
       }
-    ]
+    ],
+    "payment_details_status": "success",
+    "payment_details_file": "downloads/0000237043/PSH_INFRA_TECH_PRIVATE_LIMITED_MRMRT3609560000_payment_details.xlsx"
   },
   "237088": {
     "vendor_name": "SHAILESH GOND",
@@ -10172,7 +10313,9 @@
     "matched_establishment_ids": [
       {
         "establishment Name": "CURRENT INFRAPROJECTS LIMITED",
-        "establishment id": "RJRAJ0026875000"
+        "establishment id": "RJRAJ0026875000",
+        "payment_details_status": "success",
+        "payment_details_file": "downloads/0000244474/CURRENT_INFRAPROJECTS_LIMITED_RJRAJ0026875000_payment_details.xlsx"
       }
     ],
     "list_establishment_ids": [
@@ -10180,7 +10323,9 @@
         "establishment Name": "CURRENT INFRAPROJECTS LIMITED",
         "establishment id": "RJRAJ0026875000"
       }
-    ]
+    ],
+    "payment_details_status": "success",
+    "payment_details_file": "downloads/0000244474/CURRENT_INFRAPROJECTS_LIMITED_RJRAJ0026875000_payment_details.xlsx"
   },
   "236241": {
     "vendor_name": "M/S SHIVOM INFRAPROJECTS PRIVATE LI",
@@ -10193,7 +10338,9 @@
     "matched_establishment_ids": [
       {
         "establishment Name": "M/S SHIVOM INFRAPROJECTS PRIVATE LI",
-        "establishment id": "GJRAJ3191400000"
+        "establishment id": "GJRAJ3191400000",
+        "payment_details_status": "No Payment details found for this Establishment",
+        "payment_details_file": ""
       }
     ],
     "list_establishment_ids": [
@@ -10201,7 +10348,9 @@
         "establishment Name": "M/S SHIVOM INFRAPROJECTS PRIVATE LI",
         "establishment id": "GJRAJ3191400000"
       }
-    ]
+    ],
+    "payment_details_status": "No Payment details found for this Establishment",
+    "payment_details_file": ""
   },
   "237004": {
     "vendor_name": "Y. N. Dhanani",
@@ -10214,7 +10363,9 @@
     "matched_establishment_ids": [
       {
         "establishment Name": "Y. N. Dhanani",
-        "establishment id": "SRSRT0032149000"
+        "establishment id": "SRSRT0032149000",
+        "payment_details_status": "failed",
+        "payment_details_error": "Full establishment ID not found in results rows matching 7-digit code 0032149"
       }
     ],
     "list_establishment_ids": [
@@ -10222,7 +10373,9 @@
         "establishment Name": "Y. N. Dhanani",
         "establishment id": "SRSRT0032149000"
       }
-    ]
+    ],
+    "payment_details_status": "failed",
+    "payment_details_error": "Full establishment ID not found in results rows matching 7-digit code 0032149"
   },
   "613252": {
     "vendor_name": "M/S J M SHAH",
@@ -10235,7 +10388,9 @@
     "matched_establishment_ids": [
       {
         "establishment Name": "M/S J M SHAH",
-        "establishment id": "SRSRT1467196000"
+        "establishment id": "SRSRT1467196000",
+        "payment_details_status": "success",
+        "payment_details_file": "downloads/0000613252/M_S_J_M_SHAH_SRSRT1467196000_payment_details.xlsx"
       }
     ],
     "list_establishment_ids": [
@@ -10243,7 +10398,9 @@
         "establishment Name": "M/S J M SHAH",
         "establishment id": "SRSRT1467196000"
       }
-    ]
+    ],
+    "payment_details_status": "success",
+    "payment_details_file": "downloads/0000613252/M_S_J_M_SHAH_SRSRT1467196000_payment_details.xlsx"
   },
   "236751": {
     "vendor_name": "ROADLINK INFRATECH PRIVATE LIMITED",
@@ -10256,7 +10413,9 @@
     "matched_establishment_ids": [
       {
         "establishment Name": "ROADLINK INFRATECH PRIVATE LIMITED",
-        "establishment id": "RJRAJ1580154000"
+        "establishment id": "RJRAJ1580154000",
+        "payment_details_status": "success",
+        "payment_details_file": "downloads/0000236751/ROADLINK_INFRATECH_PRIVATE_LIMITED_RJRAJ1580154000_payment_details.xlsx"
       }
     ],
     "list_establishment_ids": [
@@ -10264,7 +10423,9 @@
         "establishment Name": "ROADLINK INFRATECH PRIVATE LIMITED",
         "establishment id": "RJRAJ1580154000"
       }
-    ]
+    ],
+    "payment_details_status": "success",
+    "payment_details_file": "downloads/0000236751/ROADLINK_INFRATECH_PRIVATE_LIMITED_RJRAJ1580154000_payment_details.xlsx"
   },
   "236682": {
     "vendor_name": "M/S A N SHAH",
@@ -10382,7 +10543,9 @@
     "matched_establishment_ids": [
       {
         "establishment Name": "VISION INFRA EQUIPMENT SOLUTIONS LI",
-        "establishment id": "PUPUN3178602000"
+        "establishment id": "PUPUN3178602000",
+        "payment_details_status": "success",
+        "payment_details_file": "downloads/0000350587/VISION_INFRA_EQUIPMENT_SOLUTIONS_LI_PUPUN3178602000_payment_details.xlsx"
       }
     ],
     "list_establishment_ids": [
@@ -10390,7 +10553,9 @@
         "establishment Name": "VISION INFRA EQUIPMENT SOLUTIONS LI",
         "establishment id": "PUPUN3178602000"
       }
-    ]
+    ],
+    "payment_details_status": "success",
+    "payment_details_file": "downloads/0000350587/VISION_INFRA_EQUIPMENT_SOLUTIONS_LI_PUPUN3178602000_payment_details.xlsx"
   },
   "236884": {
     "vendor_name": "REGAL INFRACORE LIMITED",
@@ -10414,7 +10579,9 @@
     "matched_establishment_ids": [
       {
         "establishment Name": "ASSOCIATE ENGINEERING",
-        "establishment id": "UPVNS2858113000"
+        "establishment id": "UPVNS2858113000",
+        "payment_details_status": "success",
+        "payment_details_file": "downloads/0000244370/ASSOCIATE_ENGINEERING_UPVNS2858113000_payment_details.xlsx"
       }
     ],
     "list_establishment_ids": [
@@ -10422,7 +10589,9 @@
         "establishment Name": "ASSOCIATE ENGINEERING",
         "establishment id": "UPVNS2858113000"
       }
-    ]
+    ],
+    "payment_details_status": "success",
+    "payment_details_file": "downloads/0000244370/ASSOCIATE_ENGINEERING_UPVNS2858113000_payment_details.xlsx"
   },
   "237332": {
     "vendor_name": "G H CONTRACTOR",
@@ -10460,15 +10629,21 @@
     "matched_establishment_ids": [
       {
         "establishment Name": "RUDRA INFRASTRUCTURE",
-        "establishment id": "GJAHD0053313000"
+        "establishment id": "GJAHD0053313000",
+        "payment_details_status": "No Payment details found for this Establishment",
+        "payment_details_file": ""
       },
       {
         "establishment Name": "RUDRA INFRASTRUCTURE",
-        "establishment id": "GJRAJ3100951000"
+        "establishment id": "GJRAJ3100951000",
+        "payment_details_status": "success",
+        "payment_details_file": "downloads/0000235055/RUDRA_INFRASTRUCTURE_GJRAJ3100951000_payment_details.xlsx"
       },
       {
         "establishment Name": "RUDRA INFRASTRUCTURE",
-        "establishment id": "GJAHD1741444000"
+        "establishment id": "GJAHD1741444000",
+        "payment_details_status": "No Payment details found for this Establishment",
+        "payment_details_file": ""
       }
     ],
     "list_establishment_ids": [
@@ -10484,7 +10659,9 @@
         "establishment Name": "RUDRA INFRASTRUCTURE",
         "establishment id": "GJAHD1741444000"
       }
-    ]
+    ],
+    "payment_details_status": "success",
+    "payment_details_file": "downloads/0000235055/RUDRA_INFRASTRUCTURE_GJRAJ3100951000_payment_details.xlsx"
   },
   "236990": {
     "vendor_name": "REGAL INFRACORE LIMITED",
@@ -10519,11 +10696,15 @@
     "matched_establishment_ids": [
       {
         "establishment Name": "POWER PIONEERS",
-        "establishment id": "APHYD0061652000"
+        "establishment id": "APHYD0061652000",
+        "payment_details_status": "success",
+        "payment_details_file": "downloads/0000232092/POWER_PIONEERS_APHYD0061652000_payment_details.xlsx"
       },
       {
         "establishment Name": "ARAK POWER PIONEERS INDIA PRIVATE LIMITED",
-        "establishment id": "GRGNT3580590000"
+        "establishment id": "GRGNT3580590000",
+        "payment_details_status": "No Payment details found for this Establishment",
+        "payment_details_file": ""
       }
     ],
     "list_establishment_ids": [
@@ -10555,7 +10736,9 @@
         "establishment Name": "MAA KALI FABRICATORS",
         "establishment id": "WBCAL0061652000"
       }
-    ]
+    ],
+    "payment_details_status": "success",
+    "payment_details_file": "downloads/0000232092/POWER_PIONEERS_APHYD0061652000_payment_details.xlsx"
   },
   "235355": {
     "vendor_name": "STRATA GEOSYSTEMS (INDIA) PVT LTD",
@@ -10716,7 +10899,9 @@
     "matched_establishment_ids": [
       {
         "establishment Name": "THE VISION HOUSE",
-        "establishment id": "RJRAJ0020267000"
+        "establishment id": "RJRAJ0020267000",
+        "payment_details_status": "failed",
+        "payment_details_error": "Full establishment ID not found in results rows matching 7-digit code 0020267"
       }
     ],
     "list_establishment_ids": [
@@ -10724,7 +10909,9 @@
         "establishment Name": "THE VISION HOUSE",
         "establishment id": "RJRAJ0020267000"
       }
-    ]
+    ],
+    "payment_details_status": "failed",
+    "payment_details_error": "Full establishment ID not found in results rows matching 7-digit code 0020267"
   },
   "234766": {
     "vendor_name": "PN ENTERPRISES",
@@ -10888,11 +11075,15 @@
     "matched_establishment_ids": [
       {
         "establishment Name": "PN ENTERPRISES",
-        "establishment id": "RJRAJ2469691000"
+        "establishment id": "RJRAJ2469691000",
+        "payment_details_status": "success",
+        "payment_details_file": "downloads/0000244541/PN_ENTERPRISES_RJRAJ2469691000_payment_details.xlsx"
       },
       {
         "establishment Name": "PN ENTERPRISES",
-        "establishment id": "RJUDR3783298000"
+        "establishment id": "RJUDR3783298000",
+        "payment_details_status": "success",
+        "payment_details_file": "downloads/0000244541/PN_ENTERPRISES_RJUDR3783298000_payment_details.xlsx"
       }
     ],
     "list_establishment_ids": [
@@ -11012,7 +11203,9 @@
         "establishment Name": "PN ENTERPRISES",
         "establishment id": "TNAMB2608219000"
       }
-    ]
+    ],
+    "payment_details_status": "success",
+    "payment_details_file": "downloads/0000244541/PN_ENTERPRISES_RJRAJ2469691000_payment_details.xlsx"
   },
   "237392": {
     "vendor_name": "DURGA CONSTRUCTION COMPANY",
@@ -11025,47 +11218,69 @@
     "matched_establishment_ids": [
       {
         "establishment Name": "DURGA CONSTRUCTION COMPANY",
-        "establishment id": "UPKNP2281086000"
+        "establishment id": "UPKNP2281086000",
+        "payment_details_status": "No Payment details found for this Establishment",
+        "payment_details_file": ""
       },
       {
         "establishment Name": "DURGA CONSTRUCTION COMPANY",
-        "establishment id": "UPALD3757752000"
+        "establishment id": "UPALD3757752000",
+        "payment_details_status": "No Payment details found for this Establishment",
+        "payment_details_file": ""
       },
       {
         "establishment Name": "DURGA CONSTRUCTION COMPANY",
-        "establishment id": "UPKNP1763541000"
+        "establishment id": "UPKNP1763541000",
+        "payment_details_status": "success",
+        "payment_details_file": "downloads/0000237392/DURGA_CONSTRUCTION_COMPANY_UPKNP1763541000_payment_details.xlsx"
       },
       {
         "establishment Name": "DURGA CONSTRUCTION COMPANY",
-        "establishment id": "UPVNS0045165000"
+        "establishment id": "UPVNS0045165000",
+        "payment_details_status": "No Payment details found for this Establishment",
+        "payment_details_file": ""
       },
       {
         "establishment Name": "DURGA CONSTRUCTION COMPANY",
-        "establishment id": "UPLKO3506325000"
+        "establishment id": "UPLKO3506325000",
+        "payment_details_status": "No Payment details found for this Establishment",
+        "payment_details_file": ""
       },
       {
         "establishment Name": "DURGA CONSTRUCTION COMPANY",
-        "establishment id": "UPALD0018327000"
+        "establishment id": "UPALD0018327000",
+        "payment_details_status": "failed",
+        "payment_details_error": "Full establishment ID not found in results rows matching 7-digit code 0018327"
       },
       {
         "establishment Name": "DURGA CONSTRUCTION COMPANY",
-        "establishment id": "UPVNS0059074000"
+        "establishment id": "UPVNS0059074000",
+        "payment_details_status": "success",
+        "payment_details_file": "downloads/0000237392/DURGA_CONSTRUCTION_COMPANY_UPVNS0059074000_payment_details.xlsx"
       },
       {
         "establishment Name": "DURGA CONSTRUCTION COMPANY",
-        "establishment id": "UPGKP2765024000"
+        "establishment id": "UPGKP2765024000",
+        "payment_details_status": "No Payment details found for this Establishment",
+        "payment_details_file": ""
       },
       {
         "establishment Name": "DURGA CONSTRUCTION COMPANY",
-        "establishment id": "UPGKP3090840000"
+        "establishment id": "UPGKP3090840000",
+        "payment_details_status": "No Payment details found for this Establishment",
+        "payment_details_file": ""
       },
       {
         "establishment Name": "DURGA CONSTRUCTION COMPANY",
-        "establishment id": "MRMRT2605202000"
+        "establishment id": "MRMRT2605202000",
+        "payment_details_status": "No Payment details found for this Establishment",
+        "payment_details_file": ""
       },
       {
         "establishment Name": "DURGA CONSTRUCTION COMPANY",
-        "establishment id": "MRAGR2449850000"
+        "establishment id": "MRAGR2449850000",
+        "payment_details_status": "success",
+        "payment_details_file": "downloads/0000237392/DURGA_CONSTRUCTION_COMPANY_MRAGR2449850000_payment_details.xlsx"
       }
     ],
     "list_establishment_ids": [
@@ -11113,7 +11328,9 @@
         "establishment Name": "DURGA CONSTRUCTION COMPANY",
         "establishment id": "UPGKP3090840000"
       }
-    ]
+    ],
+    "payment_details_status": "success",
+    "payment_details_file": "downloads/0000237392/DURGA_CONSTRUCTION_COMPANY_UPKNP1763541000_payment_details.xlsx"
   },
   "609363": {
     "vendor_name": "Shiv Enterprises",
@@ -11126,43 +11343,63 @@
     "matched_establishment_ids": [
       {
         "establishment Name": "Shiv Enterprises",
-        "establishment id": "RJJOD3109454000"
+        "establishment id": "RJJOD3109454000",
+        "payment_details_status": "success",
+        "payment_details_file": "downloads/0000609363/Shiv_Enterprises_RJJOD3109454000_payment_details.xlsx"
       },
       {
         "establishment Name": "Shiv Enterprises",
-        "establishment id": "RJRAJ1442772000"
+        "establishment id": "RJRAJ1442772000",
+        "payment_details_status": "No Payment details found for this Establishment",
+        "payment_details_file": ""
       },
       {
         "establishment Name": "Shiv Enterprises",
-        "establishment id": "RJKOT1636412000"
+        "establishment id": "RJKOT1636412000",
+        "payment_details_status": "No Payment details found for this Establishment",
+        "payment_details_file": ""
       },
       {
         "establishment Name": "Shiv Enterprises",
-        "establishment id": "RJKOT3623585000"
+        "establishment id": "RJKOT3623585000",
+        "payment_details_status": "No Payment details found for this Establishment",
+        "payment_details_file": ""
       },
       {
         "establishment Name": "Shiv Enterprises",
-        "establishment id": "RJJOD3389464000"
+        "establishment id": "RJJOD3389464000",
+        "payment_details_status": "No Payment details found for this Establishment",
+        "payment_details_file": ""
       },
       {
         "establishment Name": "Shiv Enterprises",
-        "establishment id": "RJRAJ3814434000"
+        "establishment id": "RJRAJ3814434000",
+        "payment_details_status": "No Payment details found for this Establishment",
+        "payment_details_file": ""
       },
       {
         "establishment Name": "Shiv Enterprises",
-        "establishment id": "RJRAJ3354306000"
+        "establishment id": "RJRAJ3354306000",
+        "payment_details_status": "No Payment details found for this Establishment",
+        "payment_details_file": ""
       },
       {
         "establishment Name": "Shiv Enterprises",
-        "establishment id": "RJRAJ3032197000"
+        "establishment id": "RJRAJ3032197000",
+        "payment_details_status": "success",
+        "payment_details_file": "downloads/0000609363/Shiv_Enterprises_RJRAJ3032197000_payment_details.xlsx"
       },
       {
         "establishment Name": "Shiv Enterprises",
-        "establishment id": "RJRAJ1454922000"
+        "establishment id": "RJRAJ1454922000",
+        "payment_details_status": "success",
+        "payment_details_file": "downloads/0000609363/Shiv_Enterprises_RJRAJ1454922000_payment_details.xlsx"
       },
       {
         "establishment Name": "Shiv Enterprises",
-        "establishment id": "RJKOT3200938000"
+        "establishment id": "RJKOT3200938000",
+        "payment_details_status": "success",
+        "payment_details_file": "downloads/0000609363/Shiv_Enterprises_RJKOT3200938000_payment_details.xlsx"
       },
       {
         "establishment Name": "Shiv Enterprises",
@@ -13530,7 +13767,8 @@
         "establishment Name": "Shiv Enterprises",
         "establishment id": "UPBLY3671320000"
       }
-    ]
+    ],
+    "payment_details_error": "Runtime error: Locator.inner_text: Timeout 30000ms exceeded.\nCall log:\n  - waiting for locator(\"#tablecontainer\")\n"
   },
   "611798": {
     "vendor_name": "N K M INFRA CONSTRUCTION",
@@ -13571,19 +13809,27 @@
     "matched_establishment_ids": [
       {
         "establishment Name": "JP ENTERPRISES",
-        "establishment id": "THTHA0203123000"
+        "establishment id": "THTHA0203123000",
+        "payment_details_status": "No Payment details found for this Establishment",
+        "payment_details_file": ""
       },
       {
         "establishment Name": "JP ENTERPRISES",
-        "establishment id": "PUPUN1945502000"
+        "establishment id": "PUPUN1945502000",
+        "payment_details_status": "No Payment details found for this Establishment",
+        "payment_details_file": ""
       },
       {
         "establishment Name": "JP ENTERPRISES",
-        "establishment id": "THTHA0206379000"
+        "establishment id": "THTHA0206379000",
+        "payment_details_status": "success",
+        "payment_details_file": "downloads/0000236658/JP_ENTERPRISES_THTHA0206379000_payment_details.xlsx"
       },
       {
         "establishment Name": "JP ENTERPRISES",
-        "establishment id": "THTHA1949086000"
+        "establishment id": "THTHA1949086000",
+        "payment_details_status": "No Payment details found for this Establishment",
+        "payment_details_file": ""
       }
     ],
     "list_establishment_ids": [
@@ -13815,7 +14061,9 @@
         "establishment Name": "JP ENTERPRISES",
         "establishment id": "PYPNY3724255000"
       }
-    ]
+    ],
+    "payment_details_status": "success",
+    "payment_details_file": "downloads/0000236658/JP_ENTERPRISES_THTHA0206379000_payment_details.xlsx"
   },
   "234154": {
     "vendor_name": "DEVANSH INTERIORS",
@@ -13845,63 +14093,93 @@
     "matched_establishment_ids": [
       {
         "establishment Name": "ANSH ENTERPRISES",
-        "establishment id": "UPVNS3825262000"
+        "establishment id": "UPVNS3825262000",
+        "payment_details_status": "No Payment details found for this Establishment",
+        "payment_details_file": ""
       },
       {
         "establishment Name": "ANSH ENTERPRISES",
-        "establishment id": "UPALD1638728000"
+        "establishment id": "UPALD1638728000",
+        "payment_details_status": "success",
+        "payment_details_file": "downloads/0000236865/ANSH_ENTERPRISES_UPALD1638728000_payment_details.xlsx"
       },
       {
         "establishment Name": "ANSH ENTERPRISES",
-        "establishment id": "UPBLY2858869000"
+        "establishment id": "UPBLY2858869000",
+        "payment_details_status": "No Payment details found for this Establishment",
+        "payment_details_file": ""
       },
       {
         "establishment Name": "ANSH ENTERPRISES",
-        "establishment id": "UPVNS3669716000"
+        "establishment id": "UPVNS3669716000",
+        "payment_details_status": "success",
+        "payment_details_file": "downloads/0000236865/ANSH_ENTERPRISES_UPVNS3669716000_payment_details.xlsx"
       },
       {
         "establishment Name": "ANSH ENTERPRISES",
-        "establishment id": "UPALD3666163000"
+        "establishment id": "UPALD3666163000",
+        "payment_details_status": "No Payment details found for this Establishment",
+        "payment_details_file": ""
       },
       {
         "establishment Name": "ANSH ENTERPRISES",
-        "establishment id": "UPKNP2934346000"
+        "establishment id": "UPKNP2934346000",
+        "payment_details_status": "success",
+        "payment_details_file": "downloads/0000236865/ANSH_ENTERPRISES_UPKNP2934346000_payment_details.xlsx"
       },
       {
         "establishment Name": "ANSH ENTERPRISES",
-        "establishment id": "UPALD1590625000"
+        "establishment id": "UPALD1590625000",
+        "payment_details_status": "success",
+        "payment_details_file": "downloads/0000236865/ANSH_ENTERPRISES_UPALD1590625000_payment_details.xlsx"
       },
       {
         "establishment Name": "ANSH ENTERPRISES",
-        "establishment id": "UPBLY2893060000"
+        "establishment id": "UPBLY2893060000",
+        "payment_details_status": "No Payment details found for this Establishment",
+        "payment_details_file": ""
       },
       {
         "establishment Name": "ANSH ENTERPRISES",
-        "establishment id": "UPBLY3205211000"
+        "establishment id": "UPBLY3205211000",
+        "payment_details_status": "No Payment details found for this Establishment",
+        "payment_details_file": ""
       },
       {
         "establishment Name": "ANSH ENTERPRISES",
-        "establishment id": "UPKNP2609262000"
+        "establishment id": "UPKNP2609262000",
+        "payment_details_status": "success",
+        "payment_details_file": "downloads/0000236865/ANSH_ENTERPRISES_UPKNP2609262000_payment_details.xlsx"
       },
       {
         "establishment Name": "ANSH ENTERPRISES",
-        "establishment id": "UPBLY3799386000"
+        "establishment id": "UPBLY3799386000",
+        "payment_details_status": "No Payment details found for this Establishment",
+        "payment_details_file": ""
       },
       {
         "establishment Name": "ANSH ENTERPRISES",
-        "establishment id": "UPGKP3662901000"
+        "establishment id": "UPGKP3662901000",
+        "payment_details_status": "No Payment details found for this Establishment",
+        "payment_details_file": ""
       },
       {
         "establishment Name": "ANSH ENTERPRISES",
-        "establishment id": "UPLKO3823912000"
+        "establishment id": "UPLKO3823912000",
+        "payment_details_status": "No Payment details found for this Establishment",
+        "payment_details_file": ""
       },
       {
         "establishment Name": "ANSH ENTERPRISES",
-        "establishment id": "UPVNS3140313000"
+        "establishment id": "UPVNS3140313000",
+        "payment_details_status": "No Payment details found for this Establishment",
+        "payment_details_file": ""
       },
       {
         "establishment Name": "ANSH ENTERPRISES",
-        "establishment id": "UPALD3046836000"
+        "establishment id": "UPALD3046836000",
+        "payment_details_status": "success",
+        "payment_details_file": "downloads/0000236865/ANSH_ENTERPRISES_UPALD3046836000_payment_details.xlsx"
       },
       {
         "establishment Name": "ANSH ENTERPRISES",
@@ -17835,7 +18113,9 @@
     "matched_establishment_ids": [
       {
         "establishment Name": "MEER CHEM PRIVATE LIMITED",
-        "establishment id": "CGRAI3135765000"
+        "establishment id": "CGRAI3135765000",
+        "payment_details_status": "success",
+        "payment_details_file": "downloads/0000237272/MEER_CHEM_PRIVATE_LIMITED_CGRAI3135765000_payment_details.xlsx"
       }
     ],
     "list_establishment_ids": [
@@ -17843,7 +18123,9 @@
         "establishment Name": "MEER CHEM PRIVATE LIMITED",
         "establishment id": "CGRAI3135765000"
       }
-    ]
+    ],
+    "payment_details_status": "success",
+    "payment_details_file": "downloads/0000237272/MEER_CHEM_PRIVATE_LIMITED_CGRAI3135765000_payment_details.xlsx"
   },
   "237289": {
     "vendor_name": "RAM CONSTRUCTION",
@@ -27341,7 +27623,9 @@
     "matched_establishment_ids": [
       {
         "establishment Name": "NIKHIL CONTRACTOR",
-        "establishment id": "UPLKO2805692000"
+        "establishment id": "UPLKO2805692000",
+        "payment_details_status": "No Payment details found for this Establishment",
+        "payment_details_file": ""
       }
     ],
     "list_establishment_ids": [
@@ -27349,7 +27633,9 @@
         "establishment Name": "NIKHIL CONTRACTOR",
         "establishment id": "UPLKO2805692000"
       }
-    ]
+    ],
+    "payment_details_status": "No Payment details found for this Establishment",
+    "payment_details_file": ""
   },
   "232221": {
     "vendor_name": "BALAJI CONSTRUCTIONS",
@@ -31561,5 +31847,12 @@
         "establishment id": "CBTRY3238507000"
       }
     ]
+  },
+  "0000339919": {
+    "vendor_name": "BYOMAKESH MISHRA",
+    "vendor_gstn": "21ABFPM4907J1ZT",
+    "status": "failed_error: Page.goto: net::ERR_EMPTY_RESPONSE at https://unifiedportal-emp.epfindia.gov.in/publicPortal/no-auth/misReport/home/loadEstSearchHome\nCall log:\n  - navigating to \"https://unifiedportal-emp.epfindia.gov.in/publicPortal/no-auth/misReport/home/loadEstSearchHome\", waiting until \"domcontentloaded\"\n",
+    "list_establishment_ids": [],
+    "matched_establishment_ids": []
   }
 }

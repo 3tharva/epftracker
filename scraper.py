@@ -8,7 +8,7 @@ import base64
 import random
 import requests
 from PIL import Image
-from playwright.async_api import async_playwright
+from patchright.async_api import async_playwright
 from dotenv import load_dotenv
 
 # Helpers for human-like behavior
@@ -96,28 +96,6 @@ async def human_scroll(page):
         await human_delay(0.3, 0.8)
     except Exception:
         pass
-
-async def apply_context_stealth(context):
-    """
-    Applies stealth settings to the browser context to bypass WAF bot checks.
-    """
-    stealth_js = """
-    Object.defineProperty(navigator, 'webdriver', {
-        get: () => undefined
-    });
-    window.navigator.chrome = {
-        runtime: {},
-        loadTimes: () => {},
-        csi: () => {}
-    };
-    Object.defineProperty(navigator, 'plugins', {
-        get: () => [1, 2, 3, 4, 5]
-    });
-    Object.defineProperty(navigator, 'languages', {
-        get: () => ['en-US', 'en']
-    });
-    """
-    await context.add_init_script(stealth_js)
 
 # Load environment variables from .env
 load_dotenv()
@@ -358,19 +336,62 @@ async def run_scraper(establishment_name, api_key, headless=True):
         else:
             user_data_dir = os.path.expanduser("~/.config/microsoft-edge")
         print(f"[*] Launching browser in persistent context using system Edge profile: '{user_data_dir}'...")
-        selected_ua = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
 
-        
+        # ── PATCH: User-Agent Spoofing ────────────────────────────────────────
+        # The default headless UA contains the word 'HeadlessChrome', which is
+        # trivially detected. We replace it with a real desktop Chrome UA.
+        # This UA must NOT contain 'Headless' to pass UA-based bot filters.
+        # ──────────────────────────────────────────────────────────────────────
+        selected_ua = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+        assert "Headless" not in selected_ua, "User-Agent must not contain 'Headless'!"
+
+        # ── PATCH: Stealth Launch Args ────────────────────────────────────────
+        # --headless=new:              Uses the new headless mode (less detectable).
+        # --disable-blink-features:    Removes the AutomationControlled flag from
+        #                              navigator.webdriver and blink internals.
+        # --window-size:               Forces a realistic viewport size; headless
+        #                              defaults to very small or 0-sized windows.
+        # --no-sandbox / --disable-gpu: Common stability args for server environments.
+        # ──────────────────────────────────────────────────────────────────────
+        stealth_args = [
+            "--disable-blink-features=AutomationControlled",
+            "--window-size=1920,1080",
+            "--no-sandbox",
+            "--disable-dev-shm-usage",
+            "--disable-gpu",
+            "--disable-infobars",
+            "--disable-extensions",
+            "--start-maximized",
+            "--lang=en-US,en",
+            # ── PROXY CONFIGURATION ──────────────────────────────────────────
+            # If you need to route traffic through a proxy to avoid IP bans,
+            # uncomment and fill in the line below:
+            # "--proxy-server=http://USER:PASS@PROXY_HOST:PORT",
+            # ────────────────────────────────────────────────────────────────
+        ]
+
+        # ── PATCH: excludeSwitches / useAutomationExtension ──────────────────
+        # Playwright does not expose CDP-level prefs directly at launch, but
+        # `ignore_default_args` removes Playwright's own `--enable-automation`
+        # flag. Combined with AutomationControlled disable above, this removes
+        # the banner and the navigator.webdriver=true default.
+        # ──────────────────────────────────────────────────────────────────────
+        ignore_automation_args = [
+            "--enable-automation",
+            "--no-sandbox",
+        ]
+
         # Try launching with Microsoft Edge channel first, fallback to default Playwright Chromium
         try:
             context = await p.chromium.launch_persistent_context(
                 user_data_dir=user_data_dir,
                 channel="msedge",
                 headless=headless,
-                args=["--disable-blink-features=AutomationControlled"],
-                ignore_default_args=["--no-sandbox"],
+                args=stealth_args,
+                ignore_default_args=ignore_automation_args,
                 user_agent=selected_ua,
-                viewport={"width": 1280, "height": 1024},
+                viewport={"width": 1920, "height": 1080},
+                screen={"width": 1920, "height": 1080},
                 ignore_https_errors=True
             )
             print("[+] Launched persistent context using Microsoft Edge channel.")
@@ -384,10 +405,11 @@ async def run_scraper(establishment_name, api_key, headless=True):
                         user_data_dir=fallback_dir,
                         channel="msedge",
                         headless=headless,
-                        args=["--disable-blink-features=AutomationControlled"],
-                        ignore_default_args=["--no-sandbox"],
+                        args=stealth_args,
+                        ignore_default_args=ignore_automation_args,
                         user_agent=selected_ua,
-                        viewport={"width": 1280, "height": 1024},
+                        viewport={"width": 1920, "height": 1080},
+                        screen={"width": 1920, "height": 1080},
                         ignore_https_errors=True
                     )
                     print("[+] Launched persistent context using Microsoft Edge channel with fallback profile.")
@@ -396,10 +418,11 @@ async def run_scraper(establishment_name, api_key, headless=True):
                     context = await p.chromium.launch_persistent_context(
                         user_data_dir=fallback_dir,
                         headless=headless,
-                        args=["--disable-blink-features=AutomationControlled"],
-                        ignore_default_args=["--no-sandbox"],
+                        args=stealth_args,
+                        ignore_default_args=ignore_automation_args,
                         user_agent=selected_ua,
-                        viewport={"width": 1280, "height": 1024},
+                        viewport={"width": 1920, "height": 1080},
+                        screen={"width": 1920, "height": 1080},
                         ignore_https_errors=True
                     )
             else:
@@ -407,14 +430,14 @@ async def run_scraper(establishment_name, api_key, headless=True):
                 context = await p.chromium.launch_persistent_context(
                     user_data_dir=user_data_dir,
                     headless=headless,
-                    args=["--disable-blink-features=AutomationControlled"],
-                    ignore_default_args=["--no-sandbox"],
+                    args=stealth_args,
+                    ignore_default_args=ignore_automation_args,
                     user_agent=selected_ua,
-                    viewport={"width": 1280, "height": 1024},
+                    viewport={"width": 1920, "height": 1080},
+                    screen={"width": 1920, "height": 1080},
                     ignore_https_errors=True
                 )
             
-        await apply_context_stealth(context)
         page = context.pages[0] if context.pages else await context.new_page()
 
         

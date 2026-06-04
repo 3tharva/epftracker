@@ -17,6 +17,26 @@ PORT = 8000
 # Global reference to running scraper process
 scraper_process = None
 
+def get_active_names():
+    filename = "vendorList.xlsx"
+    if os.path.exists("last_uploaded_filename.txt"):
+        try:
+            with open("last_uploaded_filename.txt", "r", encoding="utf-8") as f:
+                content = f.read().strip()
+                if content:
+                    filename = content
+        except Exception:
+            pass
+            
+    base = os.path.splitext(filename)[0]
+    if not base:
+        base = "vendorList"
+        
+    csv_name = f"{base}.csv"
+    json_name = f"{base}.json"
+    cleaned_csv_name = f"{base}_cleaned.csv"
+    return base, csv_name, json_name, cleaned_csv_name
+
 def standardize_columns(df):
     """
     Looks for vendor code, name, and GSTN columns case-insensitively and standardizes names.
@@ -77,9 +97,13 @@ def get_status_details():
         except Exception:
             pass
             
+    base, csv_name, json_name, cleaned_csv_name = get_active_names()
+    if filename == "None" or not filename:
+        filename = f"{base}.xlsx"
+        
     # Only load vendor counts and list if a recorded upload session exists
     if filename != "None":
-        for fname in ["vendorList_cleaned.csv", "vendorList.csv"]:
+        for fname in [cleaned_csv_name, csv_name]:
             if os.path.exists(fname):
                 try:
                     df = pd.read_csv(fname, dtype=str)
@@ -97,9 +121,9 @@ def get_status_details():
     nomatch_count = 0
     error_count = 0
     
-    if os.path.exists("vendor_est_matches.json"):
+    if os.path.exists(json_name):
         try:
-            with open("vendor_est_matches.json", "r", encoding="utf-8") as f:
+            with open(json_name, "r", encoding="utf-8") as f:
                 results = json.load(f)
             processed_count = len(results)
             for v in results.values():
@@ -193,35 +217,38 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
                 content_length = int(self.headers.get('Content-Length', 0))
                 file_bytes = self.rfile.read(content_length)
                 
-                save_path = "vendorList.xlsx" if filename.endswith('.xlsx') else "vendorList.csv"
-                with open(save_path, "wb") as f:
+                safe_filename = os.path.basename(filename)
+                with open(safe_filename, "wb") as f:
                     f.write(file_bytes)
                 
                 # Convert spreadsheet to standard CSV if needed
-                if save_path.endswith('.xlsx'):
-                    df = pd.read_excel(save_path, dtype=str)
+                base = os.path.splitext(safe_filename)[0]
+                csv_path = f"{base}.csv"
+                if safe_filename.endswith('.xlsx'):
+                    df = pd.read_excel(safe_filename, dtype=str)
                     df = standardize_columns(df)
                     df = df.fillna("")
-                    df.to_csv("vendorList.csv", index=False)
+                    df.to_csv(csv_path, index=False)
                 else:
-                    df = pd.read_csv(save_path, dtype=str)
+                    df = pd.read_csv(safe_filename, dtype=str)
                     df = standardize_columns(df)
                     df = df.fillna("")
-                    df.to_csv("vendorList.csv", index=False)
+                    df.to_csv(csv_path, index=False)
                 
                 # Save filename to a cache file
                 try:
                     with open("last_uploaded_filename.txt", "w", encoding="utf-8") as fn_file:
-                        fn_file.write(filename)
+                        fn_file.write(safe_filename)
                 except Exception:
                     pass
                 
+                cleaned_csv = f"{base}_cleaned.csv"
                 # Clean up existing status logs to avoid confusion
                 if os.path.exists("scraper_run.log"):
                     try: os.remove("scraper_run.log")
                     except Exception: pass
-                if os.path.exists("vendorList_cleaned.csv"):
-                    try: os.remove("vendorList_cleaned.csv")
+                if os.path.exists(cleaned_csv):
+                    try: os.remove(cleaned_csv)
                     except Exception: pass
                 
                 response_data = {
@@ -257,12 +284,17 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
                 headless_str = self.headers.get('X-Headless', 'true')
                 sleep_val = self.headers.get('X-Sleep', '10')
                 api_key = self.headers.get('X-Api-Key', '')
+                workers_val = self.headers.get('X-Workers', '2')
+                mode_val = self.headers.get('X-Mode', 'match')
                 
-                cmd = [sys.executable, "vendor_scraper.py", "-i", "vendorList.csv", "--sleep", sleep_val]
+                base, csv_name, json_name, cleaned_csv_name = get_active_names()
+                cmd = [sys.executable, "-u", "vendor_scraper.py", "-i", csv_name, "--sleep", sleep_val, "--workers", workers_val]
                 if headless_str.lower() == 'true':
                     cmd.append("--headless")
                 if api_key:
                     cmd.extend(["-k", api_key])
+                if mode_val == 'payment':
+                    cmd.append("--payment")
                 
                 print(f"[*] Starting scraper subprocess: {' '.join(cmd)}")
                 
@@ -336,13 +368,13 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
                 # Verify that it is valid JSON
                 data = json.loads(file_bytes.decode('utf-8'))
                 
-                # Save to vendor_est_matches.json
-                with open("vendor_est_matches.json", "w", encoding="utf-8") as f:
+                base, csv_name, json_name, cleaned_csv_name = get_active_names()
+                with open(json_name, "w", encoding="utf-8") as f:
                     json.dump(data, f, indent=4)
                     
                 response_data = {
                     "status": "success",
-                    "filename": "vendor_est_matches.json",
+                    "filename": json_name,
                     "count": len(data)
                 }
                 
@@ -356,12 +388,61 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
                 self.end_headers()
                 self.wfile.write(json.dumps({"error": str(e)}).encode())
             return
+
+        # 5. POST /api/select_active - Select active file from dropdown
+        elif parsed_url.path == '/api/select_active':
+            try:
+                content_length = int(self.headers.get('Content-Length', 0))
+                body = self.rfile.read(content_length).decode('utf-8')
+                params = json.loads(body)
+                filename = params.get('filename', '')
+                if not filename:
+                    raise ValueError("Filename is required.")
+                
+                safe_filename = os.path.basename(filename)
+                base = os.path.splitext(safe_filename)[0]
+                
+                with open("last_uploaded_filename.txt", "w", encoding="utf-8") as fn_file:
+                    fn_file.write(f"{base}.xlsx")
+                
+                self.send_response(200)
+                self.send_header('Content-Type', 'application/json')
+                self.end_headers()
+                self.wfile.write(json.dumps({"status": "success", "active_base": base}).encode())
+            except Exception as e:
+                self.send_response(400)
+                self.send_header('Content-Type', 'application/json')
+                self.end_headers()
+                self.wfile.write(json.dumps({"error": str(e)}).encode())
+            return
             
         super().do_POST()
 
     def do_GET(self):
         parsed_url = urlparse(self.path)
         
+        # Intercept /vendor_est_matches.json and serve the active JSON instead
+        if parsed_url.path == '/vendor_est_matches.json':
+            try:
+                base, csv_name, json_name, cleaned_csv_name = get_active_names()
+                if os.path.exists(json_name):
+                    with open(json_name, "rb") as f:
+                        content = f.read()
+                else:
+                    content = b"{}"
+                    
+                self.send_response(200)
+                self.send_header('Content-Type', 'application/json')
+                self.send_header('Content-Length', str(len(content)))
+                self.end_headers()
+                self.wfile.write(content)
+            except Exception as e:
+                self.send_response(500)
+                self.send_header('Content-Type', 'application/json')
+                self.end_headers()
+                self.wfile.write(json.dumps({"error": str(e)}).encode())
+            return
+
         # 1. GET /api/status - Fetch current progress
         if parsed_url.path == '/api/status':
             try:
@@ -381,8 +462,9 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
         elif parsed_url.path == '/api/files':
             try:
                 file_list = []
+                base, csv_name, json_name, cleaned_csv_name = get_active_names()
                 # Check output directories
-                for root_file in ["vendorList.xlsx", "vendorList.csv", "vendorList_cleaned.csv", "vendor_est_matches.json"]:
+                for root_file in [f"{base}.xlsx", csv_name, cleaned_csv_name, json_name]:
                     if os.path.exists(root_file):
                         stat = os.stat(root_file)
                         file_list.append({
@@ -392,12 +474,15 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
                         })
                 # Check worksheets downloads
                 if os.path.exists("downloads"):
-                    for fname in os.listdir("downloads"):
-                        fpath = os.path.join("downloads", fname)
-                        if os.path.isfile(fpath):
+                    for root, dirs, files in os.walk("downloads"):
+                        for fname in files:
+                            fpath = os.path.join(root, fname)
+                            relpath = os.path.relpath(fpath, start=os.getcwd())
+                            # Keep it forward-slash format
+                            relpath = relpath.replace('\\', '/')
                             stat = os.stat(fpath)
                             file_list.append({
-                                "name": f"downloads/{fname}",
+                                "name": relpath,
                                 "size": stat.st_size,
                                 "mtime": stat.st_mtime
                             })
