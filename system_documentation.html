@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EPFO Tracker - System Documentation</title>
+    <!-- Fonts & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            /* Theme Variables - Dark Mode (Default) */
+            --bg-color: #0b0f19;
+            --panel-bg: rgba(17, 24, 39, 0.7);
+            --panel-border: rgba(255, 255, 255, 0.08);
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+            --accent-primary: #6366f1;
+            --accent-primary-gradient: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+            --accent-secondary: #06b6d4;
+            --sidebar-bg: #111827;
+            --code-bg: #05070f;
+            --code-text: #34d399;
+            --card-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+            
+            --color-success: #10b981;
+            --color-warning: #f59e0b;
+            --color-danger: #ef4444;
+            
+            --font-main: 'Inter', sans-serif;
+            --font-title: 'Outfit', sans-serif;
+            --font-code: 'Fira Code', monospace;
+        }
+
+        [data-theme="light"] {
+            /* Theme Variables - Light Mode */
+            --bg-color: #f8fafc;
+            --panel-bg: rgba(255, 255, 255, 0.85);
+            --panel-border: rgba(0, 0, 0, 0.08);
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --accent-primary: #4f46e5;
+            --accent-primary-gradient: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%);
+            --accent-secondary: #0891b2;
+            --sidebar-bg: #f1f5f9;
+            --code-bg: #1e293b;
+            --code-text: #38bdf8;
+            --card-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            transition: background-color 0.25s, border-color 0.25s, color 0.25s;
+        }
+
+        body {
+            font-family: var(--font-main);
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            overflow-x: hidden;
+        }
+
+        /* Sidebar Navigation */
+        .sidebar {
+            width: 280px;
+            background-color: var(--sidebar-bg);
+            border-right: 1px solid var(--panel-border);
+            height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+            display: flex;
+            flex-direction: column;
+            padding: 1.5rem;
+            z-index: 10;
+        }
+
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 2rem;
+        }
+
+        .logo-icon {
+            font-size: 1.6rem;
+            background: var(--accent-primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .logo-text {
+            font-family: var(--font-title);
+            font-weight: 700;
+            font-size: 1.25rem;
+            letter-spacing: -0.5px;
+        }
+
+        .nav-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            flex-grow: 1;
+            overflow-y: auto;
+        }
+
+        .nav-item a {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 14px;
+            border-radius: 10px;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .nav-item a:hover {
+            color: var(--text-main);
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .nav-item.active a {
+            color: white;
+            background: var(--accent-primary-gradient);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.35);
+        }
+
+        .sidebar-footer {
+            margin-top: auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 1rem;
+            border-top: 1px solid var(--panel-border);
+        }
+
+        /* Main Content Area */
+        .content {
+            margin-left: 280px;
+            flex-grow: 1;
+            padding: 3rem 4rem;
+            max-width: 1200px;
+            min-height: 100vh;
+        }
+
+        @media (max-width: 992px) {
+            .sidebar {
+                width: 70px;
+                padding: 1rem 0.5rem;
+                align-items: center;
+            }
+            .logo-text, .nav-item span, .sidebar-footer span {
+                display: none;
+            }
+            .logo-area {
+                justify-content: center;
+                margin-bottom: 1.5rem;
+            }
+            .nav-item a {
+                justify-content: center;
+                padding: 12px;
+            }
+            .content {
+                margin-left: 70px;
+                padding: 2rem;
+            }
+        }
+
+        /* Glass Cards */
+        .glass-card {
+            background: var(--panel-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--panel-border);
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: var(--card-shadow);
+            margin-bottom: 2rem;
+        }
+
+        /* Typography & Layout Elements */
+        h2 {
+            font-family: var(--font-title);
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        h3 {
+            font-family: var(--font-title);
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin: 1.5rem 0 0.75rem 0;
+            color: var(--text-main);
+        }
+
+        p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            line-height: 1.6;
+            margin-bottom: 1rem;
+        }
+
+        strong {
+            color: var(--text-main);
+        }
+
+        /* Lists */
+        ul, ol {
+            margin-left: 1.5rem;
+            margin-bottom: 1rem;
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        li {
+            margin-bottom: 0.5rem;
+        }
+
+        /* Code Blocks */
+        pre {
+            font-family: var(--font-code);
+            background: var(--code-bg);
+            color: var(--code-text);
+            padding: 1.25rem;
+            border-radius: 12px;
+            overflow-x: auto;
+            font-size: 0.85rem;
+            margin: 1rem 0;
+            border: 1px solid var(--panel-border);
+            position: relative;
+        }
+
+        .code-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(0,0,0,0.2);
+            padding: 6px 12px;
+            border-radius: 8px 8px 0 0;
+            border-bottom: 1px solid var(--panel-border);
+            font-family: var(--font-title);
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            margin-bottom: -1rem;
+        }
+
+        .code-container {
+            margin: 1.25rem 0;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid var(--panel-border);
+        }
+
+        .code-container pre {
+            border: none;
+            border-radius: 0 0 12px 12px;
+            margin: 0;
+        }
+
+        /* Custom Alert Boxes */
+        .alert {
+            padding: 1rem 1.25rem;
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.05);
+            font-size: 0.9rem;
+            line-height: 1.5;
+            margin-bottom: 1.5rem;
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+        }
+
+        .alert-info {
+            background-color: rgba(99, 102, 241, 0.08);
+            border-color: rgba(99, 102, 241, 0.2);
+            color: #818cf8;
+        }
+
+        .alert-success {
+            background-color: rgba(16, 185, 129, 0.08);
+            border-color: rgba(16, 185, 129, 0.2);
+            color: #34d399;
+        }
+
+        .alert-warning {
+            background-color: rgba(245, 158, 11, 0.08);
+            border-color: rgba(245, 158, 11, 0.2);
+            color: #fbbf24;
+        }
+
+        /* SVG Architecture diagrams */
+        .diagram-container {
+            display: flex;
+            justify-content: center;
+            margin: 1.5rem 0;
+            padding: 1rem;
+            background: rgba(0, 0, 0, 0.15);
+            border-radius: 12px;
+            border: 1px solid var(--panel-border);
+        }
+
+        /* Theme Toggle */
+        .theme-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            cursor: pointer;
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .theme-btn:hover {
+            color: var(--text-main);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        /* Copy Button */
+        .copy-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+
+        .copy-btn:hover {
+            color: var(--text-main);
+        }
+
+        /* System flow node layout */
+        .flow-node {
+            padding: 12px 18px;
+            border-radius: 10px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--panel-border);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .flow-step {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: var(--accent-primary-gradient);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: 700;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Sidebar Menu -->
+    <div class="sidebar">
+        <div class="logo-area">
+            <i class="fa-solid fa-book-bookmark logo-icon"></i>
+            <span class="logo-text">EPF Tracker Docs</span>
+        </div>
+        
+        <ul class="nav-list">
+            <li class="nav-item active" data-target="arch"><a href="#arch"><i class="fa-solid fa-layer-group"></i> <span>Architecture</span></a></li>
+            <li class="nav-item" data-target="pipeline"><a href="#pipeline"><i class="fa-solid fa-route"></i> <span>Data Flow</span></a></li>
+            <li class="nav-item" data-target="resolution"><a href="#resolution"><i class="fa-solid fa-sliders"></i> <span>Match Rules</span></a></li>
+            <li class="nav-item" data-target="scripts"><a href="#scripts"><i class="fa-solid fa-code"></i> <span>Scripts Reference</span></a></li>
+            <li class="nav-item" data-target="captcha"><a href="#captcha"><i class="fa-solid fa-robot"></i> <span>CAPTCHA Handling</span></a></li>
+            <li class="nav-item" data-target="dashboard"><a href="#dashboard"><i class="fa-solid fa-table-columns"></i> <span>Dashboard Viewer</span></a></li>
+            <li class="nav-item" data-target="schema"><a href="#schema"><i class="fa-solid fa-database"></i> <span>JSON Schema</span></a></li>
+        </ul>
+
+        <div class="sidebar-footer">
+            <span style="font-size:0.75rem; color:var(--text-muted)">Theme toggle</span>
+            <button class="theme-btn" id="theme-toggle" title="Toggle Light/Dark Theme">
+                <i class="fa-solid fa-sun"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="content">
+
+        <!-- Architecture Section -->
+        <section id="arch" class="glass-card">
+            <h2><i class="fa-solid fa-layer-group" style="color:var(--accent-primary)"></i> System Architecture Overview</h2>
+            <p>
+                The <strong>EPFO Tracker Scraper and Matches Analyzer</strong> is an automated crawler tool designed to search, verify, and document employee establishment registrations on the Indian Employees' Provident Fund Organisation (EPFO) portal. The tool reconciles local vendor registration lists with official database search results, resolves state-level jurisdictions, and presents structured analytical outputs on a web dashboard.
+            </p>
+            
+            <h3>Core System Components</h3>
+            <div class="flow-node">
+                <div class="flow-step">1</div>
+                <div>
+                    <strong>Vendor Orchestrator (vendor_scraper.py)</strong>
+                    <p style="margin: 4px 0 0 0; font-size: 0.85rem;">Orchestrates the verification. Deduplicates incoming vendor files, maps state codes from tax IDs (GSTN), parses downloads, and matches profiles using validation tables.</p>
+                </div>
+            </div>
+            <div class="flow-node">
+                <div class="flow-step">2</div>
+                <div>
+                    <strong>Playwright Crawler Engines (scraper.py)</strong>
+                    <p style="margin: 4px 0 0 0; font-size: 0.85rem;">Launches system Edge/Chromium instances, applies anti-detection stealth overlays, solves portal CAPTCHAs via LLMs, and pulls EPFO data sheets.</p>
+                </div>
+            </div>
+            <div class="flow-node">
+                <div class="flow-step">3</div>
+                <div>
+                    <strong>Match Post-Processor (fix_matches.py)</strong>
+                    <p style="margin: 4px 0 0 0; font-size: 0.85rem;">Resolves state/office location naming anomalies by comparing scraped IDs against local district databases, fixing disclaimers and matching records.</p>
+                </div>
+            </div>
+            <div class="flow-node">
+                <div class="flow-step">4</div>
+                <div>
+                    <strong>Analytical View Interface (dashboard.html & run_dashboard.py)</strong>
+                    <p style="margin: 4px 0 0 0; font-size: 0.85rem;">Provides a modern UI to filter, search, explore mismatches, and view details about sub-codes and crawler disclaimers.</p>
+                </div>
+            </div>
+
+            <div class="diagram-container">
+                <svg width="600" height="240" viewBox="0 0 600 240" style="background: transparent; font-family: var(--font-title);">
+                    <!-- Definitions -->
+                    <defs>
+                        <linearGradient id="primary-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#6366f1" />
+                            <stop offset="100%" stop-color="#4f46e5" />
+                        </linearGradient>
+                        <linearGradient id="secondary-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#06b6d4" />
+                            <stop offset="100%" stop-color="#0891b2" />
+                        </linearGradient>
+                    </defs>
+                    
+                    <!-- Nodes -->
+                    <!-- Input Box -->
+                    <rect x="20" y="90" width="110" height="60" rx="8" fill="rgba(255,255,255,0.03)" stroke="var(--panel-border)" stroke-width="2" />
+                    <text x="75" y="120" fill="var(--text-main)" font-size="12" text-anchor="middle" font-weight="bold">Vendor CSV List</text>
+                    <text x="75" y="136" fill="var(--text-muted)" font-size="10" text-anchor="middle">Codes & GSTNs</text>
+                    
+                    <!-- Arrow 1 -->
+                    <path d="M 130 120 L 160 120" fill="none" stroke="var(--panel-border)" stroke-width="2" marker-end="url(#arrow)" />
+                    <polygon points="160,120 152,116 152,124" fill="var(--text-muted)" />
+                    
+                    <!-- Main Orchestrator Node -->
+                    <rect x="170" y="60" width="140" height="120" rx="10" fill="url(#primary-grad)" />
+                    <text x="240" y="105" fill="white" font-size="13" text-anchor="middle" font-weight="bold">vendor_scraper.py</text>
+                    <text x="240" y="125" fill="rgba(255,255,255,0.8)" font-size="11" text-anchor="middle">GSTN-State mapping</text>
+                    <text x="240" y="142" fill="rgba(255,255,255,0.8)" font-size="11" text-anchor="middle">Verification pipeline</text>
+                    
+                    <!-- Arrow 2 (Bi-directional Crawler link) -->
+                    <path d="M 240 60 L 240 30 L 370 30 L 370 60" fill="none" stroke="var(--panel-border)" stroke-dasharray="4" stroke-width="2" />
+                    <text x="305" y="24" fill="var(--accent-secondary)" font-size="10" text-anchor="middle">Playwright Engine API</text>
+                    <polygon points="370,60 366,52 374,52" fill="var(--text-muted)" />
+                    
+                    <!-- Web Scraper Node -->
+                    <rect x="320" y="60" width="100" height="50" rx="8" fill="rgba(255,255,255,0.03)" stroke="var(--panel-border)" stroke-width="2" />
+                    <text x="370" y="85" fill="var(--text-main)" font-size="11" text-anchor="middle" font-weight="bold">scraper.py</text>
+                    <text x="370" y="98" fill="var(--text-muted)" font-size="9" text-anchor="middle">EPFO Search & Captcha</text>
+                    
+                    <!-- Arrow 3 -->
+                    <path d="M 310 120 L 440 120" fill="none" stroke="var(--panel-border)" stroke-width="2" />
+                    <polygon points="440,120 432,116 432,124" fill="var(--text-muted)" />
+                    
+                    <!-- DB Output Node -->
+                    <rect x="450" y="90" width="130" height="60" rx="8" fill="url(#secondary-grad)" />
+                    <text x="515" y="115" fill="white" font-size="11" text-anchor="middle" font-weight="bold">vendor_est_matches.json</text>
+                    <text x="515" y="130" fill="rgba(255,255,255,0.9)" font-size="9" text-anchor="middle">Post-Fixed Data Schema</text>
+                    
+                    <!-- Post Fixer Loop -->
+                    <path d="M 515 150 L 515 210 L 240 210 L 240 180" fill="none" stroke="var(--panel-border)" stroke-width="1.5" stroke-dasharray="3" />
+                    <text x="377" y="204" fill="var(--text-muted)" font-size="10" text-anchor="middle">Post-Process: fix_matches.py</text>
+                    <polygon points="240,180 236,188 244,188" fill="var(--text-muted)" />
+                </svg>
+            </div>
+        </section>
+
+        <!-- Pipeline Section -->
+        <section id="pipeline" class="glass-card">
+            <h2><i class="fa-solid fa-route" style="color:var(--accent-secondary)"></i> Scraper Execution Pipeline</h2>
+            <p>
+                The scraper handles data validation, extraction, and clean-up in a sequential pipeline designed to bypass firewall limits while maintaining maximum data fidelity.
+            </p>
+            
+            <div class="flow-node">
+                <div class="flow-step">1</div>
+                <div>
+                    <strong>Data Reading & Sanitization</strong>
+                    <p style="margin: 4px 0 0 0; font-size: 0.85rem;">Reads <code>vendorList.csv</code>, removes duplicate entries, and cleans input values. Suffixes (like PVT, LTD, LLP) are parsed from an external configuration file <code>suffixes.txt</code> on startup and dynamically stripped from company names to prevent matching failures on the portal, falling back to built-in values if the file is missing.</p>
+                </div>
+            </div>
+            
+            <div class="flow-node">
+                <div class="flow-step">2</div>
+                <div>
+                    <strong>Allowed State Parsing</strong>
+                    <p style="margin: 4px 0 0 0; font-size: 0.85rem;">Pulls the vendor's GST number. The first two digits of the GSTN code indicate the state of registration. The pipeline matches these digits against <code>STATECODE.JSON</code> and pushes standard state abbreviations (e.g., "RJ" for Rajasthan, "BR" for Bihar) into a list of <code>allowed_state_codes</code>. If the tax code is missing or invalid, it flags it to avoid matching mismatching regions.</p>
+                </div>
+            </div>
+
+            <div class="flow-node">
+                <div class="flow-step">3</div>
+                <div>
+                    <strong>Stealth Automation</strong>
+                    <p style="margin: 4px 0 0 0; font-size: 0.85rem;">Launches Microsoft Edge under an active persistent user profile, simulating real user data locations. Stealth arguments are injected on browser initialization to override the Webdriver properties, preventing WAFs (such as Cloudflare or EPFO's firewalls) from flagging automation. Mouse paths are generated using randomized step curves, typing uses staggered character pauses, and scrolling patterns are added to simulate reading.</p>
+                </div>
+            </div>
+
+            <div class="flow-node">
+                <div class="flow-step">4</div>
+                <div>
+                    <strong>CAPTCHA Solving via Multimodal LLM</strong>
+                    <p style="margin: 4px 0 0 0; font-size: 0.85rem;">Screenshots the captcha image element (<code>#capImg</code>). Converted binary bytes are base64 encoded and sent to visual model APIs (Gemini 2.5 Flash / Flash Lite) via the OpenRouter service. The model solves the text and feeds it back to the script, which automatically types it in. If verification fails, it clicks Reset to try again up to 5 times.</p>
+                </div>
+            </div>
+
+            <div class="flow-node">
+                <div class="flow-step">5</div>
+                <div>
+                    <strong>Region Matching & Worksheet Downloading</strong>
+                    <p style="margin: 4px 0 0 0; font-size: 0.85rem;">Once details load, the search results table is parsed. If the target establishment prefix (the first two letters of the ID) matches the allowed state codes, or the derived office name matches the state, it clicks "View Details". It then clicks the Excel/CSV exporter, saving sheet outputs locally. These workbook lists are parsed (using XML Zip extraction) to pull all sub-codes and branches under the same registration, saving them in the output schema.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Match Rules Section -->
+        <section id="resolution" class="glass-card">
+            <h2><i class="fa-solid fa-sliders" style="color:var(--color-warning)"></i> Verification & Match Classification Rules</h2>
+            <p>
+                Verification logic determines whether a scraped match counts as a <strong>Perfect Match</strong> or a <strong>State Mismatch</strong>. 
+            </p>
+
+            <div class="alert alert-info">
+                <i class="fa-solid fa-circle-info" style="font-size: 1.2rem; margin-top:2px;"></i>
+                <div>
+                    <strong>EPFO Naming Convention:</strong> The first 2 letters of an EPFO Establishment ID represent the region/state prefix (e.g. <code>AP</code> in <code>APHYD0061652000</code>). The next 3 letters signify the regional office code (e.g., <code>HYD</code> for Hyderabad).
+                </div>
+            </div>
+
+            <h3>Core Verification Logic</h3>
+            <ul>
+                <li><strong>State Check:</strong> If the target establishment ID's prefix (first 2 letters) matches any code in the vendor's <code>allowed_state_codes</code>, it is marked as a <strong>Perfect Match</strong>.</li>
+                <li><strong>Office Check:</strong> If there is a prefix mismatch, the script checks the regional office code (e.g., <code>HYD</code>) and translates it to the district name (e.g., <code>HYDERABAD</code>) using the district lookup tables. If that district's state (Telangana/Andhra Pradesh) matches the vendor's allowed states, it is resolved and accepted.</li>
+                <li><strong>Disclaimer Mismatch:</strong> If both prefix check and district lookup show that the establishment resides in an unauthorized state, the scraper flags it with a State Mismatch warning and appends a <code>disclaimer</code> clarifying the issue.</li>
+            </ul>
+
+            <div class="alert alert-success">
+                <i class="fa-solid fa-circle-check" style="font-size: 1.2rem; margin-top:2px;"></i>
+                <div>
+                    <strong>Updated Mismatch Ignores Rule (&lt; 3 matches):</strong>
+                    <p style="margin-top: 4px; color: inherit;">
+                        If a vendor triggers a state mismatch but has <strong>less than 3 search results</strong> in the portal's establishment lists (<code>list_establishment_ids.length &lt; 3</code>), it is automatically reclassified as a <strong>Perfect Match</strong>. This rule reduces false mismatches for unique business names where ambiguity is negligible.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Scripts Section -->
+        <section id="scripts" class="glass-card">
+            <h2><i class="fa-solid fa-code" style="color:var(--accent-primary)"></i> Python Scripts Reference</h2>
+            
+            <h3>1. vendor_scraper.py (Main Runner)</h3>
+            <p>Handles orchestrating the search and matching logic for the entire CSV vendor database.</p>
+            <div class="code-container">
+                <div class="code-header"><span>vendor_scraper.py</span><button class="copy-btn" onclick="navigator.clipboard.writeText('python vendor_scraper.py --input vendorList.csv')"><i class="fa-regular fa-copy"></i> Copy Run Command</button></div>
+                <pre><code># State code mapper from GSTN
+def get_state_codes_for_gstn(gstn, statecode_data, district_states):
+    if not isinstance(gstn, str) || len(gstn) < 2:
+        return []
+    gstn_first_2 = gstn[:2]
+    # Maps digits to abbreviation from STATECODE.JSON
+    ...
+
+# Excel worksheet details scanner (extracts sub-code branch tables)
+def extract_establishment_details(file_path):
+    details = []
+    with zipfile.ZipFile(file_path, 'r') as z:
+        sheet_content = z.read('xl/worksheets/sheet1.xml')
+        root = ET.fromstring(sheet_content)
+        # Pulls rows and cells using openxml namespaces...
+    return details</code></pre>
+            </div>
+
+            <h3>2. scraper.py (Playwright Search API)</h3>
+            <p>Responsible for stealth page navigation, handling dialog alerts, and solving image captchas.</p>
+            <div class="code-container">
+                <div class="code-header"><span>scraper.py</span><button class="copy-btn" onclick="navigator.clipboard.writeText('python scraper.py --name \"POWER PIONEERS\"')"><i class="fa-regular fa-copy"></i> Copy Run Command</button></div>
+                <pre><code># Human mouse motion path simulation using curves & jitter
+async def human_mouse_move(page, target_locator):
+    box = await target_locator.bounding_box()
+    x_target = box["x"] + box["width"] / 2
+    y_target = box["y"] + box["height"] / 2
+    steps = random.randint(6, 12)
+    # Curves drawing coordinates
+    for i in range(steps):
+        t = (i + 1) / steps
+        step_x = current_x + (x_target - current_x) * t + random.uniform(-4, 4)
+        step_y = current_y + (y_target - current_y) * t + random.uniform(-4, 4)
+        await page.mouse.move(step_x, step_y)
+        await asyncio.sleep(random.uniform(0.015, 0.035))</code></pre>
+            </div>
+
+            <h3>3. fix_matches.py (Post-Processor Analyzer)</h3>
+            <p>Scans output JSON schemas and cleans up matching targets using offline district state maps.</p>
+            <div class="code-container">
+                <div class="code-header"><span>fix_matches.py</span><button class="copy-btn" onclick="navigator.clipboard.writeText('python fix_matches.py')"><i class="fa-regular fa-copy"></i> Copy Run Command</button></div>
+                <pre><code># Fixes mismatches in existing database files
+def fix_json_file(file_path, office_state_map):
+    with open(file_path, 'r', encoding='utf-8') as f:
+        data = json.load(f)
+    for vcode, entry in data.items():
+        if entry.get("status") != "success":
+            continue
+        # Determines target ID based on prefix match overrides or downloaded Excel logs
+        ...</code></pre>
+            </div>
+
+            <h3>4. run_dashboard.py (Lightweight Launcher)</h3>
+            <p>Serves files on the local port and redirects the system browser to the HTML viewer page.</p>
+            <div class="code-container">
+                <div class="code-header"><span>run_dashboard.py</span><button class="copy-btn" onclick="navigator.clipboard.writeText('python run_dashboard.py')"><i class="fa-regular fa-copy"></i> Copy Run Command</button></div>
+                <pre><code>class DashboardHandler(http.server.SimpleHTTPRequestHandler):
+    def end_headers(self):
+        # Override headers to force reload files without caching
+        self.send_header('Access-Control-Allow-Origin', '*')
+        self.send_header('Cache-Control', 'no-cache, no-store, must-revalidate')
+        super().end_headers()</code></pre>
+            </div>
+        </section>
+
+        <!-- CAPTCHA Section -->
+        <section id="captcha" class="glass-card">
+            <h2><i class="fa-solid fa-robot" style="color:var(--accent-secondary)"></i> AI CAPTCHA Solving</h2>
+            <p>
+                The EPFO search page requires entering an image CAPTCHA for form submission. Since standard OCR libraries (like Tesseract) struggle with noise lines, distortions, and character tilts, the tracker utilizes multimodal Vision Models via Gemini.
+            </p>
+            
+            <div class="alert alert-info">
+                <strong style="color:var(--accent-primary)">Prompts Strategy:</strong> The system sends the raw screenshot bytes to visual models along with a strict prompt defining length constraints (5-6 characters) and layout rules (left-to-right sorting) to obtain the alphanumeric string without details.
+            </div>
+
+            <div class="code-container">
+                <div class="code-header"><span>solve_captcha function snippet</span></div>
+                <pre><code>payload = {
+    "model": "google/gemini-2.5-flash-lite",
+    "messages": [{
+        "role": "user",
+        "content": [
+            {
+                "type": "text",
+                "text": "Identify the characters in this CAPTCHA image. Respond with ONLY the alphanumeric characters, nothing else — no punctuation, spaces, or explanation. The answer is 5–6 characters long. Read strictly left to right, even if characters vary in vertical position."
+            },
+            {
+                "type": "image_url",
+                "image_url": { "url": f"data:image/png;base64,{base64_image}" }
+            }
+        ]
+    }]
+}</code></pre>
+            </div>
+        </section>
+
+        <!-- Dashboard Section -->
+        <section id="dashboard" class="glass-card">
+            <h2><i class="fa-solid fa-table-columns" style="color:var(--color-success)"></i> Interactive Dashboard Page</h2>
+            <p>
+                The analytical dashboard (<code>dashboard.html</code>) is loaded in your browser using the local launcher. Key features include:
+            </p>
+            <ul>
+                <li><strong>Unified Search Bar:</strong> Instantly matches across Vendor Codes, Vendor Names, GSTNs, and Target IDs.</li>
+                <li><strong>Filtered tabs:</strong> Sorts listings into Perfect Match, State Mismatch, No Match, and Scraper Errors.</li>
+                <li><strong>Dynamic Analytics Charts:</strong> High-performance graphs powered by Chart.js visualize data segments based on active query filters in real-time.</li>
+                <li><strong>Copy tools:</strong> In-drawer buttons copy GSTNs and target IDs.</li>
+                <li><strong>Raw Log Inspector:</strong> Enables direct inspection of JSON data nodes and crawler logs.</li>
+            </ul>
+        </section>
+
+        <!-- Schema Section -->
+        <section id="schema" class="glass-card">
+            <h2><i class="fa-solid fa-database" style="color:var(--accent-primary)"></i> JSON Database Schema</h2>
+            <p>
+                Matches are written into <code>vendor_est_matches.json</code> as key-value pairs (keyed on Vendor Code).
+            </p>
+            <div class="code-container">
+                <div class="code-header"><span>vendor_est_matches.json format</span></div>
+                <pre><code>{
+  "352712": {
+    "vendor_name": "M/S Power Pioneers",
+    "vendor_gstn": "23AHVPA7926K1ZY",
+    "status": "success",
+    "allowed_state_codes": [
+      "MP"
+    ],
+    "target_establishment_id": "APHYD0061652000",
+    "matched_establishment_ids": [],
+    "disclaimer": "State code mismatch ignored (Target: ['MP'], Found: AP).",
+    "list_establishment_ids": [
+      {
+        "establishment Name": "POWER PIONEERS",
+        "establishment id": "APHYD0061652000"
+      },
+      ...
+    ]
+  }
+}</code></pre>
+            </div>
+        </section>
+
+    </div>
+
+    <!-- Smooth Navigation Highlight and Theme toggle script -->
+    <script>
+        // Theme toggle action
+        const themeToggle = document.getElementById('theme-toggle');
+        themeToggle.addEventListener('click', () => {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('doc-theme', newTheme);
+            updateThemeButton(newTheme);
+        });
+
+        function updateThemeButton(theme) {
+            if (theme === 'dark') {
+                themeToggle.innerHTML = '<i class="fa-solid fa-sun"></i>';
+            } else {
+                themeToggle.innerHTML = '<i class="fa-solid fa-moon"></i>';
+            }
+        }
+
+        // Initialize Theme
+        const storedTheme = localStorage.getItem('doc-theme') || 'dark';
+        document.documentElement.setAttribute('data-theme', storedTheme);
+        updateThemeButton(storedTheme);
+
+        // Sidebar Navigation highlights
+        const navItems = document.querySelectorAll('.nav-item');
+        const sections = document.querySelectorAll('section');
+
+        window.addEventListener('scroll', () => {
+            let currentSectionId = 'arch';
+            sections.forEach(sec => {
+                const secTop = sec.offsetTop;
+                if (window.scrollY >= secTop - 120) {
+                    currentSectionId = sec.getAttribute('id');
+                }
+            });
+
+            navItems.forEach(item => {
+                item.classList.remove('active');
+                if (item.dataset.target === currentSectionId) {
+                    item.classList.add('active');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

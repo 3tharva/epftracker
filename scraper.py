@@ -255,14 +255,31 @@ async def extract_table_data(page):
     return headers, mapped_rows
 
 
+def load_suffixes(file_path="suffixes.txt"):
+    default_suffixes = ["PVT", "LTD", "LT", "LIMITED", "LIM", "PRIVATE", "CO", "COMPANY"]
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    candidate_paths = [file_path, os.path.join(script_dir, file_path)]
+    for path in candidate_paths:
+        if os.path.exists(path):
+            try:
+                with open(path, "r", encoding="utf-8") as f:
+                    suffixes = [line.strip().upper() for line in f if line.strip() and not line.strip().startswith("#")]
+                if suffixes:
+                    return suffixes
+            except Exception as e:
+                print(f"[!] Error loading {path}: {e}")
+    return default_suffixes
+
+SUFFIXES = load_suffixes()
+
 def remove_pvt_ltd(name):
     """
-    Removes 'PVT LTD', 'CO', 'COMPANY', and similar suffixes (case-insensitive) from a vendor/establishment name.
+    Removes company suffixes (case-insensitive) from a vendor/establishment name.
     """
     if not isinstance(name, str):
         return ""
-    # Matches PVT, LTD, LT, LIMITED, LIM, PRIVATE, CO, COMPANY, etc.
-    pattern = re.compile(r'\b(PVT|LTD|LT|LIMITED|LIM|PRIVATE|CO|COMPANY)\b\.?', re.IGNORECASE)
+    escaped_suffixes = [re.escape(s) for s in SUFFIXES]
+    pattern = re.compile(r'\b(' + '|'.join(escaped_suffixes) + r')\b\.?', re.IGNORECASE)
     cleaned = pattern.sub("", name)
     cleaned = re.sub(r'\s+', ' ', cleaned)
     return cleaned.strip(" ,.-/")
@@ -297,7 +314,8 @@ async def run_scraper(establishment_name, api_key, headless=True):
         if q not in initial_queries:
             initial_queries.append(q)
             
-    pvt_ltd_pattern = re.compile(r'\b(PVT|LTD|LT|LIMITED|LIM|PRIVATE|CO|COMPANY)\b', re.IGNORECASE)
+    escaped_suffixes = [re.escape(s) for s in SUFFIXES]
+    pvt_ltd_pattern = re.compile(r'\b(' + '|'.join(escaped_suffixes) + r')\b', re.IGNORECASE)
     symbol_pattern = re.compile(r'[^a-zA-Z0-9\s\.]')
     
     # 1. Generate no-symbol queries (keeping PVT LTD CO suffix)
@@ -563,27 +581,25 @@ async def run_scraper(establishment_name, api_key, headless=True):
                         # Look for Next button in pagination
                         # jQuery DataTable format: <li class="paginate_button next" id="example_next"><a ...>Next</a></li>
                         # If it has class "disabled", it means we're on the last page.
-                        next_li = page.locator("li.paginate_button.next, #example_next").first
-                        if await next_li.count() > 0:
-                            class_attr = await next_li.get_attribute("class") or ""
-                            if "disabled" in class_attr:
+                        next_btn = page.locator("li.paginate_button.next, a.paginate_button.next, #example_next, [id$='_next']").first
+                        if await next_btn.count() > 0:
+                            class_attr = await next_btn.get_attribute("class") or ""
+                            aria_disabled = await next_btn.get_attribute("aria-disabled") or ""
+                            if "disabled" in class_attr.lower() or aria_disabled.lower() == "true":
                                 print("[*] Reached the last page of results.")
                                 break
                             
-                            next_link = next_li.locator("a")
-                            if await next_link.count() == 0:
-                                print("[*] No link inside Next button, assuming last page.")
-                                break
+                            if await next_btn.evaluate("el => el.tagName.toLowerCase()") == "a":
+                                next_link = next_btn
+                            else:
+                                next_link = next_btn.locator("a").first
+                                if await next_link.count() == 0:
+                                    print("[*] No link inside Next button, assuming last page.")
+                                    break
                             
                             # Check visibility
                             if not await next_link.is_visible():
                                 print("[*] Next link is not visible, assuming last page.")
-                                break
-                            
-                            # Check aria-disabled
-                            aria_disabled = await next_link.get_attribute("aria-disabled")
-                            if aria_disabled == "true":
-                                print("[*] Next link is aria-disabled, assuming last page.")
                                 break
                             
                             try:

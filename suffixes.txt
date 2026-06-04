@@ -1,0 +1,17 @@
+# Suffixes to remove from establishment names during search matching
+# Put one suffix per line. Lines starting with # are ignored.
+
+PVT
+LTD
+LT
+LIMITED
+LIM
+PRIVATE
+CO
+COMPANY
+LLP
+INC
+CORP
+PARTNERSHIP
+ASSOCIATES
+India

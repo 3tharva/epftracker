@@ -1,0 +1,2817 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EPFO Vendor Matches Control & Dashboard</title>
+    <!-- Fonts and Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        :root {
+            /* Dark Theme Colors (Default) */
+            --bg-color: #0b0f19;
+            --panel-bg: rgba(17, 24, 39, 0.7);
+            --panel-border: rgba(255, 255, 255, 0.06);
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+            --accent-primary: #6366f1;
+            --accent-primary-gradient: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+            --accent-secondary: #06b6d4;
+            --card-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+            
+            /* Status Colors */
+            --color-success: #10b981;
+            --color-success-bg: rgba(16, 185, 129, 0.1);
+            --color-warning: #f59e0b;
+            --color-warning-bg: rgba(245, 158, 11, 0.1);
+            --color-info: #3b82f6;
+            --color-info-bg: rgba(59, 130, 246, 0.1);
+            --color-danger: #ef4444;
+            --color-danger-bg: rgba(239, 68, 68, 0.1);
+            --color-skipped: #8b5cf6;
+            --color-skipped-bg: rgba(139, 92, 246, 0.1);
+
+            --font-main: 'Inter', sans-serif;
+            --font-title: 'Outfit', sans-serif;
+            --font-code: 'Fira Code', monospace;
+            --sidebar-width: 480px;
+        }
+
+        [data-theme="light"] {
+            /* Light Theme Colors */
+            --bg-color: #f8fafc;
+            --panel-bg: rgba(255, 255, 255, 0.85);
+            --panel-border: rgba(0, 0, 0, 0.06);
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --accent-primary: #4f46e5;
+            --accent-primary-gradient: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%);
+            --accent-secondary: #0891b2;
+            --card-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+            
+            --color-success-bg: rgba(16, 185, 129, 0.15);
+            --color-warning-bg: rgba(245, 158, 11, 0.15);
+            --color-info-bg: rgba(59, 130, 246, 0.15);
+            --color-danger-bg: rgba(239, 68, 68, 0.15);
+            --color-skipped-bg: rgba(139, 92, 246, 0.15);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            transition: background-color 0.3s, border-color 0.3s, color 0.3s;
+        }
+
+        body {
+            font-family: var(--font-main);
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Glassmorphism Panel style */
+        .glass-panel {
+            background: var(--panel-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--panel-border);
+            border-radius: 16px;
+            box-shadow: var(--card-shadow);
+        }
+
+        /* Scrollbars */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--panel-border);
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--text-muted);
+        }
+
+        /* Header */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 2rem;
+            border-bottom: 1px solid var(--panel-border);
+            z-index: 10;
+        }
+
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            font-size: 1.8rem;
+            background: var(--accent-primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        h1 {
+            font-family: var(--font-title);
+            font-weight: 700;
+            font-size: 1.4rem;
+            letter-spacing: -0.5px;
+        }
+
+        .file-status {
+            font-size: 0.8rem;
+            padding: 4px 10px;
+            border-radius: 99px;
+            background: var(--panel-border);
+            color: var(--text-muted);
+            border: 1px solid var(--panel-border);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .file-status.loaded {
+            color: var(--color-success);
+            background: var(--color-success-bg);
+            border-color: rgba(16, 185, 129, 0.3);
+        }
+
+        /* Tab Navigation Bar */
+        .tab-nav {
+            display: flex;
+            gap: 8px;
+            padding: 4px;
+            background: rgba(0,0,0,0.15);
+            border-radius: 12px;
+            border: 1px solid var(--panel-border);
+        }
+
+        .tab-btn {
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-family: var(--font-title);
+            font-size: 0.9rem;
+            font-weight: 600;
+            border: none;
+            background: transparent;
+            color: var(--text-muted);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .tab-btn:hover {
+            color: var(--text-main);
+        }
+
+        .tab-btn.active {
+            background: var(--panel-bg);
+            color: var(--text-main);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            border: 1px solid var(--panel-border);
+        }
+
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 0.65rem 1.25rem;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            border: 1px solid var(--panel-border);
+            background: var(--panel-bg);
+            color: var(--text-main);
+            transition: all 0.2s ease;
+        }
+
+        .btn:hover:not(:disabled) {
+            transform: translateY(-1px);
+            border-color: var(--text-muted);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-primary {
+            background: var(--accent-primary-gradient);
+            color: white;
+            border: none;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+            filter: brightness(1.1);
+        }
+
+        .btn-danger {
+            background: var(--color-danger-bg);
+            color: var(--color-danger);
+            border-color: rgba(239, 68, 68, 0.3);
+        }
+
+        .btn-danger:hover:not(:disabled) {
+            background: var(--color-danger);
+            color: white;
+            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .theme-toggle {
+            width: 42px;
+            height: 42px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border: 1px solid var(--panel-border);
+            background: var(--panel-bg);
+            color: var(--text-main);
+        }
+
+        .theme-toggle:hover {
+            border-color: var(--text-muted);
+        }
+
+        /* Tab Content layouts */
+        .tab-content {
+            display: none;
+            padding: 1.5rem 2rem;
+            flex-grow: 1;
+        }
+
+        .tab-content.active {
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ---------------- Tab 1: Control Panel Layout ---------------- */
+        .control-grid {
+            display: grid;
+            grid-template-columns: 400px 1fr;
+            gap: 1.5rem;
+            flex-grow: 1;
+        }
+
+        @media (max-width: 1024px) {
+            .control-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .control-left, .control-right {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .control-card {
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .card-header-title {
+            font-family: var(--font-title);
+            font-size: 1.1rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-bottom: 1px solid var(--panel-border);
+            padding-bottom: 10px;
+            margin-bottom: 4px;
+        }
+
+        /* Drag & Drop uploader inside Control Center */
+        .dropzone-inner {
+            border: 2px dashed var(--panel-border);
+            border-radius: 12px;
+            padding: 2rem 1rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .dropzone-inner:hover, .dropzone-inner.drag-active {
+            border-color: var(--accent-primary);
+            background: rgba(99, 102, 241, 0.04);
+        }
+
+        .dropzone-icon {
+            font-size: 2.2rem;
+            color: var(--accent-primary);
+        }
+
+        /* File Upload Stats preview details */
+        .file-details-preview {
+            background: rgba(0,0,0,0.15);
+            border-radius: 10px;
+            padding: 10px 14px;
+            font-size: 0.85rem;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            border: 1px solid var(--panel-border);
+        }
+
+        .file-detail-row {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .file-detail-val {
+            font-weight: 600;
+            color: var(--accent-secondary);
+        }
+
+        /* Parameters settings input fields */
+        .settings-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .input-group label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .number-input, .text-input {
+            width: 100%;
+            padding: 0.6rem 0.8rem;
+            border-radius: 8px;
+            border: 1px solid var(--panel-border);
+            background: rgba(0,0,0,0.15);
+            color: var(--text-main);
+            font-size: 0.9rem;
+            outline: none;
+        }
+
+        .number-input:focus, .text-input:focus {
+            border-color: var(--accent-primary);
+        }
+
+        /* Toggle checkbox switch */
+        .switch-group {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 6px 0;
+        }
+
+        .switch-label-desc {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .switch-label-desc span {
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .switch-label-desc small {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        /* Dynamic estimation alert box */
+        .estimate-box {
+            padding: 10px 14px;
+            border-radius: 10px;
+            background: var(--color-info-bg);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            color: var(--color-info);
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Monitor Panel Styles */
+        .monitor-progress-wrapper {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            padding: 4px 0;
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            height: 12px;
+            border-radius: 99px;
+            background: rgba(0,0,0,0.2);
+            border: 1px solid var(--panel-border);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: var(--accent-primary-gradient);
+            width: 0%;
+            border-radius: 99px;
+            transition: width 0.4s ease;
+        }
+
+        .progress-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .progress-percent {
+            color: var(--accent-primary);
+            font-weight: 700;
+        }
+
+        .monitor-active-row {
+            padding: 10px 14px;
+            border-radius: 8px;
+            background: rgba(0,0,0,0.15);
+            border-left: 4px solid var(--accent-primary);
+            font-size: 0.9rem;
+            font-weight: 500;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .active-vendor-label {
+            color: var(--accent-secondary);
+            font-weight: 700;
+            font-family: var(--font-title);
+        }
+
+        /* Monitor counters */
+        .monitor-counters {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin-top: 6px;
+        }
+
+        .m-count-card {
+            background: rgba(0,0,0,0.15);
+            border: 1px solid var(--panel-border);
+            border-radius: 10px;
+            padding: 10px 8px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .m-count-num {
+            font-family: var(--font-title);
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+
+        .m-count-lbl {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.2px;
+        }
+
+        /* Terminal styling */
+        .terminal-box {
+            background: #020617;
+            border: 1px solid var(--panel-border);
+            border-radius: 12px;
+            padding: 1rem;
+            height: 280px;
+            overflow-y: auto;
+            font-family: var(--font-code);
+            font-size: 0.8rem;
+            color: #10b981;
+            line-height: 1.4;
+            white-space: pre-wrap;
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.8);
+        }
+
+        .terminal-placeholder {
+            color: var(--text-muted);
+            text-align: center;
+            margin-top: 100px;
+            font-family: var(--font-main);
+            font-size: 0.9rem;
+        }
+
+        /* Files Inspector card */
+        .file-list-container {
+            max-height: 180px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .file-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 12px;
+            background: rgba(0,0,0,0.1);
+            border-radius: 6px;
+            font-size: 0.8rem;
+            border: 1px solid var(--panel-border);
+        }
+
+        .file-item-name {
+            font-family: monospace;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .file-item-meta {
+            color: var(--text-muted);
+            font-size: 0.75rem;
+        }
+
+        /* ---------------- Tab 2: Matches Viewer Layout ---------------- */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            gap: 1.5rem;
+            flex-grow: 1;
+        }
+
+        @media (max-width: 1024px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Left Side stats */
+        .sidebar-stats {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .kpi-container {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+
+        @media (max-width: 1024px) {
+            .kpi-container {
+                grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            }
+        }
+
+        .kpi-card {
+            padding: 1.25rem;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .kpi-title {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        .kpi-value {
+            font-family: var(--font-title);
+            font-size: 1.8rem;
+            font-weight: 700;
+        }
+
+        .kpi-subtext {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .kpi-card::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+        }
+
+        .kpi-total::after { background: var(--accent-primary); }
+        .kpi-success::after { background: var(--color-success); }
+        .kpi-mismatch::after { background: var(--color-warning); }
+        .kpi-nomatch::after { background: var(--color-danger); }
+        .kpi-failed::after { background: var(--color-skipped); }
+
+        .charts-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .chart-card {
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .chart-title {
+            font-family: var(--font-title);
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-main);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .chart-wrapper {
+            position: relative;
+            height: 220px;
+            width: 100%;
+        }
+
+        /* Right Side Data table */
+        .main-data-area {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .filters-panel {
+            padding: 1.25rem 1.5rem;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+        }
+
+        .search-wrapper {
+            position: relative;
+            flex-grow: 1;
+            min-width: 250px;
+        }
+
+        .search-wrapper i {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 0.7rem 1rem 0.7rem 2.6rem;
+            border-radius: 10px;
+            border: 1px solid var(--panel-border);
+            background: rgba(0,0,0,0.1);
+            color: var(--text-main);
+            font-size: 0.9rem;
+            outline: none;
+        }
+
+        .search-input:focus {
+            border-color: var(--accent-primary);
+            background: rgba(0,0,0,0.2);
+        }
+
+        .filter-selects {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .select-input {
+            padding: 0.7rem 1.2rem;
+            border-radius: 10px;
+            border: 1px solid var(--panel-border);
+            background: var(--panel-bg);
+            color: var(--text-main);
+            font-size: 0.9rem;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .select-input:focus {
+            border-color: var(--accent-primary);
+        }
+
+        .status-filter-tabs {
+            display: flex;
+            gap: 4px;
+            padding: 4px;
+            background: rgba(0,0,0,0.15);
+            border-radius: 10px;
+            border: 1px solid var(--panel-border);
+            overflow-x: auto;
+            max-width: 100%;
+        }
+
+        .filter-tab {
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            border: none;
+            background: transparent;
+            color: var(--text-muted);
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .filter-tab:hover {
+            color: var(--text-main);
+        }
+
+        .filter-tab.active {
+            background: var(--panel-bg);
+            color: var(--text-main);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        /* Table Design */
+        .table-card {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+            flex-grow: 1;
+            max-height: 520px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 0.9rem;
+        }
+
+        th {
+            background: rgba(0, 0, 0, 0.1);
+            padding: 1rem 1.25rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            border-bottom: 1px solid var(--panel-border);
+            font-family: var(--font-title);
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            position: sticky;
+            top: 0;
+            z-index: 2;
+        }
+
+        td {
+            padding: 1rem 1.25rem;
+            border-bottom: 1px solid var(--panel-border);
+            vertical-align: middle;
+        }
+
+        tr.table-row {
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        tr.table-row:hover {
+            background: rgba(99, 102, 241, 0.04);
+        }
+
+        .vendor-name-cell {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .vendor-gstn-sub {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            font-family: monospace;
+            letter-spacing: 0.2px;
+        }
+
+        /* Badges */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 10px;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .badge-success { background: var(--color-success-bg); color: var(--color-success); }
+        .badge-warning { background: var(--color-warning-bg); color: var(--color-warning); }
+        .badge-danger { background: var(--color-danger-bg); color: var(--color-danger); }
+        .badge-skipped { background: var(--color-skipped-bg); color: var(--color-skipped); }
+        .badge-info { background: var(--color-info-bg); color: var(--color-info); }
+
+        .state-tag {
+            background: var(--panel-border);
+            border: 1px solid var(--panel-border);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .eid-text {
+            font-family: monospace;
+            font-size: 0.85rem;
+            letter-spacing: 0.2px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .status-dot.success { background-color: var(--color-success); }
+        .status-dot.warning { background-color: var(--color-warning); }
+        .status-dot.danger { background-color: var(--color-danger); }
+
+        /* Pagination style */
+        .pagination-area {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem 1.5rem;
+            border-top: 1px solid var(--panel-border);
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        .pagination-info {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .pagination-controls {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .page-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85rem;
+            font-weight: 500;
+            border: 1px solid var(--panel-border);
+            background: var(--panel-bg);
+            color: var(--text-main);
+            cursor: pointer;
+        }
+
+        .page-btn:hover:not(:disabled) {
+            border-color: var(--text-muted);
+            background: rgba(0,0,0,0.1);
+        }
+
+        .page-btn.active {
+            background: var(--accent-primary-gradient);
+            color: white;
+            border: none;
+        }
+
+        .page-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        /* Slide-out Sidebar details panel */
+        .drawer-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(4px);
+            z-index: 100;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .drawer-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .drawer {
+            position: fixed;
+            top: 0;
+            right: calc(-1 * var(--sidebar-width));
+            width: var(--sidebar-width);
+            max-width: 100%;
+            height: 100%;
+            background: var(--bg-color);
+            border-left: 1px solid var(--panel-border);
+            box-shadow: -10px 0 30px rgba(0, 0, 0, 0.3);
+            z-index: 101;
+            display: flex;
+            flex-direction: column;
+            transition: right 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .drawer.active {
+            right: 0;
+        }
+
+        .drawer-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--panel-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .drawer-title-area {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .drawer-subtitle {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            font-family: monospace;
+        }
+
+        .close-btn {
+            font-size: 1.2rem;
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .close-btn:hover {
+            background: var(--panel-border);
+            color: var(--text-main);
+        }
+
+        .drawer-body {
+            padding: 1.5rem;
+            overflow-y: auto;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .detail-section {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .section-title {
+            font-family: var(--font-title);
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid var(--panel-border);
+            padding-bottom: 6px;
+        }
+
+        .detail-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+        }
+
+        .detail-card {
+            background: rgba(0, 0, 0, 0.15);
+            border: 1px solid var(--panel-border);
+            border-radius: 12px;
+            padding: 1rem;
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 4px 0;
+            font-size: 0.85rem;
+        }
+
+        .detail-label {
+            color: var(--text-muted);
+        }
+
+        .detail-value {
+            font-weight: 500;
+            text-align: right;
+        }
+
+        .copy-btn {
+            cursor: pointer;
+            color: var(--accent-primary);
+            background: transparent;
+            border: none;
+            margin-left: 6px;
+        }
+
+        .copy-btn:hover {
+            color: var(--accent-secondary);
+        }
+
+        /* Disclaimer box */
+        .disclaimer-alert {
+            border-radius: 12px;
+            padding: 1rem;
+            border: 1px solid rgba(245, 158, 11, 0.2);
+            background: var(--color-warning-bg);
+            color: var(--color-warning);
+            font-size: 0.85rem;
+            line-height: 1.4;
+            display: flex;
+            gap: 10px;
+        }
+
+        .disclaimer-alert i {
+            margin-top: 2px;
+        }
+
+        /* EPFO establishments lists in details drawer */
+        .est-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .est-item {
+            padding: 10px 12px;
+            border-radius: 10px;
+            border: 1px solid var(--panel-border);
+            background: rgba(0,0,0,0.1);
+            font-size: 0.85rem;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            position: relative;
+        }
+
+        .est-item.matched {
+            border-color: rgba(16, 185, 129, 0.4);
+            background: rgba(16, 185, 129, 0.03);
+        }
+
+        .est-item.target {
+            border-color: var(--color-success);
+            background: var(--color-success-bg);
+        }
+
+        .est-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 8px;
+        }
+
+        .est-name {
+            font-weight: 600;
+        }
+
+        .est-id {
+            font-family: monospace;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .est-tags {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin-top: 4px;
+        }
+
+        .est-tag {
+            font-size: 0.7rem;
+            padding: 1px 6px;
+            border-radius: 4px;
+            background: rgba(255,255,255,0.06);
+            color: var(--text-muted);
+        }
+
+        /* Raw json container */
+        .raw-json {
+            font-family: monospace;
+            font-size: 0.75rem;
+            background: #05070f;
+            border-radius: 10px;
+            padding: 1rem;
+            color: #10b981;
+            overflow-x: auto;
+            max-height: 250px;
+            border: 1px solid var(--panel-border);
+        }
+
+        /* Loader Overlay */
+        .loader-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--bg-color);
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 1.5rem;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid var(--panel-border);
+            border-radius: 50%;
+            border-top-color: var(--accent-primary);
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loader-text {
+            font-family: var(--font-title);
+            font-size: 1.2rem;
+            color: var(--text-muted);
+        }
+
+        /* Empty state for search */
+        .empty-table-state {
+            padding: 3rem;
+            text-align: center;
+            color: var(--text-muted);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .empty-table-state i {
+            font-size: 2.5rem;
+            color: var(--panel-border);
+        }
+
+        /* Notification Toast */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: #111827;
+            border: 1px solid var(--accent-primary);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 99px;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            z-index: 1000;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            pointer-events: none;
+        }
+
+        .toast.active {
+            transform: translateX(-50%) translateY(0);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Loading screen -->
+    <div id="loader" class="loader-overlay" style="display: none;">
+        <div class="spinner"></div>
+        <div class="loader-text" id="loader-text">Loading matches data...</div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast">
+        <i class="fa-solid fa-circle-check" style="color:var(--color-success)"></i>
+        <span id="toast-message">Copied to clipboard!</span>
+    </div>
+
+    <!-- Header -->
+    <header class="glass-panel" style="border-radius: 0; margin-bottom: 0;">
+        <div class="logo-area">
+            <i class="fa-solid fa-chart-line logo-icon"></i>
+            <div>
+                <h1>EPFO Scraper & Dashboard</h1>
+                <div id="file-indicator" class="file-status">
+                    <i class="fa-solid fa-circle-notch fa-spin"></i> Checking workspace files
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <div class="tab-nav">
+            <button class="tab-btn active" id="tab-control-btn" onclick="switchTab('control')">
+                <i class="fa-solid fa-gauge-high"></i> Control Panel
+            </button>
+            <button class="tab-btn" id="tab-viewer-btn" onclick="switchTab('viewer')">
+                <i class="fa-solid fa-table-list"></i> Matches Viewer
+            </button>
+        </div>
+
+        <div class="header-controls">
+            <a href="system_documentation.html" target="_blank" class="btn" style="padding: 0.5rem 1rem;">
+                <i class="fa-solid fa-book"></i> Documentation
+            </a>
+            <button class="theme-toggle" id="theme-toggle-btn" title="Toggle Theme">
+                <i class="fa-solid fa-sun"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- ==================== TAB 1: CONTROL CENTER CONTENT ==================== -->
+    <div id="tab-control-content" class="tab-content active">
+        <div class="control-grid">
+            <!-- Left Side Configuration -->
+            <div class="control-left">
+                <!-- 1. Upload Sheet Card -->
+                <div class="glass-panel control-card">
+                    <div class="card-header-title">
+                        <i class="fa-solid fa-cloud-arrow-up" style="color:var(--accent-primary)"></i>
+                        1. Upload Vendor List
+                    </div>
+                    <div class="dropzone-inner" id="drop-zone">
+                        <i class="fa-solid fa-file-excel dropzone-icon"></i>
+                        <h4 style="font-size:0.95rem; font-weight:700;">Drag & Drop Spreadsheet</h4>
+                        <p style="font-size:0.75rem; color:var(--text-muted); margin:0;">
+                            Supports .xlsx (Excel) or .csv files. Columns will be standardised.
+                        </p>
+                        <button class="btn btn-primary" style="padding: 6px 12px; font-size:0.8rem;" onclick="document.getElementById('hidden-file-input').click()">
+                            Browse File
+                        </button>
+                        <input type="file" id="hidden-file-input" style="display: none;" accept=".xlsx,.csv">
+                    </div>
+                    
+                    <!-- File Metadata Info -->
+                    <div id="file-meta-box" class="file-details-preview" style="display: none;">
+                        <div class="file-detail-row">
+                            <span class="detail-label">File Loaded:</span>
+                            <span class="file-detail-val" id="meta-filename">None</span>
+                        </div>
+                        <div class="file-detail-row">
+                            <span class="detail-label">Total Rows (Vendors):</span>
+                            <span class="file-detail-val" id="meta-vendor-count">0</span>
+                        </div>
+                        <div class="file-detail-row">
+                            <span class="detail-label">Status:</span>
+                            <span class="file-detail-val" style="color:var(--color-success)">Ready to process</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. Run Parameters Settings -->
+                <div class="glass-panel control-card">
+                    <div class="card-header-title">
+                        <i class="fa-solid fa-sliders" style="color:var(--accent-secondary)"></i>
+                        2. Scraper Estimation
+                    </div>
+                    
+                    <!-- Hidden configuration elements to preserve JavaScript references -->
+                    <div style="display: none;">
+                        <input type="number" id="sleep-delay-input" value="10">
+                        <input type="number" id="solver-time-input" value="15">
+                        <input type="checkbox" id="headless-checkbox" checked>
+                        <input type="password" id="apikey-input" value="">
+                    </div>
+
+                    <div class="estimate-box" id="runtime-estimate-box" style="margin-top: 0; background: rgba(99, 102, 241, 0.05); border: 1px solid rgba(99, 102, 241, 0.2); border-radius: 8px;">
+                        <i class="fa-solid fa-hourglass-half" style="color: var(--accent-primary);"></i>
+                        <span id="runtime-estimate-text">No file loaded for estimation.</span>
+                    </div>
+                </div>
+
+                <!-- 3. Execution Control Buttons -->
+                <div class="glass-panel control-card">
+                    <div class="card-header-title">
+                        <i class="fa-solid fa-circle-play" style="color:var(--color-success)"></i>
+                        3. Process Controls
+                    </div>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                        <button class="btn btn-primary" id="start-scraper-btn" onclick="startScraperProcess()" disabled>
+                            <i class="fa-solid fa-play"></i> Start Scraper
+                        </button>
+                        <button class="btn btn-danger" id="stop-scraper-btn" onclick="stopScraperProcess()" disabled>
+                            <i class="fa-solid fa-stop"></i> Stop Scraper
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Side Console log and progress monitor -->
+            <div class="control-right">
+                <!-- Progress bar card -->
+                <div class="glass-panel control-card">
+                    <div class="card-header-title">
+                        <i class="fa-solid fa-chart-line" style="color:var(--color-success)"></i>
+                        Execution Progress Monitor
+                    </div>
+                    <div class="monitor-progress-wrapper">
+                        <div class="progress-labels">
+                            <span id="progress-text-label">Processed: 0 / 0 vendors</span>
+                            <span class="progress-percent" id="progress-percentage-label">0%</span>
+                        </div>
+                        <div class="progress-bar-container">
+                            <div class="progress-bar-fill" id="progress-bar-fill"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="monitor-active-row">
+                        <span>Current Item:</span>
+                        <span class="active-vendor-label" id="monitor-active-vendor">Idle</span>
+                    </div>
+
+                    <div class="monitor-counters">
+                        <div class="m-count-card">
+                            <div class="m-count-num" id="mc-success" style="color:var(--color-success)">0</div>
+                            <div class="m-count-lbl">Success</div>
+                        </div>
+                        <div class="m-count-card">
+                            <div class="m-count-num" id="mc-mismatch" style="color:var(--color-warning)">0</div>
+                            <div class="m-count-lbl">Mismatches</div>
+                        </div>
+                        <div class="m-count-card">
+                            <div class="m-count-num" id="mc-nomatch" style="color:var(--color-danger)">0</div>
+                            <div class="m-count-lbl">No Match</div>
+                        </div>
+                        <div class="m-count-card">
+                            <div class="m-count-num" id="mc-error" style="color:var(--color-skipped)">0</div>
+                            <div class="m-count-lbl">Errors</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Real-time Console Log stream -->
+                <div class="glass-panel control-card" style="flex-grow: 1;">
+                    <div class="card-header-title" style="display:flex; justify-content:space-between; align-items:center;">
+                        <span><i class="fa-solid fa-terminal" style="color:var(--accent-secondary)"></i> Scraper Console Output Logs</span>
+                        <button class="btn" style="padding: 2px 8px; font-size:0.75rem;" onclick="document.getElementById('terminal').textContent = ''">
+                            Clear Log
+                        </button>
+                    </div>
+                    <div class="terminal-box" id="terminal">
+                        <div class="terminal-placeholder">Live logs stream will display here once execution begins...</div>
+                    </div>
+                </div>
+
+                <!-- Output Files list -->
+                <div class="glass-panel control-card">
+                    <div class="card-header-title">
+                        <i class="fa-solid fa-folder-open" style="color:var(--accent-secondary)"></i>
+                        Generated System Outputs
+                    </div>
+                    <div class="file-list-container" id="system-file-list">
+                        <span style="color:var(--text-muted); font-size:0.8rem;">No generated files found yet.</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== TAB 2: DATA DASHBOARD VIEWER CONTENT ==================== -->
+    <div id="tab-viewer-content" class="tab-content">
+        <div class="dashboard-grid">
+            <!-- Left Side: KPI & Charts -->
+            <div class="sidebar-stats">
+                <!-- KPIs -->
+                <div class="kpi-container">
+                    <div class="glass-panel kpi-card kpi-total">
+                        <div class="kpi-title">Total Vendors</div>
+                        <div class="kpi-value" id="kpi-total">0</div>
+                        <div class="kpi-subtext">Processed items</div>
+                    </div>
+                    <div class="glass-panel kpi-card kpi-success">
+                        <div class="kpi-title">Perfect Matches</div>
+                        <div class="kpi-value" id="kpi-success">0</div>
+                        <div class="kpi-subtext" id="kpi-success-pct">0% of total</div>
+                    </div>
+                    <div class="glass-panel kpi-card kpi-mismatch">
+                        <div class="kpi-title">State Mismatches</div>
+                        <div class="kpi-value" id="kpi-mismatch">0</div>
+                        <div class="kpi-subtext" id="kpi-mismatch-pct">0% of total</div>
+                    </div>
+                    <div class="glass-panel kpi-card kpi-nomatch">
+                        <div class="kpi-title">No Match Found</div>
+                        <div class="kpi-value" id="kpi-nomatch">0</div>
+                        <div class="kpi-subtext" id="kpi-nomatch-pct">0% of total</div>
+                    </div>
+                    <div class="glass-panel kpi-card kpi-failed">
+                        <div class="kpi-title">Errors & Skipped</div>
+                        <div class="kpi-value" id="kpi-failed">0</div>
+                        <div class="kpi-subtext" id="kpi-failed-pct">0% of total</div>
+                    </div>
+                </div>
+
+                <!-- Charts -->
+                <div class="charts-container">
+                    <div class="glass-panel chart-card">
+                        <div class="chart-title">Status Breakdown</div>
+                        <div class="chart-wrapper">
+                            <canvas id="statusChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="glass-panel chart-card">
+                        <div class="chart-title">Top Allowed States</div>
+                        <div class="chart-wrapper">
+                            <canvas id="statesChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Side: Filters, Table, Pagination -->
+            <div class="main-data-area">
+                <!-- Filters -->
+                <div class="glass-panel filters-panel">
+                    <div class="search-wrapper">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <input type="text" id="search-bar" class="search-input" placeholder="Search by Vendor ID, Name, GSTN, Establishment ID...">
+                    </div>
+                    <div class="filter-selects">
+                        <select id="state-filter" class="select-input">
+                            <option value="all">All States</option>
+                        </select>
+                        <select id="sort-select" class="select-input">
+                            <option value="id-asc">ID (Low to High)</option>
+                            <option value="id-desc">ID (High to Low)</option>
+                            <option value="name-asc">Vendor Name (A-Z)</option>
+                            <option value="name-desc">Vendor Name (Z-A)</option>
+                            <option value="status-asc">Status Group (A-Z)</option>
+                        </select>
+                        <button class="btn btn-secondary" onclick="triggerJsonUpload()" style="padding: 8px 16px; font-size: 0.85rem; border-radius: 8px; font-family: var(--font-title); font-weight: 600; display: inline-flex; align-items: center; gap: 8px; background: rgba(99, 102, 241, 0.1); border: 1px solid rgba(99, 102, 241, 0.2); color: var(--text-main); cursor: pointer; transition: all 0.2s;">
+                            <i class="fa-solid fa-file-import" style="color: var(--accent-primary)"></i> Load Matches JSON
+                        </button>
+                        <input type="file" id="json-file-upload-input" accept=".json" style="display: none;" onchange="handleJsonFileSelect(event)">
+                    </div>
+                    
+                    <div class="status-filter-tabs">
+                        <button class="filter-tab active" data-status="all">All (0)</button>
+                        <button class="filter-tab" data-status="perfect">Perfect (0)</button>
+                        <button class="filter-tab" data-status="mismatch">Mismatch (0)</button>
+                        <button class="filter-tab" data-status="no_match">No Match (0)</button>
+                        <button class="filter-tab" data-status="failed">Errors (0)</button>
+                    </div>
+                </div>
+
+                <!-- Table -->
+                <div class="glass-panel table-card">
+                    <div class="table-responsive">
+                        <table id="vendors-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 100px;">ID</th>
+                                    <th>Vendor Details</th>
+                                    <th>Match Status</th>
+                                    <th style="width: 130px;">Allowed States</th>
+                                    <th>Target Establishment ID</th>
+                                    <th>EPFO Region</th>
+                                </tr>
+                            </thead>
+                            <tbody id="table-body">
+                                <!-- Rows injected dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination -->
+                    <div class="pagination-area">
+                        <div class="pagination-info" id="pagination-info-text">
+                            Showing 0-0 of 0 records
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 15px;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span style="font-size: 0.8rem; color: var(--text-muted)">Rows per page:</span>
+                                <select id="page-size" class="select-input" style="padding: 4px 8px; font-size: 0.8rem; border-radius: 6px;">
+                                    <option value="10">10</option>
+                                    <option value="25" selected>25</option>
+                                    <option value="50">50</option>
+                                    <option value="100">100</option>
+                                </select>
+                            </div>
+                            <div class="pagination-controls" id="pagination-controls">
+                                <!-- Buttons injected here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sliding Details Drawer Panel -->
+    <div id="drawer-overlay" class="drawer-overlay"></div>
+    <div id="drawer" class="drawer">
+        <div class="drawer-header">
+            <div class="drawer-title-area">
+                <h2 id="drawer-vendor-name" style="font-family: var(--font-title); font-size: 1.25rem; margin-bottom: 0;">Vendor Name</h2>
+                <div class="drawer-subtitle">Vendor Code: <span id="drawer-vendor-id" style="font-weight: 600;">000000</span></div>
+            </div>
+            <button class="close-btn" id="drawer-close" title="Close Panel">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        
+        <div class="drawer-body">
+            <!-- Status Alert -->
+            <div class="detail-section">
+                <div class="section-title">Status Summary</div>
+                <div id="drawer-status-badge-container"></div>
+                <div id="drawer-disclaimer-container"></div>
+            </div>
+
+            <!-- Profile Info -->
+            <div class="detail-section">
+                <div class="section-title">Vendor Profiles</div>
+                <div class="detail-grid">
+                    <div class="detail-card">
+                        <div class="detail-row">
+                            <span class="detail-label">GSTN:</span>
+                            <span class="detail-value" style="font-family: monospace; font-size: 0.9rem;">
+                                <span id="drawer-gstn">N/A</span>
+                                <button class="copy-btn" id="copy-gstn-btn" title="Copy GSTN"><i class="fa-regular fa-copy"></i></button>
+                            </span>
+                        </div>
+                        <div class="detail-row" style="margin-top: 6px;">
+                            <span class="detail-label">Allowed State(s):</span>
+                            <span class="detail-value" id="drawer-allowed-states">N/A</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Target Match Info -->
+            <div class="detail-section" id="drawer-match-info-section">
+                <div class="section-title">Target Match Details</div>
+                <div class="detail-card" style="border-color: rgba(99, 102, 241, 0.2);">
+                    <div class="detail-row">
+                        <span class="detail-label">Target Est. ID:</span>
+                        <span class="detail-value" style="font-family: monospace; font-weight: 700; color: var(--accent-secondary);">
+                            <span id="drawer-target-eid">N/A</span>
+                            <button class="copy-btn" id="copy-eid-btn" title="Copy ID"><i class="fa-regular fa-copy"></i></button>
+                        </span>
+                    </div>
+                    <div class="detail-row" style="margin-top: 6px;">
+                        <span class="detail-label">EPFO Office:</span>
+                        <span class="detail-value" id="drawer-target-office">N/A</span>
+                    </div>
+                    <div class="detail-row" style="margin-top: 6px;">
+                        <span class="detail-label">State Code Match:</span>
+                        <span class="detail-value" id="drawer-target-state-match">N/A</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Searched Results List -->
+            <div class="detail-section" id="drawer-searched-section">
+                <div class="section-title">EPFO Search Results (<span id="drawer-search-count">0</span>)</div>
+                <div class="est-list" id="drawer-est-list">
+                    <!-- List items injected dynamically -->
+                </div>
+            </div>
+
+            <!-- Raw Data -->
+            <div class="detail-section">
+                <div class="section-title">Raw Match Record</div>
+                <pre class="raw-json" id="drawer-raw-json"></pre>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript Execution and Interface Logic -->
+    <script>
+        // Mappings
+        const OFFICE_CODE_TO_DISTRICT = {
+            "ASR": "AMRITSAR", "LDH": "LUDHIANA", "JAL": "JALANDHAR", "BTI": "BHATINDA", "CHD": "CHANDIGARH",
+            "HYD": "HYDERABAD", "PTC": "PATANCHERU", "KKP": "KUKATPALLI", "BNG": "BANGALORE", "MRD": "MAHADEVAPURA",
+            "BLR": "BOMMASANDRA", "GLB": "GULBARGA", "HBL": "HUBLI", "RCH": "RAICHUR", "CKR": "CHIKMAGALUR",
+            "MLR": "MANGALORE", "MYS": "MYSORE", "SHG": "SHIMOGA", "UDP": "UDUPI", "BOM": "BOMMASANDRA",
+            "KRP": "K R PURAM", "PNY": "PEENYA", "BHA": "BHAGALPUR", "MUZ": "MUZAFFARPUR", "PAT": "PATNA",
+            "CBE": "COIMBATORE", "SLM": "SALEM", "TRY": "TRICHY", "MDU": "MADURAI", "TNY": "TIRUNELVELI",
+            "TAM": "TAMBARAM", "VLR": "VELLORE", "PDY": "PUDUCHERRY", "RAI": "RAIPUR", "CPM": "DELHI",
+            "NHP": "DELHI", "SHD": "DELHI", "GOA": "GOA", "AHD": "AJMER/AHMEDABAD", "NRD": "NADIAD",
+            "RAJ": "RAJKOT", "VAT": "VATWA", "BRD": "BARODA", "SRT": "SURAT", "VAP": "VAPI",
+            "BRH": "BHARUCH", "GGN": "GURGAON", "RTK": "ROHTAK", "CDP": "CUDDAPAH", "GNT": "GUNTUR",
+            "RJY": "RAJAHMUNDRY", "VSP": "VISHAKAPATNAM", "SML": "SHIMLA", "FBD": "FARIDABAD", "KNL": "KARNAL",
+            "JAM": "JAMSHEDPUR", "RAN": "RANCHI", "JMU": "JAMMU", "SRN": "SRINAGAR", "JLP": "JALPAIGURI",
+            "JNG": "JANGIPUR", "SLG": "SILIGURI", "MAL": "MALAD", "NSK": "NASIK", "BAN": "BANDRA",
+            "BPL": "BHOPAL", "GWL": "GWALIOR", "IND": "INDORE", "JBP": "JABALPUR", "SGR": "SAGAR",
+            "UJJ": "UJJAIN", "AGR": "AGRA", "MRT": "MEERUT", "NOI": "NOIDA", "GHY": "GUWAHATI",
+            "TSK": "TINSUKIA", "AKL": "AKOLA", "AUR": "AURANGABAD", "NAG": "NAGPUR", "KRN": "KARIMNAGAR",
+            "NZB": "NIZAMABAD", "WGL": "WARANGAL", "BAM": "BERHAMPUR", "BBS": "BHUBANESWAR", "KJR": "KEONJHAR",
+            "RKL": "ROURKELA", "KOL": "KOLHAPUR", "PUN": "PUNE", "SLP": "SOLAPUR", "JOD": "JODHPUR",
+            "KOT": "KOTA", "UDR": "UDAIPUR", "THA": "THANE", "VSH": "VASHI", "AMB": "AMBATTUR",
+            "MAS": "CHENNAI", "DDN": "DEHRADUN", "HLD": "HALDWANI", "ALD": "ALLAHABAD", "BLY": "BAREILLY",
+            "GKP": "GORAKHPUR", "KNP": "KANPUR", "LKO": "LUCKNOW", "VNS": "VARANASI", "AND": "ANDUL",
+            "CAL": "KOLKATA", "DGP": "DURGAPUR", "HLO": "HALDIA", "PRB": "BARRACKPORE", "TLO": "TITAGARH"
+        };
+
+        const STATE_CODE_TO_NAME = {
+            "JK": "JAMMU & KASHMIR", "HP": "HIMACHAL PRADESH", "PB": "PUNJAB", "CH": "CHANDIGARH",
+            "UK": "UTTARAKHAND", "HR": "HARYANA", "DL": "DELHI", "RJ": "RAJASTHAN",
+            "UP": "UTTAR PRADESH", "BR": "BIHAR", "SK": "SIKKIM", "AR": "ARUNACHAL PRADESH",
+            "NL": "NAGALAND", "MN": "MANIPUR", "MZ": "MIZORAM", "TR": "TRIPURA",
+            "ML": "MEGHALAYA", "AS": "ASSAM", "WB": "WEST BENGAL", "JH": "JHARKHAND",
+            "OD": "ODISHA", "CG": "CHATTISGARH", "MP": "MADHYA PRADESH", "GJ": "GUJARAT",
+            "DN": "DADRA & NAGAR HAVELI", "DD": "DAMAN & DIU", "MH": "MAHARASHTRA",
+            "AP": "ANDHRA PRADESH", "KA": "KARNATAKA", "GA": "GOA", "LD": "LAKSHADWEEP",
+            "KL": "KERALA", "TN": "TAMIL NADU", "PY": "PUDUCHERRY", "AN": "ANDAMAN & NICOBAR",
+            "TS": "TELANGANA", "LA": "LADAKH"
+        };
+
+        // UI State
+        let currentTab = 'control';
+        let rawData = null;
+        let processedList = [];
+        let filteredList = [];
+        
+        let currentPage = 1;
+        let pageSize = 25;
+        
+        let statusChart = null;
+        let statesChart = null;
+
+        // Active filters
+        let currentSearch = "";
+        let currentStateFilter = "all";
+        let currentStatusFilter = "all";
+        let currentSort = "id-asc";
+
+        // Scraper status polling properties
+        let totalCount = 0;
+        let pollingInterval = null;
+
+        // DOM elements
+        const loader = document.getElementById('loader');
+        const loaderText = document.getElementById('loader-text');
+        const fileIndicator = document.getElementById('file-indicator');
+        const hiddenFileInput = document.getElementById('hidden-file-input');
+        const dropZone = document.getElementById('drop-zone');
+        const tableBody = document.getElementById('table-body');
+        const themeToggleBtn = document.getElementById('theme-toggle-btn');
+        
+        // Control Center inputs & status fields
+        const fileMetaBox = document.getElementById('file-meta-box');
+        const metaFilename = document.getElementById('meta-filename');
+        const metaVendorCount = document.getElementById('meta-vendor-count');
+        const runtimeEstimateText = document.getElementById('runtime-estimate-text');
+        const startScraperBtn = document.getElementById('start-scraper-btn');
+        const stopScraperBtn = document.getElementById('stop-scraper-btn');
+        const sleepDelayInput = document.getElementById('sleep-delay-input');
+        const solverTimeInput = document.getElementById('solver-time-input');
+        const headlessCheckbox = document.getElementById('headless-checkbox');
+        const apikeyInput = document.getElementById('apikey-input');
+        
+        // Progress labels
+        const progressTextLabel = document.getElementById('progress-text-label');
+        const progressPercentageLabel = document.getElementById('progress-percentage-label');
+        const progressBarFill = document.getElementById('progress-bar-fill');
+        const monitorActiveVendor = document.getElementById('monitor-active-vendor');
+        const terminal = document.getElementById('terminal');
+        const systemFileList = document.getElementById('system-file-list');
+        
+        // Viewer filter inputs
+        const searchBar = document.getElementById('search-bar');
+        const stateFilter = document.getElementById('state-filter');
+        const sortSelect = document.getElementById('sort-select');
+        
+        // Drawer DOM elements
+        const drawer = document.getElementById('drawer');
+        const drawerOverlay = document.getElementById('drawer-overlay');
+        const drawerClose = document.getElementById('drawer-close');
+        const toast = document.getElementById('toast');
+        const toastMessage = document.getElementById('toast-message');
+
+        // Initial setup
+        window.addEventListener('DOMContentLoaded', () => {
+            initTheme();
+            // Start polling status immediately to see if scraper is already running
+            pollStatus();
+            pollingInterval = setInterval(pollStatus, 2000);
+            
+            // Reload local matches data initially
+            loadViewerData();
+            // Refresh output files list
+            loadOutputFilesList();
+        });
+
+        // Tab Switcher
+        function switchTab(tabName) {
+            currentTab = tabName;
+            
+            // Toggle active classes on buttons
+            document.getElementById('tab-control-btn').classList.toggle('active', tabName === 'control');
+            document.getElementById('tab-viewer-btn').classList.toggle('active', tabName === 'viewer');
+            
+            // Toggle active tabs content
+            document.getElementById('tab-control-content').classList.toggle('active', tabName === 'control');
+            document.getElementById('tab-viewer-content').classList.toggle('active', tabName === 'viewer');
+            
+            if (tabName === 'viewer') {
+                loadViewerData();
+            } else {
+                loadOutputFilesList();
+            }
+        }
+
+        // Show toast notification
+        function showToast(message) {
+            toastMessage.textContent = message;
+            toast.classList.add('active');
+            setTimeout(() => {
+                toast.classList.remove('active');
+            }, 2500);
+        }
+
+        // Load files list
+        async function loadOutputFilesList() {
+            try {
+                const response = await fetch('/api/files');
+                if (response.ok) {
+                    const files = await response.json();
+                    if (files.length === 0) {
+                        systemFileList.innerHTML = '<span style="color:var(--text-muted); font-size:0.8rem;">No generated files found yet.</span>';
+                        return;
+                    }
+                    
+                    systemFileList.innerHTML = '';
+                    files.forEach(f => {
+                        const div = document.createElement('div');
+                        div.className = 'file-item';
+                        const sizeKB = (f.size / 1024).toFixed(1);
+                        const timeStr = new Date(f.mtime * 1000).toLocaleString();
+                        
+                        div.innerHTML = `
+                            <span class="file-item-name"><i class="fa-regular fa-file"></i> ${f.name}</span>
+                            <span class="file-item-meta">${sizeKB} KB | ${timeStr}</span>
+                        `;
+                        systemFileList.appendChild(div);
+                    });
+                }
+            } catch (err) {
+                console.log("Failed to load outputs files.", err);
+            }
+        }
+
+        // Estimate run time
+        function calculateEstimatedDuration() {
+            const count = totalCount;
+            if (count === 0) {
+                runtimeEstimateText.textContent = "No file loaded for estimation.";
+                return;
+            }
+            const sleepVal = parseInt(sleepDelayInput.value) || 10;
+            const solverVal = parseInt(solverTimeInput.value) || 15;
+            
+            const totalSec = count * (sleepVal + solverVal);
+            const totalMin = Math.round(totalSec / 60);
+            
+            if (totalMin < 60) {
+                runtimeEstimateText.textContent = `Expected run duration: ~${totalMin} minute(s) (${count} vendors @ ${sleepVal + solverVal}s average).`;
+            } else {
+                const hours = Math.floor(totalMin / 60);
+                const mins = totalMin % 60;
+                runtimeEstimateText.textContent = `Expected run duration: ~${hours}h ${mins}m (${count} vendors @ ${sleepVal + solverVal}s average).`;
+            }
+        }
+
+        sleepDelayInput.addEventListener('input', calculateEstimatedDuration);
+        solverTimeInput.addEventListener('input', calculateEstimatedDuration);
+
+        // API Polling execution status details
+        async function pollStatus() {
+            try {
+                const response = await fetch('/api/status');
+                if (response.ok) {
+                    const status = await response.json();
+                    
+                    // Update controls button visibility states
+                    if (status.running) {
+                        startScraperBtn.disabled = true;
+                        stopScraperBtn.disabled = false;
+                        
+                        // Disable configuration edits while running
+                        sleepDelayInput.disabled = true;
+                        solverTimeInput.disabled = true;
+                        headlessCheckbox.disabled = true;
+                        apikeyInput.disabled = true;
+                        
+                        fileIndicator.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin" style="color:var(--color-warning)"></i> Scraper is actively running...';
+                        fileIndicator.className = 'file-status';
+                    } else {
+                        startScraperBtn.disabled = totalCount === 0;
+                        stopScraperBtn.disabled = true;
+                        
+                        sleepDelayInput.disabled = false;
+                        solverTimeInput.disabled = false;
+                        headlessCheckbox.disabled = false;
+                        apikeyInput.disabled = false;
+                        
+                        if (status.processed_count > 0 && status.processed_count >= status.total_count) {
+                            fileIndicator.innerHTML = '<i class="fa-solid fa-circle-check"></i> Scraper Run Completed';
+                            fileIndicator.className = 'file-status loaded';
+                        } else {
+                            fileIndicator.innerHTML = '<i class="fa-solid fa-circle-info"></i> Scraper Idle';
+                            fileIndicator.className = 'file-status';
+                        }
+                    }
+
+                    // Update progress bar
+                    if (status.total_count > 0) {
+                        totalCount = status.total_count;
+                        metaVendorCount.textContent = totalCount;
+                        if (status.filename && status.filename !== 'None') {
+                            metaFilename.textContent = status.filename;
+                        }
+                        fileMetaBox.style.display = 'flex';
+                        calculateEstimatedDuration();
+
+                        const remaining = status.total_count - status.processed_count;
+                        progressTextLabel.textContent = `Processed: ${status.processed_count} / ${status.total_count} vendors (${remaining} left)`;
+                    } else {
+                        progressPercentageLabel.textContent = '0%';
+                        progressBarFill.style.width = '0%';
+                        progressTextLabel.textContent = 'Processed: 0 / 0 vendors (0 left)';
+                    }
+
+                    // Active row
+                    monitorActiveVendor.textContent = status.active_vendor;
+
+                    // Update live mini KPI numbers
+                    document.getElementById('mc-success').textContent = status.success_count;
+                    document.getElementById('mc-mismatch').textContent = status.mismatch_count;
+                    document.getElementById('mc-nomatch').textContent = status.nomatch_count;
+                    document.getElementById('mc-error').textContent = status.error_count;
+
+                    // Stream console logs
+                    if (status.log_tail) {
+                        terminal.textContent = status.log_tail;
+                        // Auto-scroll to bottom of log
+                        terminal.scrollTop = terminal.scrollHeight;
+                    } else {
+                        if (!status.running) {
+                            terminal.innerHTML = '<div class="terminal-placeholder">Live logs stream will display here once execution begins...</div>';
+                        }
+                    }
+                    
+                    // Periodically refresh Viewer matches grid silently if scraper runs
+                    if (status.running && currentTab === 'viewer') {
+                        silentlyRefreshViewerData();
+                    }
+                }
+            } catch (err) {
+                console.log("Failed to poll scraper status API.", err);
+            }
+        }
+
+        // Start execution trigger
+        async function startScraperProcess() {
+            if (totalCount === 0) {
+                alert("Please upload a vendor list spreadsheet before starting.");
+                return;
+            }
+            
+            loaderText.textContent = "Launching Playwright browser context...";
+            loader.style.display = 'flex';
+            
+            try {
+                const sleepVal = sleepDelayInput.value;
+                const headlessVal = headlessCheckbox.checked ? 'true' : 'false';
+                const keyVal = apikeyInput.value;
+                
+                const response = await fetch('/api/start', {
+                    method: 'POST',
+                    headers: {
+                        'X-Headless': headlessVal,
+                        'X-Sleep': sleepVal,
+                        'X-Api-Key': keyVal
+                    }
+                });
+                
+                if (response.ok) {
+                    showToast("Scraper process launched successfully!");
+                    // Clear local log display immediately
+                    terminal.textContent = "Starting execution...\n";
+                } else {
+                    const err = await response.json();
+                    alert(`Failed to start scraper: ${err.error}`);
+                }
+            } catch (err) {
+                alert("Network error starting scraper process.");
+            } finally {
+                loader.style.display = 'none';
+            }
+        }
+
+        // Stop execution trigger
+        async function stopScraperProcess() {
+            if (!confirm("Are you sure you want to stop the active scraping execution process?")) {
+                return;
+            }
+            
+            loaderText.textContent = "Stopping background scraper process...";
+            loader.style.display = 'flex';
+            
+            try {
+                const response = await fetch('/api/stop', { method: 'POST' });
+                if (response.ok) {
+                    showToast("Scraper stopped.");
+                } else {
+                    const err = await response.json();
+                    alert(`Failed to stop: ${err.error}`);
+                }
+            } catch (err) {
+                alert("Network error stopping process.");
+            } finally {
+                loader.style.display = 'none';
+            }
+        }
+
+        // Drag & Drop File handler
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('drag-active');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('drag-active');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('drag-active');
+            const file = e.dataTransfer.files[0];
+            if (file && (file.name.endsWith('.xlsx') || file.name.endsWith('.csv'))) {
+                uploadSpreadsheet(file);
+            } else {
+                alert("Please drop a valid .xlsx or .csv vendor list spreadsheet.");
+            }
+        });
+
+        hiddenFileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                uploadSpreadsheet(file);
+            }
+        });
+
+        // Submit spreadsheet file bytes to backend
+        async function uploadSpreadsheet(file) {
+            loaderText.textContent = "Uploading and parsing vendor list spreadsheet...";
+            loader.style.display = 'flex';
+            
+            try {
+                // Submit raw binary files bytes in request body
+                const response = await fetch('/api/upload?filename=' + encodeURIComponent(file.name), {
+                    method: 'POST',
+                    body: file
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    totalCount = result.count;
+                    metaFilename.textContent = result.filename;
+                    metaVendorCount.textContent = totalCount;
+                    
+                    fileMetaBox.style.display = 'flex';
+                    calculateEstimatedDuration();
+                    
+                    startScraperBtn.disabled = false;
+                    showToast(`Successfully uploaded spreadsheet containing ${totalCount} vendors!`);
+                    
+                    // Refresh logs and files lists
+                    loadOutputFilesList();
+                    pollStatus();
+                } else {
+                    const err = await response.json();
+                    alert(`Failed parsing spreadsheet: ${err.error}`);
+                }
+            } catch (err) {
+                alert(`Error uploading file: ${err.message}`);
+            } finally {
+                loader.style.display = 'none';
+            }
+        }
+
+        // Trigger file input for Matches JSON
+        function triggerJsonUpload() {
+            document.getElementById('json-file-upload-input').click();
+        }
+
+        // Handle JSON file selection
+        function handleJsonFileSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            if (!file.name.endsWith('.json')) {
+                alert("Please select a valid .json matches database file.");
+                return;
+            }
+            
+            uploadMatchesJson(file);
+        }
+
+        // Upload Matches JSON to server (with client-side fallback)
+        async function uploadMatchesJson(file) {
+            loaderText.textContent = "Uploading and loading matches JSON database...";
+            loader.style.display = 'flex';
+            
+            try {
+                // 1. Attempt POST to the server
+                const response = await fetch('/api/upload_matches', {
+                    method: 'POST',
+                    body: file
+                });
+                
+                if (response.ok) {
+                    showToast("Successfully uploaded matches JSON to server!");
+                    // Reload data from the newly saved file
+                    await loadViewerData();
+                    // Refresh file lists
+                    loadOutputFilesList();
+                } else {
+                    // Fallback to client-side load if server reports error
+                    console.log("Server matches upload rejected, falling back to local file reader...");
+                    readJsonFileLocally(file);
+                }
+            } catch (err) {
+                // Fallback to client-side load if server is offline or fails
+                console.log("Server matches upload failed, falling back to local file reader...", err);
+                readJsonFileLocally(file);
+            } finally {
+                loader.style.display = 'none';
+            }
+        }
+
+        // Helper to read and render JSON strictly in browser
+        function readJsonFileLocally(file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    rawData = data;
+                    rebuildProcessedList();
+                    
+                    // Build states filter list
+                    const statesSet = new Set();
+                    processedList.forEach(item => {
+                        item.allowed_state_codes.forEach(s => statesSet.add(s.toUpperCase()));
+                    });
+                    
+                    stateFilter.innerHTML = '<option value="all">All States</option>';
+                    Array.from(statesSet).sort().forEach(state => {
+                        const name = STATE_CODE_TO_NAME[state] || state;
+                        const opt = document.createElement('option');
+                        opt.value = state;
+                        opt.textContent = `${state} - ${name}`;
+                        stateFilter.appendChild(opt);
+                    });
+                    
+                    applyFiltersAndRender();
+                    showToast("Loaded matches JSON locally in browser tab!");
+                } catch (parseErr) {
+                    alert("Error parsing JSON file. Please ensure it is a valid EPFO matches JSON export.");
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // ---------------- Matches Viewer Backend Integration ----------------
+
+        // Fetch matches data silently (while crawler runs)
+        async function silentlyRefreshViewerData() {
+            try {
+                const response = await fetch('vendor_est_matches.json');
+                if (response.ok) {
+                    const data = await response.json();
+                    rawData = data;
+                    rebuildProcessedList();
+                    // Just update counts and table rows, don't trigger full loader overlay
+                    updateTabCounts();
+                    updateKPIs();
+                    renderCharts();
+                    renderTable();
+                }
+            } catch (err) {
+                // Ignore silent fetch failures
+            }
+        }
+
+        // Standard load matches viewer data
+        async function loadViewerData() {
+            loaderText.textContent = "Loading matches verification database...";
+            loader.style.display = 'flex';
+            
+            try {
+                const response = await fetch('vendor_est_matches.json');
+                if (response.ok) {
+                    const data = await response.json();
+                    rawData = data;
+                    rebuildProcessedList();
+                    
+                    // Build states filter list
+                    const statesSet = new Set();
+                    processedList.forEach(item => {
+                        item.allowed_state_codes.forEach(s => statesSet.add(s.toUpperCase()));
+                    });
+                    
+                    stateFilter.innerHTML = '<option value="all">All States</option>';
+                    Array.from(statesSet).sort().forEach(state => {
+                        const name = STATE_CODE_TO_NAME[state] || state;
+                        const opt = document.createElement('option');
+                        opt.value = state;
+                        opt.textContent = `${state} - ${name}`;
+                        stateFilter.appendChild(opt);
+                    });
+
+                    applyFiltersAndRender();
+                } else {
+                    // Fail fallback
+                    tableBody.innerHTML = `
+                        <tr>
+                            <td colspan="6">
+                                <div class="empty-table-state">
+                                    <i class="fa-solid fa-file-circle-exclamation"></i>
+                                    <h3>No verification database file found yet</h3>
+                                    <p>Upload a vendor list and start the scraper in the Control Panel to generate matches.</p>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                }
+            } catch (err) {
+                console.log("Failed to load matches data file.", err);
+            } finally {
+                loader.style.display = 'none';
+            }
+        }
+
+        // Rebuild internal structures
+        function rebuildProcessedList() {
+            if (!rawData) return;
+            processedList = [];
+            
+            for (const [vendorId, entry] of Object.entries(rawData)) {
+                if (typeof entry !== 'object' || entry === null) continue;
+                
+                const allowedStates = entry.allowed_state_codes || [];
+                const targetEid = entry.target_establishment_id;
+                const status = entry.status || 'unknown';
+                
+                let matchCategory = 'unknown';
+                if (status === 'success') {
+                    if (targetEid) {
+                        const targetStateCode = targetEid.substring(0, 2).toUpperCase();
+                        const isMatch = allowedStates.some(s => s.toUpperCase() === targetStateCode);
+                        if (isMatch) {
+                            matchCategory = 'perfect';
+                        } else {
+                            // Rule: if state mismatch but search results < 3, treat as perfect match
+                            const listEst = entry.list_establishment_ids || [];
+                            if (listEst.length < 3) {
+                                matchCategory = 'perfect';
+                            } else {
+                                matchCategory = 'mismatch';
+                            }
+                        }
+                    } else {
+                        matchCategory = 'mismatch';
+                    }
+                } else if (status === 'no_match_found') {
+                    matchCategory = 'no_match';
+                } else if (status === 'skipped_no_state_code') {
+                    matchCategory = 'skipped';
+                } else if (status.startsWith('failed') || status.includes('error')) {
+                    matchCategory = 'failed';
+                }
+                
+                let officeName = 'N/A';
+                let stateName = 'N/A';
+                if (targetEid) {
+                    const parsed = parseEstDetails(targetEid);
+                    officeName = parsed.officeName;
+                    stateName = parsed.stateName;
+                }
+
+                processedList.push({
+                    id: vendorId,
+                    vendor_name: entry.vendor_name || 'Unknown Vendor',
+                    vendor_gstn: entry.vendor_gstn || 'N/A',
+                    status: status,
+                    matchCategory: matchCategory,
+                    allowed_state_codes: allowedStates,
+                    target_establishment_id: targetEid,
+                    matched_establishment_ids: entry.matched_establishment_ids || [],
+                    list_establishment_ids: entry.list_establishment_ids || [],
+                    disclaimer: entry.disclaimer || null,
+                    officeName: officeName,
+                    stateName: stateName,
+                    raw: entry
+                });
+            }
+        }
+
+        // Parse establishment details
+        function parseEstDetails(eid) {
+            if (!eid || typeof eid !== 'string' || eid.length < 5) {
+                return { stateCode: 'Unknown', officeCode: 'Unknown', officeName: 'Unknown', stateName: 'Unknown' };
+            }
+            const stateCode = eid.substring(0, 2).toUpperCase();
+            const officeCode = eid.substring(2, 5).toUpperCase();
+            
+            const stateName = STATE_CODE_TO_NAME[stateCode] || "Unknown State";
+            const officeName = OFFICE_CODE_TO_DISTRICT[officeCode] || "Unknown Office";
+            
+            return { stateCode, officeCode, officeName, stateName };
+        }
+
+        // Filter rendering execution
+        function applyFiltersAndRender() {
+            currentSearch = searchBar.value.trim().toLowerCase();
+            currentStateFilter = stateFilter.value;
+            currentSort = sortSelect.value;
+
+            // 1. Filter
+            filteredList = processedList.filter(item => {
+                const searchMatch = !currentSearch || 
+                    item.id.toLowerCase().includes(currentSearch) ||
+                    item.vendor_name.toLowerCase().includes(currentSearch) ||
+                    item.vendor_gstn.toLowerCase().includes(currentSearch) ||
+                    (item.target_establishment_id && item.target_establishment_id.toLowerCase().includes(currentSearch));
+
+                const stateMatch = currentStateFilter === 'all' || 
+                    item.allowed_state_codes.some(s => s.toUpperCase() === currentStateFilter.toUpperCase());
+
+                const statusMatch = currentStatusFilter === 'all' || 
+                    (currentStatusFilter === 'failed' && (item.matchCategory === 'failed' || item.matchCategory === 'skipped')) ||
+                    item.matchCategory === currentStatusFilter;
+
+                return searchMatch && stateMatch && statusMatch;
+            });
+
+            // 2. Sort
+            filteredList.sort((a, b) => {
+                if (currentSort === 'id-asc') return parseInt(a.id) - parseInt(b.id);
+                if (currentSort === 'id-desc') return parseInt(b.id) - parseInt(a.id);
+                if (currentSort === 'name-asc') return a.vendor_name.localeCompare(b.vendor_name);
+                if (currentSort === 'name-desc') return b.vendor_name.localeCompare(a.vendor_name);
+                if (currentSort === 'status-asc') return a.matchCategory.localeCompare(b.matchCategory);
+                return 0;
+            });
+
+            updateTabCounts();
+            updateKPIs();
+            renderCharts();
+            currentPage = 1;
+            renderTable();
+        }
+
+        // Update KPIs
+        function updateKPIs() {
+            const total = processedList.length;
+            const perfect = processedList.filter(i => i.matchCategory === 'perfect').length;
+            const mismatch = processedList.filter(i => i.matchCategory === 'mismatch').length;
+            const nomatch = processedList.filter(i => i.matchCategory === 'no_match').length;
+            const failed = processedList.filter(i => i.matchCategory === 'failed' || i.matchCategory === 'skipped').length;
+
+            document.getElementById('kpi-total').textContent = total;
+            document.getElementById('kpi-success').textContent = perfect;
+            document.getElementById('kpi-mismatch').textContent = mismatch;
+            document.getElementById('kpi-nomatch').textContent = nomatch;
+            document.getElementById('kpi-failed').textContent = failed;
+
+            document.getElementById('kpi-success-pct').textContent = total ? `${Math.round((perfect/total)*100)}% of total` : '0% of total';
+            document.getElementById('kpi-mismatch-pct').textContent = total ? `${Math.round((mismatch/total)*100)}% of total` : '0% of total';
+            document.getElementById('kpi-nomatch-pct').textContent = total ? `${Math.round((nomatch/total)*100)}% of total` : '0% of total';
+            document.getElementById('kpi-failed-pct').textContent = total ? `${Math.round((failed/total)*100)}% of total` : '0% of total';
+        }
+
+        // Tab counts
+        function updateTabCounts() {
+            const counts = { all: 0, perfect: 0, mismatch: 0, no_match: 0, failed: 0 };
+
+            processedList.forEach(item => {
+                const searchMatch = !currentSearch || 
+                    item.id.toLowerCase().includes(currentSearch) ||
+                    item.vendor_name.toLowerCase().includes(currentSearch) ||
+                    item.vendor_gstn.toLowerCase().includes(currentSearch) ||
+                    (item.target_establishment_id && item.target_establishment_id.toLowerCase().includes(currentSearch));
+                const stateMatch = currentStateFilter === 'all' || 
+                    item.allowed_state_codes.some(s => s.toUpperCase() === currentStateFilter.toUpperCase());
+
+                if (searchMatch && stateMatch) {
+                    counts.all++;
+                    if (item.matchCategory === 'perfect') counts.perfect++;
+                    else if (item.matchCategory === 'mismatch') counts.mismatch++;
+                    else if (item.matchCategory === 'no_match') counts.no_match++;
+                    else if (item.matchCategory === 'failed' || item.matchCategory === 'skipped') counts.failed++;
+                }
+            });
+
+            document.querySelector('.filter-tab[data-status="all"]').textContent = `All (${counts.all})`;
+            document.querySelector('.filter-tab[data-status="perfect"]').textContent = `Perfect (${counts.perfect})`;
+            document.querySelector('.filter-tab[data-status="mismatch"]').textContent = `Mismatch (${counts.mismatch})`;
+            document.querySelector('.filter-tab[data-status="no_match"]').textContent = `No Match (${counts.no_match})`;
+            document.querySelector('.filter-tab[data-status="failed"]').textContent = `Errors (${counts.failed})`;
+        }
+
+        // Render Table Rows
+        function renderTable() {
+            tableBody.innerHTML = '';
+            
+            if (filteredList.length === 0) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="6">
+                            <div class="empty-table-state">
+                                <i class="fa-solid fa-magnifying-glass-chart"></i>
+                                <h3>No matching records found</h3>
+                                <p>Adjust your search queries or filters parameters.</p>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                document.getElementById('pagination-info-text').textContent = 'Showing 0-0 of 0 records';
+                document.getElementById('pagination-controls').innerHTML = '';
+                return;
+            }
+
+            const start = (currentPage - 1) * pageSize;
+            const end = Math.min(start + pageSize, filteredList.length);
+            const paginatedList = filteredList.slice(start, end);
+
+            paginatedList.forEach(item => {
+                const tr = document.createElement('tr');
+                tr.className = 'table-row';
+                tr.dataset.id = item.id;
+                tr.addEventListener('click', () => openDrawer(item));
+
+                let statusBadge = '';
+                if (item.matchCategory === 'perfect') {
+                    statusBadge = '<span class="badge badge-success"><span class="status-dot success"></span> Perfect Match</span>';
+                } else if (item.matchCategory === 'mismatch') {
+                    statusBadge = '<span class="badge badge-warning"><span class="status-dot warning"></span> State Mismatch</span>';
+                } else if (item.matchCategory === 'no_match') {
+                    statusBadge = '<span class="badge badge-danger"><span class="status-dot danger"></span> No Match</span>';
+                } else if (item.matchCategory === 'skipped') {
+                    statusBadge = '<span class="badge badge-skipped">Skipped Code</span>';
+                } else {
+                    statusBadge = `<span class="badge badge-danger" title="${item.status}">Scraper Error</span>`;
+                }
+
+                const stateBadges = item.allowed_state_codes.map(s => `<span class="state-tag" title="${STATE_CODE_TO_NAME[s.toUpperCase()] || s}">${s}</span>`).join(' ');
+
+                let eidDisplay = '<span style="color:var(--text-muted)">—</span>';
+                if (item.target_establishment_id) {
+                    const matchIcon = item.matchCategory === 'perfect' 
+                        ? '<i class="fa-solid fa-circle-check" style="color:var(--color-success); font-size:0.8rem"></i>' 
+                        : '<i class="fa-solid fa-triangle-exclamation" style="color:var(--color-warning); font-size:0.8rem" title="State prefix mismatch"></i>';
+                    eidDisplay = `<span class="eid-text">${matchIcon} ${item.target_establishment_id}</span>`;
+                }
+
+                let officeDisplay = '<span style="color:var(--text-muted)">—</span>';
+                if (item.officeName !== 'N/A') {
+                    officeDisplay = `<span style="font-weight: 500">${item.officeName}</span> <span style="font-size:0.75rem; color:var(--text-muted)">(${item.stateName})</span>`;
+                }
+
+                tr.innerHTML = `
+                    <td style="font-family: monospace; font-weight:600;">${item.id}</td>
+                    <td>
+                        <div class="vendor-name-cell">
+                            <span style="font-weight:600;">${item.vendor_name}</span>
+                            <span class="vendor-gstn-sub">${item.vendor_gstn}</span>
+                        </div>
+                    </td>
+                    <td>${statusBadge}</td>
+                    <td>${stateBadges || '<span style="color:var(--text-muted)">None</span>'}</td>
+                    <td>${eidDisplay}</td>
+                    <td>${officeDisplay}</td>
+                `;
+                tableBody.appendChild(tr);
+            });
+
+            document.getElementById('pagination-info-text').textContent = `Showing ${start + 1}-${end} of ${filteredList.length} records`;
+            renderPaginationControls();
+        }
+
+        // Pagination buttons renderer
+        function renderPaginationControls() {
+            const controls = document.getElementById('pagination-controls');
+            controls.innerHTML = '';
+
+            const totalPages = Math.ceil(filteredList.length / pageSize);
+            if (totalPages <= 1) return;
+
+            const prevBtn = document.createElement('button');
+            prevBtn.className = 'page-btn';
+            prevBtn.innerHTML = '<i class="fa-solid fa-chevron-left"></i>';
+            prevBtn.disabled = currentPage === 1;
+            prevBtn.addEventListener('click', () => {
+                currentPage--;
+                renderTable();
+            });
+            controls.appendChild(prevBtn);
+
+            const maxVisible = 5;
+            let startPage = Math.max(1, currentPage - 2);
+            let endPage = Math.min(totalPages, startPage + maxVisible - 1);
+            if (endPage - startPage < maxVisible - 1) {
+                startPage = Math.max(1, endPage - maxVisible + 1);
+            }
+
+            for (let i = startPage; i <= endPage; i++) {
+                const btn = document.createElement('button');
+                btn.className = `page-btn ${i === currentPage ? 'active' : ''}`;
+                btn.textContent = i;
+                btn.addEventListener('click', () => {
+                    currentPage = i;
+                    renderTable();
+                });
+                controls.appendChild(btn);
+            }
+
+            const nextBtn = document.createElement('button');
+            nextBtn.className = 'page-btn';
+            nextBtn.innerHTML = '<i class="fa-solid fa-chevron-right"></i>';
+            nextBtn.disabled = currentPage === totalPages;
+            nextBtn.addEventListener('click', () => {
+                currentPage++;
+                renderTable();
+            });
+            controls.appendChild(nextBtn);
+        }
+
+        // Tab selection event listeners
+        document.querySelectorAll('.filter-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                currentStatusFilter = tab.dataset.status;
+                applyFiltersAndRender();
+            });
+        });
+
+        searchBar.addEventListener('input', applyFiltersAndRender);
+        stateFilter.addEventListener('change', applyFiltersAndRender);
+        sortSelect.addEventListener('change', applyFiltersAndRender);
+        document.getElementById('page-size').addEventListener('change', (e) => {
+            pageSize = parseInt(e.target.value);
+            applyFiltersAndRender();
+        });
+
+        // Open Slider details drawer
+        function openDrawer(item) {
+            document.getElementById('drawer-vendor-name').textContent = item.vendor_name;
+            document.getElementById('drawer-vendor-id').textContent = item.id;
+            document.getElementById('drawer-gstn').textContent = item.vendor_gstn;
+
+            document.getElementById('copy-gstn-btn').onclick = () => {
+                navigator.clipboard.writeText(item.vendor_gstn);
+                showToast("GSTN copied to clipboard!");
+            };
+
+            const statesStr = item.allowed_state_codes.map(s => {
+                const name = STATE_CODE_TO_NAME[s.toUpperCase()] || s;
+                return `<span class="state-tag" style="padding: 4px 10px; font-weight:600">${s} - ${name}</span>`;
+            }).join(' ');
+            document.getElementById('drawer-allowed-states').innerHTML = statesStr || '<span class="badge badge-danger">None specified</span>';
+
+            const badgeContainer = document.getElementById('drawer-status-badge-container');
+            let badgeHtml = '';
+            if (item.matchCategory === 'perfect') {
+                badgeHtml = '<span class="badge badge-success" style="font-size: 0.9rem; padding: 6px 14px;"><i class="fa-solid fa-circle-check"></i> Perfect Match (Verified)</span>';
+            } else if (item.matchCategory === 'mismatch') {
+                badgeHtml = '<span class="badge badge-warning" style="font-size: 0.9rem; padding: 6px 14px;"><i class="fa-solid fa-triangle-exclamation"></i> Successful Match (State Mismatch)</span>';
+            } else if (item.matchCategory === 'no_match') {
+                badgeHtml = '<span class="badge badge-danger" style="font-size: 0.9rem; padding: 6px 14px;"><i class="fa-solid fa-circle-xmark"></i> Checked, No EPFO Match Found</span>';
+            } else if (item.matchCategory === 'skipped') {
+                badgeHtml = '<span class="badge badge-skipped" style="font-size: 0.9rem; padding: 6px 14px;"><i class="fa-solid fa-ban"></i> Skipped: No State Codes Provided</span>';
+            } else {
+                badgeHtml = `<span class="badge badge-danger" style="font-size: 0.9rem; padding: 6px 14px;"><i class="fa-solid fa-bug"></i> Scraper Error</span>`;
+            }
+            badgeContainer.innerHTML = badgeHtml;
+
+            const disclaimerContainer = document.getElementById('drawer-disclaimer-container');
+            if (item.disclaimer) {
+                disclaimerContainer.innerHTML = `
+                    <div class="disclaimer-alert" style="margin-top: 10px;">
+                        <i class="fa-solid fa-circle-info"></i>
+                        <div><strong>Disclaimer:</strong> ${item.disclaimer}</div>
+                    </div>
+                `;
+            } else {
+                disclaimerContainer.innerHTML = '';
+            }
+
+            const matchSection = document.getElementById('drawer-match-info-section');
+            if (item.target_establishment_id) {
+                matchSection.style.display = 'flex';
+                document.getElementById('drawer-target-eid').textContent = item.target_establishment_id;
+                document.getElementById('copy-eid-btn').onclick = () => {
+                    navigator.clipboard.writeText(item.target_establishment_id);
+                    showToast("Establishment ID copied!");
+                };
+
+                const parsed = parseEstDetails(item.target_establishment_id);
+                document.getElementById('drawer-target-office').innerHTML = `
+                    <strong>${parsed.officeName}</strong> <span style="color:var(--text-muted)">(${parsed.stateName})</span>
+                    <br><span style="font-size:0.75rem; color:var(--text-muted)">Office code: ${parsed.officeCode}, State prefix: ${parsed.stateCode}</span>
+                `;
+
+                const isStateMatch = item.allowed_state_codes.some(s => s.toUpperCase() === parsed.stateCode);
+                if (isStateMatch) {
+                    document.getElementById('drawer-target-state-match').innerHTML = '<span style="color:var(--color-success); font-weight:600;"><i class="fa-solid fa-circle-check"></i> Matching Allowed State</span>';
+                } else {
+                    const reclassified = item.list_establishment_ids.length < 3;
+                    if (reclassified) {
+                        document.getElementById('drawer-target-state-match').innerHTML = `<span style="color:var(--color-success); font-weight:600;"><i class="fa-solid fa-circle-check"></i> State Mismatch Ignored (Reclassified: ${item.list_establishment_ids.length} result(s) < 3)</span>`;
+                    } else {
+                        document.getElementById('drawer-target-state-match').innerHTML = `<span style="color:var(--color-warning); font-weight:600;"><i class="fa-solid fa-circle-exclamation"></i> State Prefix Mismatch (${parsed.stateCode} not in allowed list)</span>`;
+                    }
+                }
+            } else {
+                matchSection.style.display = 'none';
+            }
+
+            const resultsSection = document.getElementById('drawer-searched-section');
+            const searchCount = document.getElementById('drawer-search-count');
+            const estList = document.getElementById('drawer-est-list');
+            
+            estList.innerHTML = '';
+            searchCount.textContent = item.list_establishment_ids.length;
+
+            if (item.list_establishment_ids.length > 0) {
+                resultsSection.style.display = 'flex';
+                item.list_establishment_ids.forEach(est => {
+                    const estId = est["establishment id"];
+                    const estName = est["establishment Name"];
+                    const parsed = parseEstDetails(estId);
+                    
+                    const isTarget = estId === item.target_establishment_id;
+                    const isMatched = item.matched_establishment_ids.some(m => m["establishment id"] === estId);
+
+                    const div = document.createElement('div');
+                    div.className = `est-item ${isTarget ? 'target' : (isMatched ? 'matched' : '')}`;
+
+                    let icons = '';
+                    if (isTarget) {
+                        icons += '<span class="badge badge-success" style="font-size: 0.7rem; padding: 2px 6px;">Primary Match</span>';
+                    } else if (isMatched) {
+                        icons += '<span class="badge badge-info" style="font-size: 0.7rem; padding: 2px 6px;">Matched Option</span>';
+                    }
+
+                    div.innerHTML = `
+                        <div class="est-item-header">
+                            <span class="est-name">${estName}</span>
+                            ${icons}
+                        </div>
+                        <div class="est-id">${estId}</div>
+                        <div class="est-tags">
+                            <span class="est-tag"><i class="fa-solid fa-location-dot"></i> ${parsed.officeName}</span>
+                            <span class="est-tag"><i class="fa-solid fa-map"></i> ${parsed.stateName} (${parsed.stateCode})</span>
+                        </div>
+                    `;
+                    estList.appendChild(div);
+                });
+            } else {
+                resultsSection.style.display = 'none';
+            }
+
+            document.getElementById('drawer-raw-json').textContent = JSON.stringify(item.raw, null, 2);
+
+            drawerOverlay.classList.add('active');
+            drawer.classList.add('active');
+        }
+
+        function closeDrawer() {
+            drawerOverlay.classList.remove('active');
+            drawer.classList.remove('active');
+        }
+
+        drawerClose.addEventListener('click', closeDrawer);
+        drawerOverlay.addEventListener('click', closeDrawer);
+
+        // Render charts
+        function renderCharts() {
+            const total = filteredList.length;
+            const perfect = filteredList.filter(i => i.matchCategory === 'perfect').length;
+            const mismatch = filteredList.filter(i => i.matchCategory === 'mismatch').length;
+            const nomatch = filteredList.filter(i => i.matchCategory === 'no_match').length;
+            const skipped = filteredList.filter(i => i.matchCategory === 'skipped').length;
+            const failed = filteredList.filter(i => i.matchCategory === 'failed').length;
+
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            const labelColor = isDark ? '#9ca3af' : '#64748b';
+            const gridColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
+
+            // 1. Status Doughnut Chart
+            if (statusChart) statusChart.destroy();
+            
+            const statusCanvas = document.getElementById('statusChart');
+            if (total === 0) {
+                const ctx = statusCanvas.getContext('2d');
+                ctx.clearRect(0,0,statusCanvas.width,statusCanvas.height);
+                ctx.font = '14px Inter';
+                ctx.fillStyle = labelColor;
+                ctx.textAlign = 'center';
+                ctx.fillText('No data to display', statusCanvas.width/2, statusCanvas.height/2);
+            } else {
+                statusChart = new Chart(statusCanvas, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Perfect Match', 'State Mismatch', 'No Match', 'Skipped', 'Error'],
+                        datasets: [{
+                            data: [perfect, mismatch, nomatch, skipped, failed],
+                            backgroundColor: ['#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#f43f5e'],
+                            borderColor: isDark ? '#0b0f19' : '#ffffff',
+                            borderWidth: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'right',
+                                labels: {
+                                    color: labelColor,
+                                    font: { family: 'Inter', size: 11 },
+                                    boxWidth: 10,
+                                    padding: 8
+                                }
+                            }
+                        },
+                        cutout: '65%'
+                    }
+                });
+            }
+
+            // 2. States Bar Chart
+            const stateCounts = {};
+            filteredList.forEach(item => {
+                item.allowed_state_codes.forEach(s => {
+                    const code = s.toUpperCase();
+                    stateCounts[code] = (stateCounts[code] || 0) + 1;
+                });
+            });
+
+            const sortedStates = Object.entries(stateCounts)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 5);
+
+            if (statesChart) statesChart.destroy();
+
+            const statesCanvas = document.getElementById('statesChart');
+            if (sortedStates.length === 0) {
+                const ctx = statesCanvas.getContext('2d');
+                ctx.clearRect(0,0,statesCanvas.width,statesCanvas.height);
+                ctx.font = '14px Inter';
+                ctx.fillStyle = labelColor;
+                ctx.textAlign = 'center';
+                ctx.fillText('No data to display', statesCanvas.width/2, statesCanvas.height/2);
+            } else {
+                statesChart = new Chart(statesCanvas, {
+                    type: 'bar',
+                    data: {
+                        labels: sortedStates.map(x => x[0]),
+                        datasets: [{
+                            label: 'Vendor Count',
+                            data: sortedStates.map(x => x[1]),
+                            backgroundColor: 'rgba(99, 102, 241, 0.85)',
+                            hoverBackgroundColor: '#6366f1',
+                            borderRadius: 6
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        indexAxis: 'y',
+                        plugins: {
+                            legend: { display: false }
+                        },
+                        scales: {
+                            x: {
+                                grid: { color: gridColor },
+                                ticks: { color: labelColor, font: { family: 'Inter', size: 10 } }
+                            },
+                            y: {
+                                grid: { display: false },
+                                ticks: { color: labelColor, font: { family: 'Inter', size: 11, weight: 'bold' } }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        // Initialize Theme toggle
+        function initTheme() {
+            const currentTheme = localStorage.getItem('theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', currentTheme);
+            updateThemeToggleButton(currentTheme);
+        }
+
+        function updateThemeToggleButton(theme) {
+            if (theme === 'dark') {
+                themeToggleBtn.innerHTML = '<i class="fa-solid fa-sun"></i>';
+            } else {
+                themeToggleBtn.innerHTML = '<i class="fa-solid fa-moon"></i>';
+            }
+        }
+
+        themeToggleBtn.addEventListener('click', () => {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            updateThemeToggleButton(newTheme);
+            
+            if (rawData) {
+                renderCharts();
+            }
+        });
+    </script>
+</body>
+</html>

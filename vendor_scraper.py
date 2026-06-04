@@ -358,6 +358,92 @@ def find_state_for_office(office_name, office_state_map):
             
     return None
 
+def extract_establishment_details(file_path):
+    """
+    Parses the Excel file (as a zip/xml) and extracts dicts with establishment_id, establishment_name, office_name.
+    """
+    details = []
+    try:
+        with zipfile.ZipFile(file_path, 'r') as z:
+            if 'xl/worksheets/sheet1.xml' not in z.namelist():
+                return []
+            
+            sheet_content = z.read('xl/worksheets/sheet1.xml')
+            root = ET.fromstring(sheet_content)
+            ns = {'x': 'http://schemas.openxmlformats.org/spreadsheetml/2006/main'}
+            
+            rows = root.findall('.//x:row', ns)
+            if not rows:
+                return []
+            
+            est_id_col = None
+            est_name_col = None
+            office_name_col = None
+            
+            first_row = rows[0]
+            cells = first_row.findall('./x:c', ns)
+            for c in cells:
+                col_ref = c.get('r')
+                col_letter = "".join(filter(str.isalpha, col_ref))
+                
+                is_t = c.find('.//x:is/x:t', ns)
+                val = ""
+                if is_t is not None:
+                    val = is_t.text or ""
+                val_upper = val.strip().upper()
+                
+                if "ESTABLISHMENT ID" in val_upper or "ESTABLISHMENT CODE" in val_upper:
+                    est_id_col = col_letter
+                elif "ESTABLISHMENT NAME" in val_upper:
+                    est_name_col = col_letter
+                elif "OFFICE NAME" in val_upper or "OFFICE" in val_upper:
+                    office_name_col = col_letter
+            
+            if not est_id_col:
+                est_id_col = "A"
+            if not est_name_col:
+                est_name_col = "B"
+            if not office_name_col:
+                office_name_col = "D"
+                
+            for r in rows[1:]:
+                cells = r.findall('./x:c', ns)
+                row_vals = {}
+                for c in cells:
+                    col_ref = c.get('r')
+                    col_letter = "".join(filter(str.isalpha, col_ref))
+                    
+                    is_t = c.find('.//x:is/x:t', ns)
+                    val = ""
+                    if is_t is not None:
+                        val = is_t.text or ""
+                    row_vals[col_letter] = val.strip()
+                
+                est_id = row_vals.get(est_id_col, "")
+                est_name = row_vals.get(est_name_col, "")
+                office = row_vals.get(office_name_col, "")
+                if re.match(r'^[A-Z]{5}[0-9]{10}$', est_id):
+                    details.append({
+                        "establishment_id": est_id,
+                        "establishment_name": est_name,
+                        "office_name": office
+                    })
+    except Exception as e:
+        # Fallback to regex
+        try:
+            with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
+                text = f.read()
+            for match in re.findall(r'\b[A-Z]{5}[0-9]{10}\b', text):
+                details.append({
+                    "establishment_id": match,
+                    "establishment_name": "",
+                    "office_name": ""
+                })
+        except Exception:
+            pass
+            
+    return details
+
 def extract_id_office_pairs(file_path):
     """
     Parses the Excel file (as a zip/xml) and extracts (establishment_id, office_name) pairs.
@@ -620,15 +706,10 @@ async def execute_search_for_query(page, query, allowed_state_codes, api_key, of
         # Get rows
         tbody_tr = page.locator("#tablecontainer table tbody tr")
         row_count = await tbody_tr.count()
-        
-        # Check if there is pagination
-        next_li = page.locator("li.paginate_button.next, #example_next").first
-        has_next_page = False
-        if await next_li.count() > 0:
-            class_attr = await next_li.get_attribute("class") or ""
-            if "disabled" not in class_attr:
-                has_next_page = True
-                
+        if row_count == 0:
+            print(f"[-] No search results for query: '{query}'")
+            return None, [], None
+
         # Extract headers to know where Office Name is
         headers = []
         thead_ths = page.locator("#tablecontainer table thead th")
@@ -642,144 +723,47 @@ async def execute_search_for_query(page, query, allowed_state_codes, api_key, of
             if "OFFICE NAME" in h_text or "OFFICE" in h_text:
                 office_name_col_idx = h_idx
 
-        # If there is exactly 1 row on the first page, and no next page exists
-        is_single_entry = (row_count == 1) and (not has_next_page)
-        
         found_matching_row = False
         target_est_id = None
         disclaimer = None
         
-        if is_single_entry:
-            tds = tbody_tr.nth(0).locator("td")
-            td_count = await tds.count()
-            est_id = ""
-            for j in range(td_count):
-                cell_text = (await tds.nth(j).inner_text()).strip()
-                if re.match(r'^[A-Z]{5}[0-9]{10}$', cell_text):
-                    est_id = cell_text
-                    break
+        # Directly click View Details on the first row of page 1
+        tds = tbody_tr.nth(0).locator("td")
+        td_count = await tds.count()
+        est_id = ""
+        for j in range(td_count):
+            cell_text = (await tds.nth(j).inner_text()).strip()
+            if re.match(r'^[A-Z]{5}[0-9]{10}$', cell_text):
+                est_id = cell_text
+                break
+        
+        if est_id:
+            prefix = est_id[:2]
+            target_est_id = est_id
+            found_matching_row = True
             
-            if est_id:
-                prefix = est_id[:2]
-                target_est_id = est_id
-                found_matching_row = True
+            # Get Office Name for the single row
+            office_name = ""
+            if office_name_col_idx != -1 and office_name_col_idx < td_count:
+                office_name = (await tds.nth(office_name_col_idx).inner_text()).strip()
+            elif td_count == 5:
+                office_name = (await tds.nth(3).inner_text()).strip()
+            elif td_count == 6:
+                office_name = (await tds.nth(4).inner_text()).strip()
                 
-                # Get Office Name for the single row
-                office_name = ""
-                if office_name_col_idx != -1 and office_name_col_idx < td_count:
-                    office_name = (await tds.nth(office_name_col_idx).inner_text()).strip()
-                elif td_count == 5:
-                    office_name = (await tds.nth(3).inner_text()).strip()
-                elif td_count == 6:
-                    office_name = (await tds.nth(4).inner_text()).strip()
-                    
-                office_state = find_state_for_office(office_name, office_state_map)
-                
-                if (prefix in allowed_state_codes) or (office_state in allowed_state_codes):
-                    print(f"[+] Found single matching establishment ID: '{est_id}' (Office: '{office_name}' -> '{office_state}')")
-                else:
-                    disclaimer = f"Single search result found. State code mismatch ignored (Target: {allowed_state_codes}, Found ID: {prefix}, Office: {office_name} -> {office_state})."
-                    print(f"[!] {disclaimer}")
-                
-                action_cell = tds.last
-                action_link = action_cell.locator("a, button, input[type='button']").first
-                if await action_link.count() > 0:
-                    await human_click(page, action_link)
-        else:
-            current_page = 1
-            first_row_est_id = None
-            first_row_tds = None
-            while True:
-                tbody_tr = page.locator("#tablecontainer table tbody tr")
-                row_count = await tbody_tr.count()
-                
-                for i in range(row_count):
-                    tds = tbody_tr.nth(i).locator("td")
-                    td_count = await tds.count()
-                    est_id = ""
-                    for j in range(td_count):
-                        cell_text = (await tds.nth(j).inner_text()).strip()
-                        if re.match(r'^[A-Z]{5}[0-9]{10}$', cell_text):
-                            est_id = cell_text
-                            break
-                    
-                    if est_id:
-                        if first_row_est_id is None:
-                            first_row_est_id = est_id
-                            first_row_tds = tds
-                            
-                        # Get Office Name for this row
-                        office_name = ""
-                        if office_name_col_idx != -1 and office_name_col_idx < td_count:
-                            office_name = (await tds.nth(office_name_col_idx).inner_text()).strip()
-                        elif td_count == 5:
-                            office_name = (await tds.nth(3).inner_text()).strip()
-                        elif td_count == 6:
-                            office_name = (await tds.nth(4).inner_text()).strip()
-                            
-                        office_state = find_state_for_office(office_name, office_state_map)
-                        
-                        prefix = est_id[:2]
-                        if (prefix in allowed_state_codes) or (office_state in allowed_state_codes):
-                            print(f"[+] Found matching establishment ID: '{est_id}' (Office: '{office_name}' -> '{office_state}') on page {current_page}")
-                            action_cell = tds.last
-                            action_link = action_cell.locator("a, button, input[type='button']").first
-                            if await action_link.count() > 0:
-                                await human_click(page, action_link)
-                                found_matching_row = True
-                                target_est_id = est_id
-                                break
-                
-                if found_matching_row:
-                    break
-                    
-                next_li = page.locator("li.paginate_button.next, #example_next").first
-                if await next_li.count() > 0:
-                    class_attr = await next_li.get_attribute("class") or ""
-                    if "disabled" in class_attr:
-                        break
-                    next_link = next_li.locator("a")
-                    if await next_link.count() == 0 or not await next_link.is_visible():
-                        break
-                    print(f"[*] Match not found on page {current_page}. Going to next results page...")
-                    await human_click(page, next_link)
-                    await human_delay(1.5, 3.0)
-                    current_page += 1
-                else:
-                    break
-                    
-            if not found_matching_row and first_row_est_id is not None:
-                if current_page > 1:
-                    print("[*] State-matching row not found. Navigating back to page 1 to select first result...")
-                    first_page_btn = page.locator("li.paginate_button a:has-text('1'), #example a:has-text('1')").first
-                    if await first_page_btn.count() > 0:
-                        await human_click(page, first_page_btn)
-                        await human_delay(1.5, 3.0)
-                    tbody_tr = page.locator("#tablecontainer table tbody tr")
-                    first_row_tds = tbody_tr.nth(0).locator("td")
-                
-                # Get Office Name for first row fallback
-                td_count = await first_row_tds.count()
-                office_name = ""
-                if office_name_col_idx != -1 and office_name_col_idx < td_count:
-                    office_name = (await first_row_tds.nth(office_name_col_idx).inner_text()).strip()
-                elif td_count == 5:
-                    office_name = (await first_row_tds.nth(3).inner_text()).strip()
-                elif td_count == 6:
-                    office_name = (await first_row_tds.nth(4).inner_text()).strip()
-                
-                office_state = find_state_for_office(office_name, office_state_map)
-                
-                prefix = first_row_est_id[:2]
+            office_state = find_state_for_office(office_name, office_state_map)
+            
+            if (prefix in allowed_state_codes) or (office_state in allowed_state_codes):
+                print(f"[+] Found matching establishment ID: '{est_id}' (Office: '{office_name}' -> '{office_state}')")
+            else:
                 disclaimer = f"State code mismatch ignored (Target: {allowed_state_codes}, Found ID: {prefix}, Office: {office_name} -> {office_state})."
                 print(f"[!] {disclaimer}")
-                action_cell = first_row_tds.last
-                action_link = action_cell.locator("a, button, input[type='button']").first
-                if await action_link.count() > 0:
-                    await human_click(page, action_link)
-                    found_matching_row = True
-                    target_est_id = first_row_est_id
-                    
+            
+            action_cell = tds.last
+            action_link = action_cell.locator("a, button, input[type='button']").first
+            if await action_link.count() > 0:
+                await human_click(page, action_link)
+
         if not found_matching_row:
             print(f"[-] No search result matches state codes for query: '{query}'")
             return None, [], None
@@ -836,14 +820,31 @@ def save_results(results_file, results):
         except Exception as save_err:
             print(f"[!] Critical: Failed to save results: {save_err}")
 
+def load_suffixes(file_path="suffixes.txt"):
+    default_suffixes = ["PVT", "LTD", "LT", "LIMITED", "LIM", "PRIVATE", "CO", "COMPANY"]
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    candidate_paths = [file_path, os.path.join(script_dir, file_path)]
+    for path in candidate_paths:
+        if os.path.exists(path):
+            try:
+                with open(path, "r", encoding="utf-8") as f:
+                    suffixes = [line.strip().upper() for line in f if line.strip() and not line.strip().startswith("#")]
+                if suffixes:
+                    return suffixes
+            except Exception as e:
+                print(f"[!] Error loading {path}: {e}")
+    return default_suffixes
+
+SUFFIXES = load_suffixes()
+
 def remove_pvt_ltd(name):
     """
-    Removes 'PVT LTD', 'CO', 'COMPANY', and similar suffixes (case-insensitive) from a vendor name.
+    Removes company suffixes (case-insensitive) from a vendor name.
     """
     if not isinstance(name, str):
         return ""
-    # Matches PVT, LTD, LT, LIMITED, LIM, PRIVATE, CO, COMPANY, etc.
-    pattern = re.compile(r'\b(PVT|LTD|LT|LIMITED|LIM|PRIVATE|CO|COMPANY)\b\.?', re.IGNORECASE)
+    escaped_suffixes = [re.escape(s) for s in SUFFIXES]
+    pattern = re.compile(r'\b(' + '|'.join(escaped_suffixes) + r')\b\.?', re.IGNORECASE)
     cleaned = pattern.sub("", name)
     cleaned = re.sub(r'\s+', ' ', cleaned)
     return cleaned.strip(" ,.-/")
@@ -905,7 +906,8 @@ async def search_and_download_vendor(page, vendor_name, allowed_state_codes, api
         if q not in initial_queries:
             initial_queries.append(q)
             
-    pvt_ltd_pattern = re.compile(r'\b(PVT|LTD|LT|LIMITED|LIM|PRIVATE|CO|COMPANY)\b', re.IGNORECASE)
+    escaped_suffixes = [re.escape(s) for s in SUFFIXES]
+    pvt_ltd_pattern = re.compile(r'\b(' + '|'.join(escaped_suffixes) + r')\b', re.IGNORECASE)
     symbol_pattern = re.compile(r'[^a-zA-Z0-9\s\.]')
     
     # 1. Generate no-symbol queries (keeping PVT LTD CO suffix)
@@ -964,7 +966,7 @@ async def search_and_download_vendor(page, vendor_name, allowed_state_codes, api
             
     return None, [], None
 
-async def run_scraper(limit=None, api_key=DEFAULT_API_KEY, headless=True, input_file="vendorList.csv", profile_dir="chrome_profile"):
+async def run_scraper(limit=None, api_key=DEFAULT_API_KEY, headless=True, input_file="vendorList.csv", profile_dir="chrome_profile", sleep_delay=10):
     # Setup data files
     base_name, _ = os.path.splitext(input_file)
     cleaned_file = f"{base_name}_cleaned.csv"
@@ -1107,6 +1109,7 @@ async def run_scraper(limit=None, api_key=DEFAULT_API_KEY, headless=True, input_
                     "vendor_name": vendor_name,
                     "vendor_gstn": vendor_gstn,
                     "status": "skipped_no_state_code",
+                    "list_establishment_ids": [],
                     "matched_establishment_ids": []
                 }
                 # Write intermediate progress
@@ -1122,20 +1125,60 @@ async def run_scraper(limit=None, api_key=DEFAULT_API_KEY, headless=True, input_
                     page, vendor_name, allowed_state_codes, api_key, office_state_map
                 )
                 
-                matched_est_ids = set()
+                list_est_ids = []
+                matched_est_ids = []
                 status = "no_match_found"
                 
                 if target_est_id and downloaded_files:
                     status = "success"
-                    # Scan downloaded Excel files for establishment IDs and office names
+                    all_details = []
                     for f_path in downloaded_files:
-                        pairs = extract_id_office_pairs(f_path)
-                        for eid, office in pairs:
-                            prefix = eid[:2]
-                            office_state = find_state_for_office(office, office_state_map)
-                            # If matching allowed state codes, or if disclaimer is present (state code mismatch was bypassed), collect all of them
-                            if (prefix in allowed_state_codes) or (office_state in allowed_state_codes) or disclaimer:
-                                matched_est_ids.add(eid)
+                        details = extract_establishment_details(f_path)
+                        all_details.extend(details)
+                        
+                    # Deduplicate details by establishment_id
+                    seen_ids = set()
+                    unique_details = []
+                    for d in all_details:
+                        eid = d["establishment_id"]
+                        if eid not in seen_ids:
+                            seen_ids.add(eid)
+                            unique_details.append(d)
+                            
+                    # Construct list_establishment_ids node list
+                    for d in unique_details:
+                        list_est_ids.append({
+                            "establishment Name": d["establishment_name"],
+                            "establishment id": d["establishment_id"]
+                        })
+                        
+                    prefix_matches = []
+                    office_matches = []
+                    for d in unique_details:
+                        eid = d["establishment_id"]
+                        office = d["office_name"]
+                        prefix = eid[:2].upper()
+                        office_state = find_state_for_office(office, office_state_map)
+                        
+                        item = {
+                            "establishment Name": d["establishment_name"],
+                            "establishment id": eid
+                        }
+                        if prefix in allowed_state_codes:
+                            prefix_matches.append((eid, item))
+                        elif office_state in allowed_state_codes:
+                            office_matches.append((eid, item))
+                            
+                    if prefix_matches:
+                        target_est_id = prefix_matches[0][0]
+                        disclaimer = None
+                        matched_est_ids = [item for _, item in prefix_matches] + [item for _, item in office_matches]
+                    elif office_matches:
+                        target_est_id = office_matches[0][0]
+                        disclaimer = None
+                        matched_est_ids = [item for _, item in office_matches]
+                    else:
+                        matched_est_ids = []
                                 
                     print(f"[+] Found {len(matched_est_ids)} state-matching establishment IDs inside downloaded files.")
                 elif target_est_id:
@@ -1150,7 +1193,8 @@ async def run_scraper(limit=None, api_key=DEFAULT_API_KEY, headless=True, input_
                     "status": status,
                     "allowed_state_codes": allowed_state_codes,
                     "target_establishment_id": target_est_id,
-                    "matched_establishment_ids": list(matched_est_ids)
+                    "list_establishment_ids": list_est_ids,
+                    "matched_establishment_ids": matched_est_ids
                 }
                 if disclaimer:
                     results[vendor_code]["disclaimer"] = disclaimer
@@ -1159,8 +1203,8 @@ async def run_scraper(limit=None, api_key=DEFAULT_API_KEY, headless=True, input_
                 save_results(results_file, results)
                 
                 count += 1
-                print("[*] Waiting 10 seconds before next vendor...")
-                await asyncio.sleep(10)
+                print(f"[*] Waiting {sleep_delay} seconds before next vendor...")
+                await asyncio.sleep(sleep_delay)
                 
             except Exception as e:
                 print(f"[!] Error processing vendor {vendor_code}: {e}")
@@ -1169,12 +1213,13 @@ async def run_scraper(limit=None, api_key=DEFAULT_API_KEY, headless=True, input_
                     "vendor_name": vendor_name,
                     "vendor_gstn": vendor_gstn,
                     "status": f"failed_error: {str(e)}",
+                    "list_establishment_ids": [],
                     "matched_establishment_ids": []
                 }
                 save_results(results_file, results)
                 # Small wait before trying next
-                print("[*] Waiting 10 seconds after failure before next vendor...")
-                await asyncio.sleep(10)
+                print(f"[*] Waiting {sleep_delay} seconds after failure before next vendor...")
+                await asyncio.sleep(sleep_delay)
                 
         await context.close()
         
@@ -1187,6 +1232,7 @@ def main():
     parser.add_argument("-k", "--key", default=DEFAULT_API_KEY, help="Gemini API Key")
     parser.add_argument("--headless", action="store_true", help="Run browser in headless mode")
     parser.add_argument("--profile", default="edge_profile", help="Path to Edge user data directory (default: edge_profile)")
+    parser.add_argument("--sleep", type=int, default=10, help="Sleep duration in seconds between vendors (default: 10)")
     
     args = parser.parse_args()
     
@@ -1196,7 +1242,8 @@ def main():
         api_key=args.key,
         headless=args.headless,
         input_file=args.input,
-        profile_dir=args.profile
+        profile_dir=args.profile,
+        sleep_delay=args.sleep
     ))
 
 
