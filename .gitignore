@@ -1,7 +1,6 @@
 .venv/
 .env
 chrome_profile/
-downloads/
 __pycache__/
 *.pyc
 vendorList_cleaned.csv
