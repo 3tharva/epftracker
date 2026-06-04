@@ -146,8 +146,8 @@ def solve_captcha(image_bytes, api_key):
         }
         
         models_to_try = [
-            "google/gemini-2.5-flash-lite",
             "google/gemini-2.5-flash",
+            "google/gemini-2.5-flash-lite",
             "google/gemini-flash-1.5"
         ]
         
@@ -412,7 +412,7 @@ async def run_scraper(establishment_name, api_key, headless=True):
             print(f"[!] Alert popup detected: {alert_msg}")
             
             # Check if this alert is captcha related
-            if "captcha" in alert_msg.lower() or "invalid" in alert_msg.lower() or "wrong" in alert_msg.lower():
+            if "captcha" in alert_msg.lower() or "invalid" in alert_msg.lower() or "wrong" in alert_msg.lower() or "incorrect" in alert_msg.lower() or "mismatch" in alert_msg.lower() or "does not match" in alert_msg.lower():
                 captcha_failed = True
             await dialog.dismiss()
 
@@ -439,9 +439,12 @@ async def run_scraper(establishment_name, api_key, headless=True):
             await page.goto(DEFAULT_URL, wait_until="load", timeout=60000)
             
             max_attempts = 5
-            
             for attempt in range(1, max_attempts + 1):
                 print(f"\n--- Scraping Attempt {attempt}/{max_attempts} ---")
+                
+                print(f"[*] Navigating to EPFO Portal to load fresh captcha (Attempt {attempt}/{max_attempts})...")
+                await page.goto(DEFAULT_URL, wait_until="load", timeout=60000)
+                await human_delay(1.5, 3.0)
                 
                 # Fill establishment name
                 print(f"[*] Entering establishment name: '{current_name}'")
@@ -451,6 +454,15 @@ async def run_scraper(establishment_name, api_key, headless=True):
                 print("[*] Locating captcha image...")
                 captcha_img = page.locator("#capImg")
                 await captcha_img.wait_for(state="visible", timeout=15000)
+                
+                try:
+                    print(f"[*] Waiting for captcha image to load...")
+                    await page.wait_for_function(
+                        "document.querySelector('#capImg') && document.querySelector('#capImg').complete && document.querySelector('#capImg').naturalWidth > 0",
+                        timeout=8000
+                    )
+                except Exception as e:
+                    print(f"[!] Warning: Captcha load wait timed out: {e}")
                 
                 # Give it a tiny bit of time to fully render the image
                 await page.wait_for_timeout(1000)

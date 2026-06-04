@@ -506,7 +506,7 @@ async def execute_search_for_query(page, query, allowed_state_codes, api_key, of
         if "no details found" in msg_lower or "valid establishment name" in msg_lower:
             print(f"[-] Alert: '{alert_msg}'. No details found for this search. Will not retry captcha.")
             captcha_failed = False
-        elif "captcha" in msg_lower or "invalid" in msg_lower or "wrong" in msg_lower:
+        elif "captcha" in msg_lower or "invalid" in msg_lower or "wrong" in msg_lower or "incorrect" in msg_lower or "mismatch" in msg_lower or "does not match" in msg_lower:
             captcha_failed = True
         await dialog.dismiss()
         
@@ -514,42 +514,28 @@ async def execute_search_for_query(page, query, allowed_state_codes, api_key, of
     
     max_attempts = 5
     for attempt in range(1, max_attempts + 1):
-        # Go to home/reset page if we are not there
-        is_on_search_page = False
-        try:
-            is_on_search_page = await page.locator("#estName").is_visible()
-        except Exception:
-            pass
-            
-        if is_on_search_page:
-            if attempt == 1:
-                reset_btn = page.locator("input[value='Reset']")
-                if await reset_btn.count() > 0 and await reset_btn.is_visible():
-                    try:
-                        print("[*] Clicking Reset button to clear search form...")
-                        await human_click(page, reset_btn)
-                        await human_delay(1.0, 2.0)
-                    except Exception as e:
-                        print(f"[!] Reset click failed: {e}. Reloading page...")
-                        await navigate_with_retry(page, DEFAULT_URL)
-                        await human_delay(1.5, 3.0)
-                else:
-                    await navigate_with_retry(page, DEFAULT_URL)
-                    await human_delay(1.5, 3.0)
-            else:
-                # Captcha retry on the same page. Just wait a small bit, don't reload or reset.
-                print(f"[*] Captcha retry {attempt}: page already loaded, reusing search page.")
-                await human_delay(1.0, 2.0)
-        else:
-            await navigate_with_retry(page, DEFAULT_URL)
-            await human_delay(1.5, 3.0)
+        # Reload the page on every single attempt to guarantee a fresh captcha is loaded and completely rendered
+        print(f"[*] Navigating to EPFO Portal to load fresh captcha (Attempt {attempt}/{max_attempts})...")
+        await navigate_with_retry(page, DEFAULT_URL)
+        await human_delay(1.5, 3.0)
         
         # Enter establishment name
         await human_type(page, "#estName", query)
         
-        # Capture Captcha
+        # Locate captcha image
         captcha_img = page.locator("#capImg")
         await captcha_img.wait_for(state="visible", timeout=15000)
+        
+        # Wait for captcha to load
+        try:
+            print(f"[*] Waiting for captcha image to load...")
+            await page.wait_for_function(
+                "document.querySelector('#capImg') && document.querySelector('#capImg').complete && document.querySelector('#capImg').naturalWidth > 0",
+                timeout=8000
+            )
+        except Exception as e:
+            print(f"[!] Warning: Captcha load wait timed out: {e}")
+            
         await human_delay(1.0, 2.0)
         image_bytes = await captcha_img.screenshot()
         
@@ -593,14 +579,11 @@ async def execute_search_for_query(page, query, allowed_state_codes, api_key, of
             
         container_text = await page.locator("#tablecontainer").inner_text()
         container_text_lower = container_text.lower()
-        body_text_lower = (await page.locator("body").inner_text()).lower()
         
         if (
             "no records" in container_text_lower 
             or "no details found" in container_text_lower 
-            or "no details found" in body_text_lower
-            or "valid establishment" in container_text_lower 
-            or "valid establishment" in body_text_lower
+            or "no data available" in container_text_lower
         ):
             page.remove_listener("dialog", handle_alert)
             print(f"[-] No details/records found for query: '{query}'. Skipping query.")

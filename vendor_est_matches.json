@@ -215,13 +215,8 @@
   "236483": {
     "vendor_name": "DRN Infrastructure Pvt.Ltd",
     "vendor_gstn": "29AAHCD2154N1ZA",
-    "status": "no_downloads",
-    "allowed_state_codes": [
-      "KA"
-    ],
-    "target_establishment_id": "BGBNG2871958000",
-    "matched_establishment_ids": [],
-    "disclaimer": "State code mismatch ignored (Target: ['KA'], Found ID: BG, Office: BANGALORE -> None)."
+    "status": "failed_error: Locator.click: Target page, context or browser has been closed",
+    "matched_establishment_ids": []
   },
   "236492": {
     "vendor_name": "Raj Enterprises",
