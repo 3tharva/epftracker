@@ -101,8 +101,19 @@ def get_latest_payment_info(file_path):
 
 
 
-async def human_delay(min_sec=8.0, max_sec=10.0):
-    await asyncio.sleep(random.uniform(8.0, 10.0))
+def _gauss_delay(min_sec: float, max_sec: float) -> float:
+    """
+    Returns a Gaussian-distributed delay clamped to [min_sec, max_sec].
+    More realistic than flat uniform — most pauses cluster in the middle.
+    """
+    mid = (min_sec + max_sec) / 2.0
+    sigma = (max_sec - min_sec) / 6.0  # ±3-sigma fits within range
+    val = random.gauss(mid, sigma)
+    return max(min_sec, min(max_sec, val))
+
+async def human_delay(min_sec=1.0, max_sec=3.0):
+    """Gaussian-distributed human-like delay."""
+    await asyncio.sleep(_gauss_delay(min_sec, max_sec))
 
 async def human_mouse_move(page, target_locator):
     try:
@@ -176,23 +187,171 @@ async def human_click(page, selector_or_locator):
 async def human_scroll(page):
     """
     Simulates a human scrolling down and up slightly to look like a reader.
+    Uses multiple micro-scroll steps for realism.
     """
     try:
-        scroll_y = random.randint(150, 350)
-        await page.evaluate(f"window.scrollBy(0, {scroll_y})")
-        await human_delay(0.5, 1.2)
-        await page.evaluate(f"window.scrollBy(0, -{scroll_y})")
-        await human_delay(0.3, 0.8)
+        total_y = random.randint(150, 380)
+        steps = random.randint(3, 6)
+        for _ in range(steps):
+            chunk = total_y // steps + random.randint(-10, 10)
+            await page.evaluate(f"window.scrollBy(0, {chunk})")
+            await asyncio.sleep(_gauss_delay(0.08, 0.22))
+        await human_delay(0.4, 1.0)
+        # Scroll back up
+        for _ in range(random.randint(2, 4)):
+            chunk = total_y // 3 + random.randint(-10, 10)
+            await page.evaluate(f"window.scrollBy(0, -{chunk})")
+            await asyncio.sleep(_gauss_delay(0.06, 0.18))
+        await human_delay(0.2, 0.6)
     except Exception:
         pass
 
+async def idle_simulation(page):
+    """
+    Random mid-session idle activity: random mouse moves + micro-scrolls.
+    Mimics a user pausing to read or think. Call between major actions.
+    """
+    try:
+        # Random mouse drift
+        for _ in range(random.randint(1, 3)):
+            x = random.randint(200, 1600)
+            y = random.randint(100, 800)
+            await page.mouse.move(x, y)
+            await asyncio.sleep(_gauss_delay(0.1, 0.35))
+        # Occasional tiny scroll
+        if random.random() < 0.4:
+            scroll = random.randint(20, 80)
+            direction = random.choice([1, -1])
+            await page.evaluate(f"window.scrollBy(0, {scroll * direction})")
+        await human_delay(0.5, 1.5)
+    except Exception:
+        pass
+
+# Realistic, modern browser user-agents (Windows desktop, Chrome/Edge/Firefox)
+# All non-headless, regularly updated to current major versions
 USER_AGENTS = [
+    # Chrome stable channel — most common desktop UA
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:124.0) Gecko/20100101 Firefox/124.0",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36 Edg/124.0.0.0"
+    # Edge stable channel
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 Edg/131.0.0.0",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36 Edg/130.0.0.0",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36 Edg/129.0.0.0",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36 Edg/128.0.0.0",
+    # Firefox (less common but adds pool diversity)
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:131.0) Gecko/20100101 Firefox/131.0",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:130.0) Gecko/20100101 Firefox/130.0",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:128.0) Gecko/20100101 Firefox/128.0",
 ]
+
+# Viewport size pool — slight variation per worker avoids fixed fingerprint
+VIEWPORT_POOL = [
+    {"width": 1920, "height": 1080},
+    {"width": 1920, "height": 1080},  # most common — weighted heavier
+    {"width": 1920, "height": 1080},
+    {"width": 1366, "height": 768},
+    {"width": 1440, "height": 900},
+    {"width": 1536, "height": 864},
+    {"width": 1600, "height": 900},
+    {"width": 2560, "height": 1440},
+]
+
+# JS snippet to mask all common automation fingerprints
+# Injected into every new page before any navigation
+STEALTH_JS = """
+() => {
+    // 1. Remove webdriver flag
+    Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
+
+    // 2. Realistic plugins list (Chrome has 3 default plugins)
+    Object.defineProperty(navigator, 'plugins', {
+        get: () => {
+            const arr = [1, 2, 3].map(() => ({ length: 0 }));
+            arr.refresh = () => {};
+            return arr;
+        }
+    });
+
+    // 3. Ensure languages look real
+    Object.defineProperty(navigator, 'languages', {
+        get: () => ['en-IN', 'en-US', 'en', 'hi']
+    });
+
+    // 4. Mask Chrome headless object
+    if (!window.chrome) {
+        window.chrome = { runtime: {} };
+    }
+
+    // 5. Permissions API — mask automation
+    const origQuery = window.navigator.permissions && window.navigator.permissions.query;
+    if (origQuery) {
+        window.navigator.permissions.query = (parameters) =>
+            parameters.name === 'notifications'
+                ? Promise.resolve({ state: Notification.permission })
+                : origQuery(parameters);
+    }
+
+    // 6. WebGL vendor/renderer — use realistic Intel/AMD strings
+    const getParameter = WebGLRenderingContext.prototype.getParameter;
+    WebGLRenderingContext.prototype.getParameter = function(parameter) {
+        if (parameter === 37445) return 'Intel Inc.';          // UNMASKED_VENDOR_WEBGL
+        if (parameter === 37446) return 'Intel Iris OpenGL Engine';  // UNMASKED_RENDERER_WEBGL
+        return getParameter.call(this, parameter);
+    };
+
+    // 7. Canvas noise — add imperceptible pixel noise to defeat canvas fingerprinting
+    const toBlob = HTMLCanvasElement.prototype.toBlob;
+    const toDataURL = HTMLCanvasElement.prototype.toDataURL;
+    const getImageData = CanvasRenderingContext2D.prototype.getImageData;
+    const _addNoise = (data) => {
+        for (let i = 0; i < data.length; i += 4) {
+            data[i] ^= Math.floor(Math.random() * 3);        // R
+            data[i + 1] ^= Math.floor(Math.random() * 3);   // G
+            data[i + 2] ^= Math.floor(Math.random() * 3);   // B
+        }
+    };
+    CanvasRenderingContext2D.prototype.getImageData = function(...args) {
+        const imageData = getImageData.apply(this, args);
+        _addNoise(imageData.data);
+        return imageData;
+    };
+
+    // 8. AudioContext fingerprint noise
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    if (AudioContext) {
+        const origCreateOscillator = AudioContext.prototype.createOscillator;
+        AudioContext.prototype.createOscillator = function() {
+            const osc = origCreateOscillator.apply(this, arguments);
+            const origFreq = Object.getOwnPropertyDescriptor(osc.frequency, 'value');
+            if (origFreq && origFreq.configurable) {
+                Object.defineProperty(osc.frequency, 'value', {
+                    get: () => (origFreq.get ? origFreq.get.call(osc.frequency) : 440) + Math.random() * 0.0001,
+                    set: origFreq.set ? origFreq.set.bind(osc.frequency) : undefined,
+                    configurable: true,
+                });
+            }
+            return osc;
+        };
+    }
+
+    // 9. Screen dimensions — match viewport
+    Object.defineProperty(screen, 'availWidth', { get: () => window.innerWidth });
+    Object.defineProperty(screen, 'availHeight', { get: () => window.innerHeight });
+
+    // 10. Mask toString of modified functions
+    const nativeToString = Function.prototype.toString;
+    Function.prototype.toString = function() {
+        if (this === Function.prototype.toString) return nativeToString.call(this);
+        return `function ${this.name || ''}() { [native code] }`;
+    };
+}
+"""
 
 
 # Load environment variables from local .env file if it exists
@@ -616,25 +775,53 @@ def extract_establishment_ids_from_file(file_path):
             
     return list(est_ids)
 
-async def navigate_with_retry(page, url, retries=3):
+async def navigate_with_retry(page, url, retries=4):
+    """
+    Navigates to a URL with exponential back-off on failure.
+    Detects WAF block pages and raises immediately to avoid wasting attempts.
+    """
     for i in range(retries):
         try:
-            await page.goto(url, wait_until="domcontentloaded", timeout=45000)
-            
-            # Check for WAF block page
+            # Randomize referer header to look like organic navigation
+            if random.random() < 0.4:
+                await page.set_extra_http_headers({
+                    "Referer": random.choice([
+                        "https://www.google.co.in/",
+                        "https://epfindia.gov.in/",
+                        "https://www.epfindia.gov.in/site_en/index.php",
+                    ])
+                })
+
+            await page.goto(url, wait_until="domcontentloaded", timeout=50000)
+
+            # Verify page loaded and check for WAF block
             content = await page.content()
-            if "web page blocked" in content.lower() or "attack id" in content.lower() or "message id" in content.lower():
-                print("[!] EPFO WAF Block Page detected! Your IP address is temporarily blocked by the EPFO firewall.")
+            content_lower = content.lower()
+            if (
+                "web page blocked" in content_lower
+                or "attack id" in content_lower
+                or "message id" in content_lower
+                or "access denied" in content_lower
+                or "ip has been blocked" in content_lower
+            ):
+                print("[!] EPFO WAF Block Page detected! Triggering exponential back-off...")
+                waf_wait = random.uniform(45, 90) * (2 ** i)  # 45-90s, doubles each retry
+                waf_wait = min(waf_wait, 300)  # cap at 5 minutes
+                print(f"[!] Waiting {waf_wait:.0f}s before retrying...")
+                await asyncio.sleep(waf_wait)
                 raise Exception("EPFO WAF IP block detected.")
-                
+
             return True
         except Exception as e:
-            if "EPFO WAF IP block detected" in str(e):
-                raise e
-            print(f"[!] Navigation attempt {i+1} failed: {e}")
-            if i == retries - 1:
+            if "EPFO WAF IP block detected" in str(e) and i == retries - 1:
                 raise
-            await asyncio.sleep(5)
+            print(f"[!] Navigation attempt {i+1}/{retries} failed: {e}")
+            if i < retries - 1:
+                back_off = _gauss_delay(4.0, 8.0) * (1.5 ** i)
+                print(f"[*] Back-off {back_off:.1f}s before retry {i+2}...")
+                await asyncio.sleep(back_off)
+            else:
+                raise
     return False
 
 async def execute_search_for_query(page, query, allowed_state_codes, api_key, office_state_map, vendor_code="unknown"):
@@ -663,7 +850,10 @@ async def execute_search_for_query(page, query, allowed_state_codes, api_key, of
         # Reload the page on every single attempt to guarantee a fresh captcha is loaded and completely rendered
         print(f"[*] Navigating to EPFO Portal to load fresh captcha (Attempt {attempt}/{max_attempts})...")
         await navigate_with_retry(page, DEFAULT_URL)
-        await human_delay(1.5, 3.0)
+        # Post-navigation idle: simulate reading the page before typing
+        await human_delay(2.0, 4.5)
+        if random.random() < 0.35:
+            await idle_simulation(page)
         
         # Enter establishment name
         await human_type(page, "#estName", query)
@@ -851,11 +1041,14 @@ async def execute_search_for_query(page, query, allowed_state_codes, api_key, of
             return None, [], None, []
 
         print(f"[*] Clicking View Details for best matched ID: {target_est_id}")
+        # Idle simulation before clicking — mimics user reviewing search results
+        if random.random() < 0.5:
+            await idle_simulation(page)
         await human_click(page, action_link)
 
         # Wait for details page load
         print("[*] Waiting for details section/page to load...")
-        await human_delay(4.0, 6.0)
+        await human_delay(4.5, 7.0)
         
         # Scroll naturally
         await human_scroll(page)
@@ -928,7 +1121,9 @@ async def execute_payment_search_and_download(page, target_est_id, api_key, vend
     for attempt in range(1, max_attempts + 1):
         print(f"[*] Navigating to EPFO Portal for payment details search (Attempt {attempt}/{max_attempts})...")
         await navigate_with_retry(page, DEFAULT_URL)
-        await human_delay(1.5, 3.0)
+        await human_delay(2.0, 4.5)
+        if random.random() < 0.35:
+            await idle_simulation(page)
         
         # Enter 7-digit establishment code
         await human_type(page, "#estCode", est_code_7)
@@ -1309,10 +1504,22 @@ async def search_and_download_vendor(page, vendor_name, allowed_state_codes, api
             
     return None, [], None, []
 
+async def _inject_stealth_scripts(context):
+    """
+    Injects anti-fingerprint JS into every page opened in this context.
+    Must be called once right after context creation, before any navigation.
+    """
+    try:
+        await context.add_init_script(STEALTH_JS)
+    except Exception as e:
+        print(f"[!] Warning: Could not inject stealth scripts: {e}")
+
 async def _launch_worker_context(p, worker_id, headless, stealth_args, ignore_automation_args):
     """
     Launches an isolated Patchright browser context for a single concurrent worker.
     Each worker gets its own temporary profile directory so sessions never collide.
+    Applies full anti-detection: randomized UA, viewport jitter, locale/timezone spoofing,
+    stealth JS injection, and realistic HTTP headers.
     Tries Edge channel first, falls back to bundled Patchright Chromium.
     """
     import platform
@@ -1322,17 +1529,37 @@ async def _launch_worker_context(p, worker_id, headless, stealth_args, ignore_au
     worker_profile = os.path.join(tempfile.gettempdir(), f"epf_worker_{worker_id}_{os.getpid()}")
     os.makedirs(worker_profile, exist_ok=True)
 
+    # Pick UA — never reuse the same one across workers in the same run
     selected_ua = random.choice(USER_AGENTS)
     assert "Headless" not in selected_ua, "User-Agent must not contain 'Headless'!"
+
+    # Per-worker viewport variation — avoids fixed-resolution fingerprint
+    vp = random.choice(VIEWPORT_POOL)
+    # Add very slight random jitter (±1-3px) to avoid exact match with known automation sizes
+    vp = {
+        "width": vp["width"] + random.randint(-3, 3),
+        "height": vp["height"] + random.randint(-3, 3),
+    }
 
     launch_kwargs = dict(
         headless=headless,
         args=stealth_args,
         ignore_default_args=ignore_automation_args,
         user_agent=selected_ua,
-        viewport={"width": 1920, "height": 1080},
-        screen={"width": 1920, "height": 1080},
+        viewport=vp,
+        screen=vp,
+        locale="en-IN",           # Indian locale — matches target EPFO portal location
+        timezone_id="Asia/Kolkata",  # IST timezone — reduces TZ mismatch signals
         ignore_https_errors=True,
+        color_scheme="no-preference",  # Avoid dark-mode fingerprinting
+        extra_http_headers={
+            "Accept-Language": "en-IN,en;q=0.9,hi;q=0.8,en-US;q=0.7",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
+            "Accept-Encoding": "gzip, deflate, br",
+            "Sec-CH-UA-Platform": '"Windows"',
+            "Upgrade-Insecure-Requests": "1",
+            "DNT": "1",
+        },
     )
 
     for attempt_channel in ["msedge", None]:
@@ -1349,7 +1576,11 @@ async def _launch_worker_context(p, worker_id, headless, stealth_args, ignore_au
                     **launch_kwargs
                 )
             label = f"Edge ({attempt_channel})" if attempt_channel else "Patchright Chromium"
-            print(f"[W{worker_id}] Launched browser context via {label} (profile: {worker_profile})")
+            print(f"[W{worker_id}] Launched {label} | UA: ...{selected_ua[-40:]} | Viewport: {vp['width']}x{vp['height']}")
+
+            # Inject stealth JS into every future page in this context
+            await _inject_stealth_scripts(ctx)
+
             return ctx, worker_profile
         except Exception as e:
             print(f"[W{worker_id}] Channel '{attempt_channel}' failed: {e}. Trying next...")
@@ -1723,19 +1954,51 @@ async def run_scraper(
     semaphore = asyncio.Semaphore(CONCURRENCY)
     results_lock = asyncio.Lock()
 
-    # ── Stealth browser args ──────────────────────────────────────────────────
+    # ── Hardened Stealth browser args ────────────────────────────────────────
+    # Goal: make Chromium look exactly like a regular user-installed Chrome/Edge.
     stealth_args = [
+        # Core automation masking
         "--disable-blink-features=AutomationControlled",
+        "--disable-automation",
+        # Window & display
+        "--start-maximized",
         "--window-size=1920,1080",
+        # Performance / stability flags that match real Chrome defaults
         "--no-sandbox",
         "--disable-dev-shm-usage",
         "--disable-gpu",
         "--disable-infobars",
         "--disable-extensions",
-        "--start-maximized",
-        "--lang=en-US,en",
+        # Language & locale — match Indian English user
+        "--lang=en-IN",
+        "--accept-lang=en-IN,en,hi",
+        # Reduce automation-specific features that leak presence
+        "--disable-background-networking",
+        "--disable-client-side-phishing-detection",
+        "--disable-default-apps",
+        "--disable-hang-monitor",
+        "--disable-popup-blocking",
+        "--disable-prompt-on-repost",
+        "--disable-sync",
+        "--disable-translate",
+        "--metrics-recording-only",
+        "--no-first-run",
+        "--safebrowsing-disable-auto-update",
+        "--password-store=basic",
+        "--use-mock-keychain",
+        # Prevent flags that reveal headless/automated mode
+        "--hide-scrollbars",
+        "--mute-audio",
+        "--no-default-browser-check",
+        "--ignore-certificate-errors",
+        # Reduce TLS/QUIC fingerprint leakage
+        "--disable-quic",
     ]
-    ignore_automation_args = ["--enable-automation", "--no-sandbox"]
+    ignore_automation_args = [
+        "--enable-automation",
+        "--no-sandbox",
+        "--disable-extensions",
+    ]
 
     # ── PHASE 1: ESTABLISHMENT MATCHING ──────────────────────────────────────
     # We run matching phase ONLY if NOT explicitly requested to run payment details only
@@ -1812,10 +2075,13 @@ async def run_scraper(
 
                     await asyncio.gather(*tasks)
 
-                    # Batch delay
+                    # Batch delay — Gaussian-distributed 8-12s with occasional longer pause
                     if batch_start + CONCURRENCY < len(pending_match):
-                        batch_delay = random.uniform(3, 8)
-                        print(f"\n[*] Batch complete. Waiting {batch_delay:.1f}s before next batch...\n")
+                        batch_delay = _gauss_delay(8.0, 12.0)
+                        # 20% chance of an extended cool-down (mimics user taking a break)
+                        if random.random() < 0.20:
+                            batch_delay += random.uniform(10.0, 25.0)
+                        print(f"\n[*] Batch complete. Cooling down {batch_delay:.1f}s before next batch...\n")
                         await asyncio.sleep(batch_delay)
             
             print("\n[+] Phase 1 (Establishment Matching) completed successfully!")
@@ -1897,10 +2163,12 @@ async def run_scraper(
 
                 await asyncio.gather(*tasks)
 
-                # Batch delay
+                # Batch delay — Gaussian-distributed 8-12s with occasional longer pause
                 if batch_start + CONCURRENCY < len(pending_payment):
-                    batch_delay = random.uniform(3, 8)
-                    print(f"\n[*] Batch complete. Waiting {batch_delay:.1f}s before next batch...\n")
+                    batch_delay = _gauss_delay(8.0, 12.0)
+                    if random.random() < 0.20:
+                        batch_delay += random.uniform(10.0, 25.0)
+                    print(f"\n[*] Batch complete. Cooling down {batch_delay:.1f}s before next batch...\n")
                     await asyncio.sleep(batch_delay)
         
         print("\n[+] Phase 2 (Payment Details Downloading) completed successfully!")

@@ -1579,6 +1579,10 @@
                             <option value="name-asc">Vendor Name (A-Z)</option>
                             <option value="name-desc">Vendor Name (Z-A)</option>
                             <option value="status-asc">Status Group (A-Z)</option>
+                            <option value="payment-month-desc">Wage Month (Newest First)</option>
+                            <option value="payment-month-asc">Wage Month (Oldest First)</option>
+                            <option value="payment-amount-desc">Amount (Highest First)</option>
+                            <option value="payment-amount-asc">Amount (Lowest First)</option>
                         </select>
                         <button class="btn btn-secondary" onclick="triggerJsonUpload()" style="padding: 8px 16px; font-size: 0.85rem; border-radius: 8px; font-family: var(--font-title); font-weight: 600; display: inline-flex; align-items: center; gap: 8px; background: rgba(99, 102, 241, 0.1); border: 1px solid rgba(99, 102, 241, 0.2); color: var(--text-main); cursor: pointer; transition: all 0.2s;">
                             <i class="fa-solid fa-file-import" style="color: var(--accent-primary)"></i> Load Matches JSON
@@ -2468,12 +2472,60 @@
             });
 
             // 2. Sort
+            // Helper: get the best available payment info from an item
+            function getPaymentInfo(item) {
+                // Check matched_establishment_ids first (primary match record)
+                const primary = item.matched_establishment_ids.find(
+                    m => m["establishment id"] === item.target_establishment_id
+                );
+                const candidates = primary
+                    ? [primary, ...item.matched_establishment_ids.filter(m => m !== primary)]
+                    : item.matched_establishment_ids;
+
+                for (const m of candidates) {
+                    if (m.latest_payment) return m.latest_payment;
+                }
+                // Fallback to top-level raw
+                if (item.raw.latest_payment) return item.raw.latest_payment;
+                return null;
+            }
+
+            // Parse a wage_month string like "MAR-2025" or "2025-03" into a numeric score for sorting
+            function parseWageMonthScore(wageMonth) {
+                if (!wageMonth) return -Infinity;
+                const MONTHS = { JAN:1,FEB:2,MAR:3,APR:4,MAY:5,JUN:6,JUL:7,AUG:8,SEP:9,OCT:10,NOV:11,DEC:12 };
+                // Format: MMM-YYYY
+                const m1 = wageMonth.match(/^([A-Z]{3})[\-\/](\d{4})$/);
+                if (m1) return parseInt(m1[2]) * 100 + (MONTHS[m1[1]] || 0);
+                // Format: YYYY-MM
+                const m2 = wageMonth.match(/^(\d{4})[\-\/](\d{1,2})$/);
+                if (m2) return parseInt(m2[1]) * 100 + parseInt(m2[2]);
+                return -Infinity;
+            }
+
             filteredList.sort((a, b) => {
                 if (currentSort === 'id-asc') return parseInt(a.id) - parseInt(b.id);
                 if (currentSort === 'id-desc') return parseInt(b.id) - parseInt(a.id);
                 if (currentSort === 'name-asc') return a.vendor_name.localeCompare(b.vendor_name);
                 if (currentSort === 'name-desc') return b.vendor_name.localeCompare(a.vendor_name);
                 if (currentSort === 'status-asc') return a.matchCategory.localeCompare(b.matchCategory);
+
+                if (currentSort === 'payment-month-desc' || currentSort === 'payment-month-asc') {
+                    const pa = getPaymentInfo(a);
+                    const pb = getPaymentInfo(b);
+                    const sa = parseWageMonthScore(pa ? pa.wage_month : null);
+                    const sb = parseWageMonthScore(pb ? pb.wage_month : null);
+                    return currentSort === 'payment-month-desc' ? sb - sa : sa - sb;
+                }
+
+                if (currentSort === 'payment-amount-desc' || currentSort === 'payment-amount-asc') {
+                    const pa = getPaymentInfo(a);
+                    const pb = getPaymentInfo(b);
+                    const sa = pa && pa.amount != null ? Number(pa.amount) : -Infinity;
+                    const sb = pb && pb.amount != null ? Number(pb.amount) : -Infinity;
+                    return currentSort === 'payment-amount-desc' ? sb - sa : sa - sb;
+                }
+
                 return 0;
             });
 
@@ -2938,6 +2990,7 @@
                         <div class="est-item-header">
                             <span class="est-name">${estName}</span>
                             ${icons}
+                            ${isTarget ? '<span style="font-size:0.7rem; color:var(--text-muted); margin-left:auto; display:flex; align-items:center; gap:4px;"><i class="fa-solid fa-arrow-up-right-from-square"></i> Click to open</span>' : ''}
                         </div>
                         <div class="est-id">${estId}</div>
                         <div class="est-tags">
@@ -2946,6 +2999,43 @@
                         </div>
                         ${paymentDownloadButton}
                     `;
+
+                    // ── Primary Match click → open xlsx ─────────────────────
+                    if (isTarget) {
+                        div.style.cursor = 'pointer';
+                        div.addEventListener('click', (e) => {
+                            // Don't trigger if user clicked an <a> tag inside (the View Excel btn)
+                            if (e.target.closest('a')) return;
+
+                            // Find the payment file path from matched record or top-level raw
+                            let filePath = null;
+                            const mRec = item.matched_establishment_ids.find(m => m["establishment id"] === estId);
+                            if (mRec && mRec.payment_details_status === 'success' && mRec.payment_details_file) {
+                                filePath = mRec.payment_details_file;
+                            } else if (item.raw.payment_details_status === 'success' && item.raw.payment_details_file) {
+                                filePath = item.raw.payment_details_file;
+                            }
+
+                            if (filePath) {
+                                // Open / download the xlsx
+                                const link = document.createElement('a');
+                                link.href = '/' + filePath;
+                                link.download = filePath.split('/').pop();
+                                document.body.appendChild(link);
+                                link.click();
+                                document.body.removeChild(link);
+                                showToast('Opening payment Excel file…');
+                            } else {
+                                const mStatus = mRec ? mRec.payment_details_status : item.raw.payment_details_status;
+                                if (mStatus === 'No Payment details found for this Establishment') {
+                                    showToast('No payment details available for this establishment.');
+                                } else {
+                                    showToast('Payment file not downloaded yet — run the scraper first.');
+                                }
+                            }
+                        });
+                    }
+
                     estList.appendChild(div);
                 });
             } else {

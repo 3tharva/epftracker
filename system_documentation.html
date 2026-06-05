@@ -386,9 +386,10 @@
         </div>
         
         <ul class="nav-list">
-            <li class="nav-item active" data-target="arch"><a href="#arch"><i class="fa-solid fa-layer-group"></i> <span>Architecture</span></a></li>
+            <li class="nav-item" data-target="arch"><a href="#arch"><i class="fa-solid fa-layer-group"></i> <span>Architecture</span></a></li>
             <li class="nav-item" data-target="pipeline"><a href="#pipeline"><i class="fa-solid fa-route"></i> <span>Data Flow</span></a></li>
             <li class="nav-item" data-target="resolution"><a href="#resolution"><i class="fa-solid fa-sliders"></i> <span>Match Rules</span></a></li>
+            <li class="nav-item" data-target="setup"><a href="#setup"><i class="fa-solid fa-terminal"></i> <span>Environment Setup</span></a></li>
             <li class="nav-item" data-target="scripts"><a href="#scripts"><i class="fa-solid fa-code"></i> <span>Scripts Reference</span></a></li>
             <li class="nav-item" data-target="captcha"><a href="#captcha"><i class="fa-solid fa-robot"></i> <span>CAPTCHA Handling</span></a></li>
             <li class="nav-item" data-target="dashboard"><a href="#dashboard"><i class="fa-solid fa-table-columns"></i> <span>Dashboard Viewer</span></a></li>
@@ -580,6 +581,83 @@
             </div>
         </section>
 
+        <!-- Environment Setup Section -->
+        <section id="setup" class="glass-card">
+            <h2><i class="fa-solid fa-terminal" style="color:var(--accent-secondary)"></i> Environment Setup</h2>
+            <p>
+                All Python scripts require a <strong>virtual environment</strong> with the project dependencies installed.
+                The project root contains a <code>venv/</code> folder — activate it before running any script.
+            </p>
+
+            <div class="alert alert-info" style="margin-bottom: 1.25rem;">
+                <i class="fa-solid fa-folder" style="font-size: 1.1rem; margin-top: 2px;"></i>
+                <div>
+                    <strong>Project directory:</strong><br>
+                    <code style="font-size: 0.85rem;">c:\Users\projectcontrols.inte\OneDrive - G R Infraprojects Limited\Documents\epftracker\</code>
+                </div>
+            </div>
+
+            <h3>Step 1 — Create the Virtual Environment</h3>
+            <p style="font-size: 0.9rem; color: var(--text-muted);">Only needed once. Skip if <code>venv/</code> folder already exists in the project directory.</p>
+            <div class="code-container">
+                <div class="code-header">
+                    <span>PowerShell / CMD</span>
+                    <button class="copy-btn" onclick="navigator.clipboard.writeText('python -m venv venv'); this.textContent='Copied!'; setTimeout(() => this.innerHTML='<i class=\'fa-regular fa-copy\'></i> Copy', 1500)"><i class="fa-regular fa-copy"></i> Copy</button>
+                </div>
+                <pre><code>python -m venv venv</code></pre>
+            </div>
+
+            <h3>Step 2 — Activate the Virtual Environment</h3>
+
+            <div class="code-container" style="margin-bottom: 10px;">
+                <div class="code-header">
+                    <span><i class="fa-brands fa-windows"></i> &nbsp;PowerShell (recommended)</span>
+                    <button class="copy-btn" onclick="navigator.clipboard.writeText('.\\venv\\Scripts\\Activate.ps1'); this.textContent='Copied!'; setTimeout(() => this.innerHTML='<i class=\'fa-regular fa-copy\'></i> Copy', 1500)"><i class="fa-regular fa-copy"></i> Copy</button>
+                </div>
+                <pre><code>.\venv\Scripts\Activate.ps1</code></pre>
+            </div>
+
+            <div class="code-container" style="margin-bottom: 10px;">
+                <div class="code-header">
+                    <span><i class="fa-brands fa-windows"></i> &nbsp;Command Prompt (CMD)</span>
+                    <button class="copy-btn" onclick="navigator.clipboard.writeText('venv\\Scripts\\activate.bat'); this.textContent='Copied!'; setTimeout(() => this.innerHTML='<i class=\'fa-regular fa-copy\'></i> Copy', 1500)"><i class="fa-regular fa-copy"></i> Copy</button>
+                </div>
+                <pre><code>venv\Scripts\activate.bat</code></pre>
+            </div>
+
+            <div class="alert alert-success" style="margin: 0.75rem 0;">
+                <i class="fa-solid fa-circle-check" style="font-size: 1rem; margin-top: 2px;"></i>
+                <div>When activated, your prompt will show <code>(venv)</code> as a prefix, confirming the environment is active.</div>
+            </div>
+
+            <h3>Step 3 — Install Dependencies</h3>
+            <p style="font-size: 0.9rem; color: var(--text-muted);">Only needed once after creating the venv, or when <code>requirements.txt</code> changes.</p>
+            <div class="code-container">
+                <div class="code-header">
+                    <span>requirements.txt</span>
+                    <button class="copy-btn" onclick="navigator.clipboard.writeText('pip install -r requirements.txt'); this.textContent='Copied!'; setTimeout(() => this.innerHTML='<i class=\'fa-regular fa-copy\'></i> Copy', 1500)"><i class="fa-regular fa-copy"></i> Copy</button>
+                </div>
+                <pre><code>pip install -r requirements.txt</code></pre>
+            </div>
+
+            <h3>Deactivate When Done</h3>
+            <div class="code-container">
+                <div class="code-header">
+                    <span>PowerShell / CMD</span>
+                    <button class="copy-btn" onclick="navigator.clipboard.writeText('deactivate'); this.textContent='Copied!'; setTimeout(() => this.innerHTML='<i class=\'fa-regular fa-copy\'></i> Copy', 1500)"><i class="fa-regular fa-copy"></i> Copy</button>
+                </div>
+                <pre><code>deactivate</code></pre>
+            </div>
+
+            <div class="alert alert-warning" style="margin-top: 1rem;">
+                <i class="fa-solid fa-triangle-exclamation" style="font-size: 1rem; margin-top: 2px;"></i>
+                <div>
+                    <strong>PowerShell Execution Policy:</strong> If you get a <em>"cannot be loaded because running scripts is disabled"</em> error, run this once in PowerShell as Administrator:<br>
+                    <code style="display: inline-block; margin-top: 6px;">Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser</code>
+                </div>
+            </div>
+        </section>
+
         <!-- Scripts Section -->
         <section id="scripts" class="glass-card">
             <h2><i class="fa-solid fa-code" style="color:var(--accent-primary)"></i> Python Scripts Reference</h2>
@@ -640,16 +718,46 @@ def fix_json_file(file_path, office_state_map):
         ...</code></pre>
             </div>
 
-            <h3>4. run_dashboard.py (Lightweight Launcher)</h3>
-            <p>Serves files on the local port and redirects the system browser to the HTML viewer page.</p>
+            <h3>4. run_dashboard.py (Dashboard Server &amp; Launcher)</h3>
+            <p>Starts a local HTTP server on <strong>port 8000</strong> and automatically opens the dashboard in your default browser. The server handles all API endpoints for the scraper control panel, file uploads, and real-time log streaming.</p>
+
+            <div class="alert alert-info" style="margin-bottom: 1rem;">
+                <i class="fa-solid fa-terminal" style="font-size: 1.1rem; margin-top: 2px;"></i>
+                <div>
+                    <strong>Run Command:</strong>
+                    <div style="margin-top: 6px; background: var(--code-bg); border-radius: 8px; padding: 10px 14px; font-family: var(--font-code); font-size: 0.9rem; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+                        <span style="color: #a5f3fc;">python run_dashboard.py</span>
+                        <button class="copy-btn" onclick="navigator.clipboard.writeText('python run_dashboard.py'); this.textContent='Copied!'; setTimeout(() => this.innerHTML='<i class=\'fa-regular fa-copy\'></i> Copy', 1500)" style="font-size: 0.8rem; display: inline-flex; align-items: center; gap: 5px; color: var(--accent-primary);">
+                            <i class="fa-regular fa-copy"></i> Copy
+                        </button>
+                    </div>
+                    <div style="margin-top: 8px; font-size: 0.85rem; color: var(--text-muted);">Dashboard opens at: <code style="color: var(--color-success);">http://localhost:8000/dashboard.html</code></div>
+                </div>
+            </div>
+
             <div class="code-container">
-                <div class="code-header"><span>run_dashboard.py</span><button class="copy-btn" onclick="navigator.clipboard.writeText('python run_dashboard.py')"><i class="fa-regular fa-copy"></i> Copy Run Command</button></div>
+                <div class="code-header"><span>run_dashboard.py — Server internals</span></div>
                 <pre><code>class DashboardHandler(http.server.SimpleHTTPRequestHandler):
     def end_headers(self):
         # Override headers to force reload files without caching
         self.send_header('Access-Control-Allow-Origin', '*')
         self.send_header('Cache-Control', 'no-cache, no-store, must-revalidate')
-        super().end_headers()</code></pre>
+        super().end_headers()
+
+# API Endpoints served by the dashboard server:
+# GET  /api/status          — Scraper status, progress bar counts, active vendor
+# POST /api/start           — Launch vendor_scraper.py as background process
+# POST /api/stop            — Terminate running scraper process
+# POST /api/upload          — Upload vendor list (.xlsx / .csv)
+# POST /api/upload_matches  — Upload / replace vendorList.json
+# GET  /api/files           — List generated output files
+# GET  /api/log             — Stream last 100 lines of scraper_run.log
+# GET  /vendor_est_matches.json — Serve current JSON database to dashboard</code></pre>
+            </div>
+
+            <h4 style="margin: 1rem 0 0.5rem; font-size: 0.95rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Stop the Server</h4>
+            <div style="background: var(--code-bg); border-radius: 8px; padding: 10px 14px; font-family: var(--font-code); font-size: 0.85rem; color: #fca5a5;">
+                Press <kbd style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15); padding: 2px 7px; border-radius: 4px; font-size: 0.8rem;">Ctrl + C</kbd> in the terminal window to stop the server.
             </div>
         </section>
 
@@ -688,15 +796,44 @@ def fix_json_file(file_path, office_state_map):
         <!-- Dashboard Section -->
         <section id="dashboard" class="glass-card">
             <h2><i class="fa-solid fa-table-columns" style="color:var(--color-success)"></i> Interactive Dashboard Page</h2>
+
+            <div class="alert alert-info" style="margin-bottom: 1rem;">
+                <i class="fa-solid fa-globe" style="font-size: 1.1rem; margin-top: 2px;"></i>
+                <div>
+                    Open the dashboard in your browser after running <code>python run_dashboard.py</code>:<br>
+                    <a href="http://localhost:8000/dashboard.html" style="color: var(--color-success); font-family: var(--font-code); font-weight: 600;" target="_blank">http://localhost:8000/dashboard.html</a>
+                </div>
+            </div>
+
             <p>
-                The analytical dashboard (<code>dashboard.html</code>) is loaded in your browser using the local launcher. Key features include:
+                The analytical dashboard (<code>dashboard.html</code>) is served by the local HTTP server and provides full scraper control and data visualization. Key features include:
             </p>
+
+            <h3>Data Viewer Features</h3>
             <ul>
-                <li><strong>Unified Search Bar:</strong> Instantly matches across Vendor Codes, Vendor Names, GSTNs, and Target IDs.</li>
-                <li><strong>Filtered tabs:</strong> Sorts listings into Perfect Match, State Mismatch, No Match, and Scraper Errors.</li>
-                <li><strong>Dynamic Analytics Charts:</strong> High-performance graphs powered by Chart.js visualize data segments based on active query filters in real-time.</li>
-                <li><strong>Copy tools:</strong> In-drawer buttons copy GSTNs and target IDs.</li>
-                <li><strong>Raw Log Inspector:</strong> Enables direct inspection of JSON data nodes and crawler logs.</li>
+                <li><strong>Unified Search Bar:</strong> Instantly matches across Vendor Codes, Vendor Names, GSTNs, and Target Establishment IDs. Supports leading-zero stripping for numeric vendor code lookups.</li>
+                <li><strong>Status Filter Tabs:</strong> One-click filtering into Perfect Match, State Mismatch, No Match Found, and Scraper Errors categories.</li>
+                <li><strong>Payment Data Columns:</strong> The <em>Payment Details</em> column shows the latest payment month info for each matched establishment:
+                    <ul style="margin-top: 6px;">
+                        <li><code>Wage Month</code> — Most recent month for which EPF was remitted (e.g., <code>MAR-2025</code>)</li>
+                        <li><code>Amount</code> — EPF amount paid in that month (Indian number format)</li>
+                        <li><code>Employees</code> — Number of employees covered in that payment</li>
+                    </ul>
+                </li>
+                <li><strong>Excel Download Links:</strong> Clickable green tags to download the raw payment detail Excel files per establishment ID.</li>
+                <li><strong>Dynamic Analytics Charts:</strong> Status breakdown doughnut chart and top allowed-states bar chart, both live-updating with active filters.</li>
+                <li><strong>Copy Tools:</strong> In-drawer copy buttons for GSTN and Target Establishment ID.</li>
+                <li><strong>State Filter Dropdown:</strong> Filter all records by a specific EPFO state code.</li>
+            </ul>
+
+            <h3>Control Panel Features</h3>
+            <ul>
+                <li><strong>Drag &amp; Drop Upload:</strong> Drop a <code>.xlsx</code> or <code>.csv</code> vendor list to load it into the scraper queue.</li>
+                <li><strong>Full Pipeline Button:</strong> Runs both Phase 1 (establishment matching) and Phase 2 (payment downloading).</li>
+                <li><strong>Rerun Payments Button:</strong> Runs only Phase 2 to update payment data for already-matched vendors.</li>
+                <li><strong>Stop Scraper Button:</strong> Gracefully terminates the running scraper process.</li>
+                <li><strong>Live Console Log:</strong> Streams the last 100 lines of <code>scraper_run.log</code> in real-time.</li>
+                <li><strong>Progress Monitor:</strong> Shows processed / total vendor counts with a progress bar and per-category counters.</li>
             </ul>
         </section>
 
