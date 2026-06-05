@@ -11,11 +11,119 @@ import subprocess
 import time
 from urllib.parse import urlparse, parse_qs
 import pandas as pd
+import openpyxl.reader.excel
+# Bypass stylesheet loading bug in openpyxl for server-generated Excel files
+openpyxl.reader.excel.apply_stylesheet = lambda archive, wb: None
 
 PORT = 8000
 
 # Global reference to running scraper process
 scraper_process = None
+
+def parse_wage_month(month_str):
+    if not isinstance(month_str, str):
+        return None
+    parts = month_str.strip().split('-')
+    if len(parts) != 2:
+        return None
+    month_name, year_str = parts[0].upper(), parts[1]
+    months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"]
+    if month_name not in months:
+        return None
+    month_num = months.index(month_name) + 1
+    try:
+        if len(year_str) == 2:
+            year = 2000 + int(year_str)
+        elif len(year_str) == 4:
+            year = int(year_str)
+        else:
+            return None
+    except ValueError:
+        return None
+    return (year, month_num)
+
+def get_latest_payment_info(file_path):
+    if not file_path or not os.path.exists(file_path):
+        return None
+    try:
+        df = pd.read_excel(file_path)
+        cols = {c.strip().lower(): c for c in df.columns}
+        wage_month_col = next((cols[c] for c in ['wage month', 'wagemonth', 'month'] if c in cols), None)
+        amount_col = next((cols[c] for c in ['amount', 'amt', 'total amount'] if c in cols), None)
+        emp_col = next((cols[c] for c in ['no. of employee', 'no. of employees', 'employee count', 'employees', 'no_of_employee', 'no_of_employees'] if c in cols), None)
+        
+        if not wage_month_col:
+            return None
+            
+        best_row = None
+        best_date = None
+        
+        for idx, row in df.iterrows():
+            wm_val = str(row[wage_month_col]).strip()
+            parsed = parse_wage_month(wm_val)
+            if parsed:
+                if not best_date or parsed > best_date:
+                    best_date = parsed
+                    best_row = row
+                    
+        if best_row is not None:
+            amt_val = best_row[amount_col] if amount_col is not None else None
+            emp_val = best_row[emp_col] if emp_col is not None else None
+            
+            try:
+                if pd.isna(amt_val):
+                    amt_val = None
+                elif isinstance(amt_val, float):
+                    amt_val = round(amt_val, 2)
+                else:
+                    amt_val = int(amt_val)
+            except Exception:
+                pass
+                
+            try:
+                if pd.isna(emp_val):
+                    emp_val = None
+                else:
+                    emp_val = int(emp_val)
+            except Exception:
+                pass
+                
+            return {
+                "wage_month": str(best_row[wage_month_col]).strip(),
+                "amount": amt_val,
+                "employees": emp_val
+            }
+    except Exception as e:
+        print(f"Error parsing payment details {file_path}: {e}")
+    return None
+
+def backfill_latest_payments(json_data):
+    updated = False
+    for vendor_code, record in json_data.items():
+        if not isinstance(record, dict):
+            continue
+            
+        # Check matched_establishment_ids
+        matched_list = record.get("matched_establishment_ids", [])
+        for item in matched_list:
+            if not isinstance(item, dict):
+                continue
+            file_path = item.get("payment_details_file")
+            if file_path and os.path.exists(file_path) and "latest_payment" not in item:
+                latest_info = get_latest_payment_info(file_path)
+                if latest_info:
+                    item["latest_payment"] = latest_info
+                    updated = True
+                    
+        # Check top level
+        top_file_path = record.get("payment_details_file")
+        if top_file_path and os.path.exists(top_file_path) and "latest_payment" not in record:
+            latest_info = get_latest_payment_info(top_file_path)
+            if latest_info:
+                record["latest_payment"] = latest_info
+                updated = True
+                
+    return updated
 
 def get_active_names():
     filename = "vendorList.xlsx"
@@ -425,12 +533,23 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
         if parsed_url.path == '/vendor_est_matches.json':
             try:
                 base, csv_name, json_name, cleaned_csv_name = get_active_names()
+                data = {}
                 if os.path.exists(json_name):
-                    with open(json_name, "rb") as f:
-                        content = f.read()
-                else:
-                    content = b"{}"
-                    
+                    try:
+                        with open(json_name, "r", encoding="utf-8") as f:
+                            data = json.load(f)
+                    except Exception:
+                        pass
+                
+                # Backfill latest payment details dynamically
+                if data and backfill_latest_payments(data):
+                    try:
+                        with open(json_name, "w", encoding="utf-8") as f:
+                            json.dump(data, f, indent=4, ensure_ascii=False)
+                    except Exception:
+                        pass
+                
+                content = json.dumps(data, ensure_ascii=False).encode('utf-8')
                 self.send_response(200)
                 self.send_header('Content-Type', 'application/json')
                 self.send_header('Content-Length', str(len(content)))

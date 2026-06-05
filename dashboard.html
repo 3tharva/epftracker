@@ -684,6 +684,7 @@
             display: flex;
             flex-direction: column;
             gap: 1.5rem;
+            min-width: 0; /* Prevents grid item from expanding beyond screen */
         }
 
         .filters-panel {
@@ -802,7 +803,7 @@
 
         th {
             background: rgba(0, 0, 0, 0.1);
-            padding: 1rem 1.25rem;
+            padding: 0.75rem 1rem;
             font-weight: 600;
             color: var(--text-muted);
             border-bottom: 1px solid var(--panel-border);
@@ -816,7 +817,7 @@
         }
 
         td {
-            padding: 1rem 1.25rem;
+            padding: 0.75rem 1rem;
             border-bottom: 1px solid var(--panel-border);
             vertical-align: middle;
         }
@@ -2447,8 +2448,11 @@
 
             // 1. Filter
             filteredList = processedList.filter(item => {
+                const queryCleaned = currentSearch.replace(/^0+/, '');
+                const idCleaned = item.id.replace(/^0+/, '');
                 const searchMatch = !currentSearch || 
                     item.id.toLowerCase().includes(currentSearch) ||
+                    (queryCleaned && idCleaned.toLowerCase().includes(queryCleaned)) ||
                     item.vendor_name.toLowerCase().includes(currentSearch) ||
                     item.vendor_gstn.toLowerCase().includes(currentSearch) ||
                     (item.target_establishment_id && item.target_establishment_id.toLowerCase().includes(currentSearch));
@@ -2505,8 +2509,11 @@
             const counts = { all: 0, perfect: 0, mismatch: 0, no_match: 0, failed: 0 };
 
             processedList.forEach(item => {
+                const queryCleaned = currentSearch.replace(/^0+/, '');
+                const idCleaned = item.id.replace(/^0+/, '');
                 const searchMatch = !currentSearch || 
                     item.id.toLowerCase().includes(currentSearch) ||
+                    (queryCleaned && idCleaned.toLowerCase().includes(queryCleaned)) ||
                     item.vendor_name.toLowerCase().includes(currentSearch) ||
                     item.vendor_gstn.toLowerCase().includes(currentSearch) ||
                     (item.target_establishment_id && item.target_establishment_id.toLowerCase().includes(currentSearch));
@@ -2597,10 +2604,23 @@
                     let htmlList = [];
                     downloadedItems.forEach(m => {
                         const shortEstId = m["establishment id"];
+                        let latestPaymentInfo = '';
+                        if (m.latest_payment) {
+                            latestPaymentInfo = `
+                                <div style="font-size:0.7rem; color:var(--text-muted); margin-top:3px; display:flex; gap:6px; flex-wrap:wrap;">
+                                    <span>Month: <strong>${m.latest_payment.wage_month}</strong></span>
+                                    <span>Amt: <strong>${m.latest_payment.amount != null ? Number(m.latest_payment.amount).toLocaleString('en-IN') : '—'}</strong></span>
+                                    <span>Emps: <strong>${m.latest_payment.employees != null ? m.latest_payment.employees : '—'}</strong></span>
+                                </div>
+                            `;
+                        }
                         htmlList.push(`
-                            <a href="/${m.payment_details_file}" class="excel-tag" download onclick="event.stopPropagation();" title="Download Excel for ${shortEstId} (${m["establishment Name"]})">
-                                <i class="fa-solid fa-file-excel" style="color:#10b981; margin-right:4px;"></i> ${shortEstId}
-                            </a>
+                            <div style="display:flex; flex-direction:column; background:rgba(255,255,255,0.03); padding:6px 8px; border-radius:6px; border:1px solid var(--panel-border); min-width:140px; margin-bottom: 2px;">
+                                <a href="/${m.payment_details_file}" class="excel-tag" download onclick="event.stopPropagation();" title="Download Excel for ${shortEstId} (${m["establishment Name"]})">
+                                    <i class="fa-solid fa-file-excel" style="color:#10b981; margin-right:4px;"></i> ${shortEstId}
+                                </a>
+                                ${latestPaymentInfo}
+                            </div>
                         `);
                     });
                     
@@ -2629,10 +2649,23 @@
                     const filename = item.raw.payment_details_file.split('/').pop();
                     const status = item.raw.payment_details_status;
                     if (status === 'success') {
+                        let latestPaymentInfo = '';
+                        if (item.raw.latest_payment) {
+                            latestPaymentInfo = `
+                                <div style="font-size:0.7rem; color:var(--text-muted); margin-top:3px; display:flex; gap:6px; flex-wrap:wrap;">
+                                    <span>Month: <strong>${item.raw.latest_payment.wage_month}</strong></span>
+                                    <span>Amt: <strong>${item.raw.latest_payment.amount != null ? Number(item.raw.latest_payment.amount).toLocaleString('en-IN') : '—'}</strong></span>
+                                    <span>Emps: <strong>${item.raw.latest_payment.employees != null ? item.raw.latest_payment.employees : '—'}</strong></span>
+                                </div>
+                            `;
+                        }
                         paymentsDisplay = `
-                            <a href="/${item.raw.payment_details_file}" class="excel-tag" download onclick="event.stopPropagation();" title="Download Excel: ${filename}">
-                                <i class="fa-solid fa-file-excel" style="color:#10b981; margin-right:4px;"></i> Download Excel
-                            </a>
+                            <div style="display:flex; flex-direction:column; background:rgba(255,255,255,0.03); padding:6px 8px; border-radius:6px; border:1px solid var(--panel-border); min-width:140px;">
+                                <a href="/${item.raw.payment_details_file}" class="excel-tag" download onclick="event.stopPropagation();" title="Download Excel: ${filename}">
+                                    <i class="fa-solid fa-file-excel" style="color:#10b981; margin-right:4px;"></i> Download Excel
+                                </a>
+                                ${latestPaymentInfo}
+                            </div>
                         `;
                     } else if (status === 'No Payment details found for this Establishment') {
                         paymentsDisplay = `
@@ -2836,10 +2869,23 @@
                         const status = matchedEstRecord.payment_details_status;
                         const file = matchedEstRecord.payment_details_file;
                         if (status === 'success' && file) {
+                            let latestPaymentInfo = '';
+                            if (matchedEstRecord.latest_payment) {
+                                latestPaymentInfo = `
+                                    <div style="font-size:0.75rem; color:var(--text-muted); margin-top:4px; display:flex; gap:8px; flex-wrap:wrap; background:rgba(255,255,255,0.03); padding:6px 10px; border-radius:6px; border:1px solid var(--panel-border);">
+                                        <span>Wage Month: <strong style="color:var(--text-main)">${matchedEstRecord.latest_payment.wage_month}</strong></span>
+                                        <span>Amount: <strong style="color:var(--text-main)">${matchedEstRecord.latest_payment.amount != null ? Number(matchedEstRecord.latest_payment.amount).toLocaleString('en-IN') : '—'}</strong></span>
+                                        <span>Employees: <strong style="color:var(--text-main)">${matchedEstRecord.latest_payment.employees != null ? matchedEstRecord.latest_payment.employees : '—'}</strong></span>
+                                    </div>
+                                `;
+                            }
                             paymentDownloadButton = `
-                                <a href="/${file}" class="btn btn-secondary excel-tag" style="margin-top: 8px; width: fit-content;" download title="Download Excel sheet for payment details">
-                                    <i class="fa-solid fa-file-excel" style="color:#10b981; margin-right:6px;"></i> View Excel
-                                </a>
+                                <div style="display:flex; flex-direction:column; gap:6px;">
+                                    <a href="/${file}" class="btn btn-secondary excel-tag" style="margin-top: 8px; width: fit-content;" download title="Download Excel sheet for payment details">
+                                        <i class="fa-solid fa-file-excel" style="color:#10b981; margin-right:6px;"></i> View Excel
+                                    </a>
+                                    ${latestPaymentInfo}
+                                </div>
                             `;
                         } else if (status === 'No Payment details found for this Establishment') {
                             paymentDownloadButton = `
@@ -2860,10 +2906,23 @@
                             const status = item.raw.payment_details_status;
                             const file = item.raw.payment_details_file;
                             if (status === 'success' && file) {
+                                let latestPaymentInfo = '';
+                                if (item.raw.latest_payment) {
+                                    latestPaymentInfo = `
+                                        <div style="font-size:0.75rem; color:var(--text-muted); margin-top:4px; display:flex; gap:8px; flex-wrap:wrap; background:rgba(255,255,255,0.03); padding:6px 10px; border-radius:6px; border:1px solid var(--panel-border);">
+                                            <span>Wage Month: <strong style="color:var(--text-main)">${item.raw.latest_payment.wage_month}</strong></span>
+                                            <span>Amount: <strong style="color:var(--text-main)">${item.raw.latest_payment.amount != null ? Number(item.raw.latest_payment.amount).toLocaleString('en-IN') : '—'}</strong></span>
+                                            <span>Employees: <strong style="color:var(--text-main)">${item.raw.latest_payment.employees != null ? item.raw.latest_payment.employees : '—'}</strong></span>
+                                        </div>
+                                    `;
+                                }
                                 paymentDownloadButton = `
-                                    <a href="/${file}" class="btn btn-secondary excel-tag" style="margin-top: 8px; width: fit-content;" download title="Download Excel sheet for payment details">
-                                        <i class="fa-solid fa-file-excel" style="color:#10b981; margin-right:6px;"></i> View Excel
-                                    </a>
+                                    <div style="display:flex; flex-direction:column; gap:6px;">
+                                        <a href="/${file}" class="btn btn-secondary excel-tag" style="margin-top: 8px; width: fit-content;" download title="Download Excel sheet for payment details">
+                                            <i class="fa-solid fa-file-excel" style="color:#10b981; margin-right:6px;"></i> View Excel
+                                        </a>
+                                        ${latestPaymentInfo}
+                                    </div>
                                 `;
                             } else if (status === 'No Payment details found for this Establishment') {
                                 paymentDownloadButton = `
